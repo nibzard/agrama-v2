@@ -1,0 +1,51 @@
+# Zig build artifacts
+zig-cache/
+zig-out/
+build/
+*.o
+*.a
+*.so
+*.dll
+*.exe
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Claude agents
+.claude/agents/logs/
+.claude/agents/tmp/
+
+# Testing
+coverage/
+*.log
+
+# OS files
+Thumbs.db
+desktop.ini
+
+# Build outputs
+dist/
+out/
+target/
+
+# Temporary files
+*.tmp
+temp/
+tmp/
