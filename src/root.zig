@@ -30,6 +30,54 @@ pub const AgentManager = @import("agent_manager.zig").AgentManager;
 pub const AgentSession = @import("agent_manager.zig").AgentSession;
 pub const FileLock = @import("agent_manager.zig").FileLock;
 
+// Export Frontier Reduction Engine components
+pub const FrontierReductionEngine = @import("fre.zig").FrontierReductionEngine;
+pub const TemporalNode = @import("fre.zig").TemporalNode;
+pub const TemporalEdge = @import("fre.zig").TemporalEdge;
+pub const PathResult = @import("fre.zig").PathResult;
+pub const ImpactAnalysis = @import("fre.zig").ImpactAnalysis;
+pub const DependencyGraph = @import("fre.zig").DependencyGraph;
+pub const TraversalDirection = @import("fre.zig").TraversalDirection;
+pub const NodeType = @import("fre.zig").NodeType;
+pub const RelationType = @import("fre.zig").RelationType;
+pub const TimeRange = @import("fre.zig").TimeRange;
+
+// Export HNSW components
+pub const HNSWIndex = @import("hnsw.zig").HNSWIndex;
+pub const Vector = @import("hnsw.zig").Vector;
+pub const MatryoshkaEmbedding = @import("hnsw.zig").MatryoshkaEmbedding;
+pub const SearchResult = @import("hnsw.zig").SearchResult;
+pub const HNSWSearchParams = @import("hnsw.zig").HNSWSearchParams;
+pub const NodeID = @import("hnsw.zig").NodeID;
+
+// Export Semantic Database components
+pub const SemanticDatabase = @import("semantic_database.zig").SemanticDatabase;
+pub const SemanticSearchResult = @import("semantic_database.zig").SemanticSearchResult;
+pub const HybridQuery = @import("semantic_database.zig").HybridQuery;
+pub const SemanticDatabaseStats = @import("semantic_database.zig").SemanticDatabaseStats;
+
+// Export CRDT components
+pub const VectorClock = @import("crdt.zig").VectorClock;
+pub const Position = @import("crdt.zig").Position;
+pub const OperationType = @import("crdt.zig").OperationType;
+pub const CRDTOperation = @import("crdt.zig").CRDTOperation;
+pub const ConflictEvent = @import("crdt.zig").ConflictEvent;
+pub const AgentCursor = @import("crdt.zig").AgentCursor;
+pub const CRDTDocument = @import("crdt.zig").CRDTDocument;
+
+// Export CRDT Manager components
+pub const CRDTManager = @import("crdt_manager.zig").CRDTManager;
+pub const AgentCRDTSession = @import("crdt_manager.zig").AgentCRDTSession;
+pub const CollaborativeContext = @import("crdt_manager.zig").CollaborativeContext;
+pub const CRDTStats = @import("crdt_manager.zig").CRDTStats;
+
+// Export CRDT MCP Tools
+pub const MCPCRDTContext = @import("mcp_crdt_tools.zig").MCPCRDTContext;
+pub const ReadCodeCRDTTool = @import("mcp_crdt_tools.zig").ReadCodeCRDTTool;
+pub const WriteCodeCRDTTool = @import("mcp_crdt_tools.zig").WriteCodeCRDTTool;
+pub const UpdateCursorTool = @import("mcp_crdt_tools.zig").UpdateCursorTool;
+pub const GetCollaborativeContextTool = @import("mcp_crdt_tools.zig").GetCollaborativeContextTool;
+
 // Re-export for convenience
 pub const TemporalGraphDB = Database;
 
@@ -160,4 +208,44 @@ test "AgramaCodeGraphServer initialization" {
     try testing.expect(stats.mcp.agents == 0);
     try testing.expect(stats.websocket.active_connections == 0);
     try testing.expect(stats.agent_manager.active_agents == 0);
+}
+
+test "FRE module exports" {
+    // Verify FRE types are accessible
+    const fre_type_info = @typeInfo(FrontierReductionEngine);
+    try testing.expect(fre_type_info == .@"struct");
+
+    const node_type_info = @typeInfo(TemporalNode);
+    try testing.expect(node_type_info == .@"struct");
+
+    const edge_type_info = @typeInfo(TemporalEdge);
+    try testing.expect(edge_type_info == .@"struct");
+
+    // Test enum types
+    const node_type_enum_info = @typeInfo(NodeType);
+    try testing.expect(node_type_enum_info == .@"enum");
+
+    const relation_type_enum_info = @typeInfo(RelationType);
+    try testing.expect(relation_type_enum_info == .@"enum");
+}
+
+test "HNSW module exports" {
+    // Verify HNSW types are accessible
+    const hnsw_index_type_info = @typeInfo(HNSWIndex);
+    try testing.expect(hnsw_index_type_info == .@"struct");
+
+    const vector_type_info = @typeInfo(Vector);
+    try testing.expect(vector_type_info == .@"struct");
+
+    const matryoshka_type_info = @typeInfo(MatryoshkaEmbedding);
+    try testing.expect(matryoshka_type_info == .@"struct");
+}
+
+test "SemanticDatabase module exports" {
+    // Verify Semantic Database types are accessible
+    const semantic_db_type_info = @typeInfo(SemanticDatabase);
+    try testing.expect(semantic_db_type_info == .@"struct");
+
+    const semantic_result_type_info = @typeInfo(SemanticSearchResult);
+    try testing.expect(semantic_result_type_info == .@"struct");
 }

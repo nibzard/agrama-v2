@@ -21,12 +21,12 @@ pub const MCPRequest = struct {
 
     pub fn deinit(self: *MCPRequest, allocator: Allocator) void {
         allocator.free(self.method);
-        // Note: id and params are owned by the parsed JSON, 
+        // Note: id and params are owned by the parsed JSON,
         // so we don't manually deinit them
     }
 };
 
-/// JSON-RPC 2.0 compliant response structure  
+/// JSON-RPC 2.0 compliant response structure
 pub const MCPResponse = struct {
     jsonrpc: []const u8 = "2.0",
     id: ?std.json.Value = null,
@@ -126,7 +126,7 @@ pub const MCPCompliantServer = struct {
     /// Initialize MCP Compliant Server
     pub fn init(allocator: Allocator, database: *Database) !MCPCompliantServer {
         var tools = ArrayList(MCPToolDefinition).init(allocator);
-        
+
         // Define read_code tool according to MCP specification
         try tools.append(try createReadCodeTool(allocator));
         try tools.append(try createWriteCodeTool(allocator));
@@ -160,14 +160,12 @@ pub const MCPCompliantServer = struct {
     /// Main server loop - processes stdin messages
     pub fn run(self: *MCPCompliantServer) !void {
         std.log.info("MCP Compliant Server starting on stdio transport", .{});
-        
+
         var line_buf: [4096]u8 = undefined;
-        
+
         while (true) {
             // Read line from stdin (MCP stdio transport requirement)
-            if (try self.stdin_reader.reader().readUntilDelimiterOrEof(
-                line_buf[0..], '\n'
-            )) |line| {
+            if (try self.stdin_reader.reader().readUntilDelimiterOrEof(line_buf[0..], '\n')) |line| {
                 try self.processMessage(line);
             } else {
                 // EOF - client disconnected
@@ -178,12 +176,7 @@ pub const MCPCompliantServer = struct {
 
     /// Process incoming JSON-RPC message
     fn processMessage(self: *MCPCompliantServer, message: []const u8) !void {
-        var parsed = std.json.parseFromSlice(
-            std.json.Value, 
-            self.allocator, 
-            message, 
-            .{}
-        ) catch {
+        var parsed = std.json.parseFromSlice(std.json.Value, self.allocator, message, .{}) catch {
             try self.sendError(null, -32700, "Parse error", null);
             return;
         };
@@ -200,12 +193,12 @@ pub const MCPCompliantServer = struct {
     /// Parse JSON-RPC request
     fn parseRequest(self: *MCPCompliantServer, value: std.json.Value) !MCPRequest {
         const obj = value.object;
-        
+
         const jsonrpc = obj.get("jsonrpc") orelse return error.MissingJsonRpc;
         if (!std.mem.eql(u8, jsonrpc.string, "2.0")) return error.InvalidJsonRpc;
 
         const method = obj.get("method") orelse return error.MissingMethod;
-        
+
         return MCPRequest{
             .jsonrpc = "2.0",
             .id = obj.get("id"),
@@ -271,18 +264,18 @@ pub const MCPCompliantServer = struct {
     /// Handle tools/list request
     fn handleToolsList(self: *MCPCompliantServer, request: MCPRequest) !void {
         // Create a simple JSON response without complex object management
-        const tools_json = 
+        const tools_json =
             \\{"tools":[
             \\  {"name":"read_code","title":"Read Code File","description":"Read and analyze code files with optional history","inputSchema":{"type":"object","properties":{"path":{"type":"string","description":"File path to read"},"include_history":{"type":"boolean","description":"Include file history"}},"required":["path"]}},
             \\  {"name":"write_code","title":"Write Code File","description":"Write or modify code files with provenance tracking","inputSchema":{"type":"object","properties":{"path":{"type":"string"},"content":{"type":"string"}},"required":["path","content"]}},
             \\  {"name":"get_context","title":"Get Context","description":"Get comprehensive contextual information","inputSchema":{"type":"object","properties":{}}}
             \\]}
         ;
-        
-        // Parse the JSON and send as response  
+
+        // Parse the JSON and send as response
         var parsed = try std.json.parseFromSlice(std.json.Value, self.allocator, tools_json, .{});
         defer parsed.deinit();
-        
+
         try self.sendResponse(request.id, parsed.value);
     }
 
@@ -316,20 +309,20 @@ pub const MCPCompliantServer = struct {
         // Create simple JSON response for tool call result
         const first_content = if (tool_response.content.len > 0) tool_response.content[0] else null;
         const text_content = if (first_content) |content| content.text orelse "No content" else "No content";
-        
+
         // Build JSON response string (escape quotes in text)
         const escaped_text = try self.escapeJsonString(text_content);
         defer self.allocator.free(escaped_text);
-        
-        const response_json = try std.fmt.allocPrint(self.allocator, 
+
+        const response_json = try std.fmt.allocPrint(self.allocator,
             \\{{"content":[{{"type":"text","text":"{s}"}}],"isError":{}}}
         , .{ escaped_text, tool_response.isError });
         defer self.allocator.free(response_json);
-        
+
         // Parse and send
         var parsed = try std.json.parseFromSlice(std.json.Value, self.allocator, response_json, .{});
         defer parsed.deinit();
-        
+
         try self.sendResponse(request.id, parsed.value);
     }
 
@@ -369,7 +362,7 @@ pub const MCPCompliantServer = struct {
         };
     }
 
-    /// Execute write_code tool  
+    /// Execute write_code tool
     fn executeWriteCode(self: *MCPCompliantServer, arguments: std.json.Value) !MCPToolResponse {
         const args_obj = arguments.object;
         const path_value = args_obj.get("path") orelse return error.MissingPath;
@@ -396,7 +389,7 @@ pub const MCPCompliantServer = struct {
     /// Execute get_context tool
     fn executeGetContext(self: *MCPCompliantServer, arguments: std.json.Value) !MCPToolResponse {
         _ = arguments;
-        
+
         const context_info = try std.fmt.allocPrint(self.allocator, "Agrama CodeGraph MCP Server\nTools available: read_code, write_code, get_context\nDatabase ready for AI collaboration", .{});
 
         var response_content = try self.allocator.alloc(MCPContent, 1);
@@ -435,7 +428,7 @@ pub const MCPCompliantServer = struct {
         };
 
         try self.sendMessage(response);
-        
+
         // Clean up the error message we allocated
         response.deinit(self.allocator);
     }
@@ -450,12 +443,12 @@ pub const MCPCompliantServer = struct {
 
         try self.stdout_writer.writeAll(string.items);
     }
-    
+
     /// Escape JSON string (simple implementation)
     fn escapeJsonString(self: *MCPCompliantServer, input: []const u8) ![]u8 {
         var result = std.ArrayList(u8).init(self.allocator);
         defer result.deinit();
-        
+
         for (input) |char| {
             switch (char) {
                 '"' => try result.appendSlice("\\\""),
@@ -466,7 +459,7 @@ pub const MCPCompliantServer = struct {
                 else => try result.append(char),
             }
         }
-        
+
         return result.toOwnedSlice();
     }
 };
@@ -521,7 +514,7 @@ fn createWriteCodeTool(allocator: Allocator) !MCPToolDefinition {
     try path_schema.put("type", std.json.Value{ .string = "string" });
 
     var content_schema = std.json.ObjectMap.init(allocator);
-    defer content_schema.deinit();  
+    defer content_schema.deinit();
     try content_schema.put("type", std.json.Value{ .string = "string" });
 
     try properties.put("path", std.json.Value{ .object = path_schema });

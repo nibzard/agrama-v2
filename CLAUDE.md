@@ -60,6 +60,37 @@ zig fmt . && zig build && zig build test && echo "✓ Ready to commit"
 - Use categories: Core, MCP, Web, API, Docs, Test, Deploy
 - Reference SPECS.md and MVP.md for requirements
 
+### Task Master Usage Policy
+
+**PROACTIVE TASK-MASTER INVOCATION REQUIRED:**
+
+The @task-master subagent should be invoked proactively in the following situations:
+
+1. **After Major Development Work**: Always invoke @task-master after completing significant features, phases, or milestones to update TODO.md status and plan next steps.
+
+2. **Before Starting New Development Phases**: Use @task-master to coordinate team transitions, update priorities, and manage dependencies between subagents.
+
+3. **When Multiple Tasks Complete**: Don't let completed tasks accumulate - invoke @task-master to mark them complete and update project status in real-time.
+
+4. **During Project State Changes**: Release completion, architecture changes, or major decisions require @task-master coordination.
+
+5. **Regular Status Updates**: For complex multi-day work, invoke @task-master daily to maintain accurate project tracking.
+
+**Why This Matters:**
+- TODO.md serves as the single source of truth for project status
+- Other team members and stakeholders rely on accurate task tracking  
+- Project momentum and coordination depend on up-to-date status
+- @task-master provides strategic oversight that prevents scope drift and maintains focus
+
+**Example Usage:**
+```
+# After completing MCP server implementation
+@task-master: Update TODO.md with MCP server completion, coordinate Phase 3 UI development
+
+# After successful release
+@task-master: Mark MVP release complete, update project status, plan Phase 4 advanced algorithms
+```
+
 ## Architecture Deep Dive
 
 ### Temporal Knowledge Graph (Core)

@@ -184,7 +184,7 @@ fn mcpCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
                 \\EXAMPLE CLIENT USAGE:
                 \\    echo 'JSON message' | agrama mcp
                 \\
-                );
+            );
             return;
         } else {
             std.log.err("Unknown mcp option: {s}", .{arg});
