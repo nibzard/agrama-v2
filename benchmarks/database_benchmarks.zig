@@ -367,7 +367,7 @@ const MockTemporalDB = struct {
 /// Generate realistic test data for database benchmarking
 const TestDataGenerator = struct {
     const NodeType = struct { content: []const u8, embedding: []f32 };
-    
+
     pub fn generateCodeNodes(allocator: Allocator, count: usize) ![]NodeType {
         const nodes = try allocator.alloc(NodeType, count);
         var rng = std.Random.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));

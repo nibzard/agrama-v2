@@ -40,12 +40,26 @@ pub const VectorClock = struct {
     }
 
     pub fn deinit(self: *VectorClock) void {
+        // Collect keys to free without using dynamic allocation
+        // Use a fixed-size buffer for keys - VectorClocks typically have few agents
+        var keys_buffer: [32][]const u8 = undefined;
+        var key_count: usize = 0;
+
         var iterator = self.clocks.iterator();
         while (iterator.next()) |entry| {
-            self.allocator.free(entry.key_ptr.*);
+            if (key_count < keys_buffer.len) {
+                keys_buffer[key_count] = entry.key_ptr.*;
+                key_count += 1;
+            }
         }
+
+        // Deinitialize the HashMap first
         self.clocks.deinit();
-        // Note: agent_id is already freed in the iterator above since it's a key in clocks
+
+        // Then free all the keys
+        for (keys_buffer[0..key_count]) |key| {
+            self.allocator.free(key);
+        }
     }
 
     /// Increment local logical time
@@ -65,9 +79,6 @@ pub const VectorClock = struct {
             gop.value_ptr.* = 0;
         }
         gop.value_ptr.* = @max(gop.value_ptr.*, remote_time);
-
-        // Increment our own logical time
-        _ = try self.tick();
     }
 
     /// Check if this vector clock happens before another
@@ -142,6 +153,17 @@ pub const CRDTOperation = struct {
     created_at: i64, // Wall clock time for ordering tie-breaking
 
     pub fn init(allocator: Allocator, operation_id: u128, agent_id: []const u8, document_path: []const u8, operation_type: OperationType, position: Position, content: []const u8, timestamp: VectorClock) !CRDTOperation {
+        // Clone the VectorClock to avoid shared ownership issues
+        var cloned_timestamp = try VectorClock.init(allocator, timestamp.agent_id);
+        var iterator = timestamp.clocks.iterator();
+        while (iterator.next()) |entry| {
+            if (!std.mem.eql(u8, entry.key_ptr.*, timestamp.agent_id)) {
+                try cloned_timestamp.update(entry.key_ptr.*, entry.value_ptr.*);
+            } else {
+                try cloned_timestamp.clocks.put(cloned_timestamp.agent_id, entry.value_ptr.*);
+            }
+        }
+
         return CRDTOperation{
             .operation_id = operation_id,
             .agent_id = try allocator.dupe(u8, agent_id),
@@ -149,7 +171,7 @@ pub const CRDTOperation = struct {
             .operation_type = operation_type,
             .position = position,
             .content = try allocator.dupe(u8, content),
-            .timestamp = timestamp,
+            .timestamp = cloned_timestamp,
             .dependencies = ArrayList(u128).init(allocator),
             .created_at = std.time.timestamp(),
         };
@@ -430,14 +452,13 @@ pub const CRDTDocument = struct {
         self.mutex.lock();
         defer self.mutex.unlock();
 
-        const cursor = try AgentCursor.init(self.allocator, agent_id, agent_name, self.document_path, position);
-
         // Remove existing cursor for this agent if it exists
         if (self.agent_cursors.fetchRemove(agent_id)) |kv| {
             var mutable_cursor = kv.value;
             mutable_cursor.deinit(self.allocator);
         }
 
+        const cursor = try AgentCursor.init(self.allocator, agent_id, agent_name, self.document_path, position);
         try self.agent_cursors.put(cursor.agent_id, cursor);
     }
 

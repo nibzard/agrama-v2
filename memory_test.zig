@@ -7,7 +7,7 @@ const MCPServer = @import("src/mcp_server.zig").MCPServer;
 
 test "Memory Safety Integration" {
     std.debug.print("\n=== MEMORY SAFETY INTEGRATION TEST ===\n", .{});
-    
+
     var gpa = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
     defer {
         const result = gpa.deinit();
@@ -28,7 +28,7 @@ test "Memory Safety Integration" {
         try database.saveFile("test.txt", "Hello, World!");
         const content = try database.getFile("test.txt");
         try testing.expect(std.mem.eql(u8, content, "Hello, World!"));
-        
+
         // Test history without leaks
         const history = database.getHistory("test.txt", 5) catch &[_]@import("src/database.zig").Change{};
         defer if (history.len > 0) allocator.free(history);
@@ -40,12 +40,12 @@ test "Memory Safety Integration" {
     {
         var database = Database.init(allocator);
         defer database.deinit();
-        
+
         var mcp_server = MCPServer.init(allocator, &database);
         defer mcp_server.deinit();
 
         try mcp_server.registerAgent("test-agent", "Test Agent");
-        
+
         // Just test that registration worked
         try testing.expect(true); // Basic functionality test
     }
@@ -56,7 +56,7 @@ test "Memory Safety Integration" {
 
 test "MCP Tool Memory Safety" {
     std.debug.print("\n=== MCP TOOL MEMORY SAFETY TEST ===\n", .{});
-    
+
     var gpa = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
     defer {
         const result = gpa.deinit();
@@ -70,7 +70,7 @@ test "MCP Tool Memory Safety" {
 
     var database = Database.init(allocator);
     defer database.deinit();
-    
+
     var mcp_server = MCPServer.init(allocator, &database);
     defer mcp_server.deinit();
 
@@ -81,14 +81,14 @@ test "MCP Tool Memory Safety" {
     {
         // Create minimal test file
         try database.saveFile("minimal_test.zig", "const std = @import(\"std\");");
-        
+
         // Create arguments without history to avoid leaks
         var arguments_map = std.json.ObjectMap.init(allocator);
         defer arguments_map.deinit();
-        
+
         try arguments_map.put("path", std.json.Value{ .string = "minimal_test.zig" });
         try arguments_map.put("include_history", std.json.Value{ .bool = false });
-        
+
         // Just test that file was created successfully
         const content = try database.getFile("minimal_test.zig");
         try testing.expect(std.mem.eql(u8, content, "const std = @import(\"std\");"));

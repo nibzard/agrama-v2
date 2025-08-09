@@ -93,7 +93,7 @@ pub const MatryoshkaEmbedding = struct {
         const new_vector = try Vector.init(allocator, self.full_vector.dimensions);
         @memcpy(new_vector.data, self.full_vector.data);
         const new_dims = try allocator.dupe(u32, self.dimensions);
-        
+
         return MatryoshkaEmbedding{
             .full_vector = new_vector,
             .dimensions = new_dims,
