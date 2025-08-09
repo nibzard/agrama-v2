@@ -337,7 +337,7 @@ test "WebSocketConnection creation and cleanup" {
     // Skip the actual WebSocket connection test due to mock socket limitations
     // In production, this would test with real socket connections
     // For now, just test the basic struct fields
-    
+
     // Test basic WebSocketConnection fields
     const test_id = "test-connection";
     try testing.expect(std.mem.eql(u8, test_id, test_id));

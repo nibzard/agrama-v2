@@ -113,4 +113,146 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_lib_unit_tests.step);
     test_step.dependOn(&run_exe_unit_tests.step);
+
+    // Integration tests
+    const integration_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/integration_test.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
+    // Add all source dependencies to integration tests
+    integration_tests.root_module.addImport("agrama_lib", lib_mod);
+    
+    const run_integration_tests = b.addRunArtifact(integration_tests);
+
+    const integration_step = b.step("test-integration", "Run integration tests");
+    integration_step.dependOn(&run_integration_tests.step);
+
+    // Benchmark infrastructure (module for potential future use)
+    _ = b.createModule(.{
+        .root_source_file = b.path("benchmarks/benchmark_runner.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    // Comprehensive benchmark suite
+    const benchmark_suite = b.addExecutable(.{
+        .name = "benchmark_suite",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("benchmarks/benchmark_suite.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
+    // Individual benchmark executables
+    const hnsw_bench = b.addExecutable(.{
+        .name = "hnsw_benchmark",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("benchmarks/hnsw_benchmarks.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
+    const fre_bench = b.addExecutable(.{
+        .name = "fre_benchmark",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("benchmarks/fre_benchmarks.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
+    const db_bench = b.addExecutable(.{
+        .name = "database_benchmark",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("benchmarks/database_benchmarks.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
+    const mcp_bench = b.addExecutable(.{
+        .name = "mcp_benchmark",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("benchmarks/mcp_benchmarks.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
+    // Install benchmark executables (temporarily disabled)
+    // b.installArtifact(benchmark_suite);
+    // b.installArtifact(hnsw_bench);
+    // b.installArtifact(fre_bench);
+    // b.installArtifact(db_bench);
+    // b.installArtifact(mcp_bench);
+
+    // Benchmark run commands
+    const run_benchmark_suite = b.addRunArtifact(benchmark_suite);
+    const run_hnsw_bench = b.addRunArtifact(hnsw_bench);
+    const run_fre_bench = b.addRunArtifact(fre_bench);
+    const run_db_bench = b.addRunArtifact(db_bench);
+    const run_mcp_bench = b.addRunArtifact(mcp_bench);
+
+    // Pass arguments to benchmarks
+    if (b.args) |args| {
+        run_benchmark_suite.addArgs(args);
+        run_hnsw_bench.addArgs(args);
+        run_fre_bench.addArgs(args);
+        run_db_bench.addArgs(args);
+        run_mcp_bench.addArgs(args);
+    }
+
+    // Benchmark build steps
+    const bench_step = b.step("bench", "Run comprehensive benchmark suite");
+    bench_step.dependOn(&run_benchmark_suite.step);
+
+    const bench_hnsw_step = b.step("bench-hnsw", "Run HNSW benchmarks only");
+    bench_hnsw_step.dependOn(&run_hnsw_bench.step);
+
+    const bench_fre_step = b.step("bench-fre", "Run FRE benchmarks only");
+    bench_fre_step.dependOn(&run_fre_bench.step);
+
+    const bench_db_step = b.step("bench-database", "Run database benchmarks only");
+    bench_db_step.dependOn(&run_db_bench.step);
+
+    const bench_mcp_step = b.step("bench-mcp", "Run MCP benchmarks only");
+    bench_mcp_step.dependOn(&run_mcp_bench.step);
+
+    // Quick benchmark for development
+    const quick_bench_cmd = b.addRunArtifact(benchmark_suite);
+    quick_bench_cmd.addArg("--quick");
+    const bench_quick_step = b.step("bench-quick", "Run benchmarks in quick mode (reduced dataset sizes)");
+    bench_quick_step.dependOn(&quick_bench_cmd.step);
+
+    // Benchmark validation (optimized build for accurate performance measurement)
+    const validate_benchmark_suite = b.addExecutable(.{
+        .name = "validate_suite",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("benchmarks/benchmark_suite.zig"),
+            .target = target,
+            .optimize = .ReleaseFast, // Force optimized build for validation
+        }),
+    });
+    // b.installArtifact(validate_benchmark_suite);
+
+    const run_validate_suite = b.addRunArtifact(validate_benchmark_suite);
+    if (b.args) |args| {
+        run_validate_suite.addArgs(args);
+    }
+
+    const validate_step = b.step("validate", "Run performance validation with optimized build");
+    validate_step.dependOn(&run_validate_suite.step);
+
+    // Regression testing
+    const regression_cmd = b.addRunArtifact(benchmark_suite);
+    regression_cmd.addArg("--compare");
+    regression_cmd.addArg("benchmarks/baseline.json");
+    const regression_step = b.step("bench-regression", "Check for performance regressions against baseline");
+    regression_step.dependOn(&regression_cmd.step);
 }

@@ -36,6 +36,9 @@ pub const Database = struct {
     // History of all changes stored as path -> list of changes
     file_histories: HashMap([]const u8, ArrayList(Change), HashContext, std.hash_map.default_max_load_percentage),
 
+    // Optional FRE integration for advanced graph operations
+    fre: ?@import("fre.zig").FrontierReductionEngine,
+
     const HashContext = struct {
         pub fn hash(self: @This(), s: []const u8) u64 {
             _ = self;
@@ -54,11 +57,28 @@ pub const Database = struct {
             .allocator = allocator,
             .current_files = HashMap([]const u8, []const u8, HashContext, std.hash_map.default_max_load_percentage).init(allocator),
             .file_histories = HashMap([]const u8, ArrayList(Change), HashContext, std.hash_map.default_max_load_percentage).init(allocator),
+            .fre = null,
+        };
+    }
+
+    /// Initialize database with FRE integration
+    pub fn initWithFRE(allocator: Allocator) !Database {
+        const fre = @import("fre.zig").FrontierReductionEngine.init(allocator);
+        return Database{
+            .allocator = allocator,
+            .current_files = HashMap([]const u8, []const u8, HashContext, std.hash_map.default_max_load_percentage).init(allocator),
+            .file_histories = HashMap([]const u8, ArrayList(Change), HashContext, std.hash_map.default_max_load_percentage).init(allocator),
+            .fre = fre,
         };
     }
 
     /// Clean up database resources
     pub fn deinit(self: *Database) void {
+        // Clean up FRE if present
+        if (self.fre) |*fre| {
+            fre.deinit();
+        }
+
         // Clean up current files
         var current_iterator = self.current_files.iterator();
         while (current_iterator.next()) |entry| {
@@ -138,6 +158,21 @@ pub const Database = struct {
             return result;
         }
         return error.FileNotFound;
+    }
+
+    /// Get FRE instance if available
+    pub fn getFRE(self: *Database) ?*@import("fre.zig").FrontierReductionEngine {
+        if (self.fre) |*fre| {
+            return fre;
+        }
+        return null;
+    }
+
+    /// Enable FRE functionality
+    pub fn enableFRE(self: *Database) !void {
+        if (self.fre == null) {
+            self.fre = @import("fre.zig").FrontierReductionEngine.init(self.allocator);
+        }
     }
 };
 
@@ -259,4 +294,27 @@ test "file content updates correctly" {
     try testing.expect(history.len == 2);
     try testing.expectEqualSlices(u8, "Updated content", history[0].content);
     try testing.expectEqualSlices(u8, "Initial content", history[1].content);
+}
+
+test "Database FRE integration" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
+    var db = Database.init(allocator);
+    defer db.deinit();
+
+    // Initially no FRE
+    try testing.expect(db.getFRE() == null);
+
+    // Enable FRE
+    try db.enableFRE();
+    try testing.expect(db.getFRE() != null);
+
+    // Test FRE functionality
+    if (db.getFRE()) |fre| {
+        const stats = fre.getGraphStats();
+        try testing.expect(stats.nodes == 0);
+        try testing.expect(stats.edges == 0);
+    }
 }

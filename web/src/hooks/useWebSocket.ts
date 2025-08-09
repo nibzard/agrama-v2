@@ -1,6 +1,16 @@
 // WebSocket hook for real-time MCP server communication
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { WebSocketEvent, AgentConnection, AgentActivity, FileChange, HumanCommand } from '../types';
+import type { 
+  WebSocketEvent, 
+  AgentConnection, 
+  AgentActivity, 
+  FileChange, 
+  HumanCommand,
+  SemanticSearchResult,
+  DependencyAnalysis,
+  CollaborationUpdate,
+  PerformanceUpdate
+} from '../types';
 
 interface UseWebSocketReturn {
   // Connection state
@@ -14,8 +24,16 @@ interface UseWebSocketReturn {
   fileChanges: FileChange[];
   commands: HumanCommand[];
   
+  // Algorithm data streams
+  semanticSearchResults: SemanticSearchResult[];
+  dependencyAnalyses: DependencyAnalysis[];
+  collaborationUpdates: CollaborationUpdate[];
+  performanceUpdates: PerformanceUpdate[];
+  
   // Actions
   sendCommand: (command: string, targetAgents?: string[]) => void;
+  sendSemanticSearch: (query: string) => void;
+  requestDependencyAnalysis: (targetNode: string) => void;
   reconnect: () => void;
   
   // Metrics
@@ -28,6 +46,10 @@ const RECONNECT_INTERVAL = 3000;
 const MAX_ACTIVITIES = 1000;
 const MAX_FILE_CHANGES = 500;
 const MAX_COMMANDS = 100;
+const MAX_SEARCH_RESULTS = 100;
+const MAX_DEPENDENCY_ANALYSES = 50;
+const MAX_COLLABORATION_UPDATES = 200;
+const MAX_PERFORMANCE_UPDATES = 100;
 
 export const useWebSocket = (): UseWebSocketReturn => {
   // Connection state
@@ -40,6 +62,13 @@ export const useWebSocket = (): UseWebSocketReturn => {
   const [activities, setActivities] = useState<AgentActivity[]>([]);
   const [fileChanges, setFileChanges] = useState<FileChange[]>([]);
   const [commands, setCommands] = useState<HumanCommand[]>([]);
+  
+  // Algorithm data state
+  const [semanticSearchResults, setSemanticSearchResults] = useState<SemanticSearchResult[]>([]);
+  const [dependencyAnalyses, setDependencyAnalyses] = useState<DependencyAnalysis[]>([]);
+  const [collaborationUpdates, setCollaborationUpdates] = useState<CollaborationUpdate[]>([]);
+  const [performanceUpdates, setPerformanceUpdates] = useState<PerformanceUpdate[]>([]);
+  
   const [totalEvents, setTotalEvents] = useState(0);
   const [lastEventTime, setLastEventTime] = useState<Date | null>(null);
   
@@ -183,6 +212,39 @@ export const useWebSocket = (): UseWebSocketReturn => {
           cmd.id === commandResponse.id ? { ...cmd, ...commandResponse } : cmd
         ));
         break;
+
+      case 'semantic_search_result':
+        const searchResult = event.data as SemanticSearchResult;
+        setSemanticSearchResults(prev => {
+          const updated = [searchResult, ...prev];
+          return updated.slice(0, MAX_SEARCH_RESULTS);
+        });
+        break;
+
+      case 'dependency_analysis':
+        const dependencyAnalysis = event.data as DependencyAnalysis;
+        setDependencyAnalyses(prev => {
+          const updated = [dependencyAnalysis, ...prev];
+          return updated.slice(0, MAX_DEPENDENCY_ANALYSES);
+        });
+        break;
+
+      case 'collaboration_update':
+        const collaborationUpdate = event.data as CollaborationUpdate;
+        setCollaborationUpdates(prev => {
+          const updated = [collaborationUpdate, ...prev];
+          return updated.slice(0, MAX_COLLABORATION_UPDATES);
+        });
+        break;
+
+      case 'performance_metrics':
+        const performanceUpdate = event.data as PerformanceUpdate;
+        performanceUpdate.timestamp = event.timestamp;
+        setPerformanceUpdates(prev => {
+          const updated = [performanceUpdate, ...prev];
+          return updated.slice(0, MAX_PERFORMANCE_UPDATES);
+        });
+        break;
     }
   }, []);
   
@@ -218,6 +280,42 @@ export const useWebSocket = (): UseWebSocketReturn => {
       setError('Failed to send command');
     }
   }, [connected]);
+
+  // Send semantic search request
+  const sendSemanticSearch = useCallback((query: string) => {
+    if (!connected || !ws.current) {
+      setError('Not connected to server');
+      return;
+    }
+
+    try {
+      ws.current.send(JSON.stringify({
+        type: 'semantic_search_request',
+        data: { query, timestamp: new Date() }
+      }));
+    } catch (error) {
+      console.error('[Observatory] Failed to send semantic search:', error);
+      setError('Failed to send semantic search');
+    }
+  }, [connected]);
+
+  // Request dependency analysis
+  const requestDependencyAnalysis = useCallback((targetNode: string) => {
+    if (!connected || !ws.current) {
+      setError('Not connected to server');
+      return;
+    }
+
+    try {
+      ws.current.send(JSON.stringify({
+        type: 'dependency_analysis_request',
+        data: { targetNode, timestamp: new Date() }
+      }));
+    } catch (error) {
+      console.error('[Observatory] Failed to request dependency analysis:', error);
+      setError('Failed to request dependency analysis');
+    }
+  }, [connected]);
   
   // Manual reconnection
   const reconnect = useCallback(() => {
@@ -249,7 +347,13 @@ export const useWebSocket = (): UseWebSocketReturn => {
     activities,
     fileChanges,
     commands,
+    semanticSearchResults,
+    dependencyAnalyses,
+    collaborationUpdates,
+    performanceUpdates,
     sendCommand,
+    sendSemanticSearch,
+    requestDependencyAnalysis,
     reconnect,
     totalEvents,
     lastEventTime
