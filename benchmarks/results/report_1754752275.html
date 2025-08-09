@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agrama Performance Benchmark Report</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 40px; background: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; }
+        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .metric-value { font-size: 2em; font-weight: bold; color: #667eea; }
+        .metric-label { color: #666; text-transform: uppercase; font-size: 0.9em; letter-spacing: 1px; }
+        .benchmark-results { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; }
+        .status-pass { color: #28a745; font-weight: bold; }
+        .status-fail { color: #dc3545; font-weight: bold; }
+        .category-hnsw { border-left: 4px solid #ff6b6b; }
+        .category-fre { border-left: 4px solid #4ecdc4; }
+        .category-database { border-left: 4px solid #45b7d1; }
+        .category-mcp { border-left: 4px solid #96ceb4; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Agrama Performance Benchmark Report</h1>
+        <p>Generated: 1754752275</p>
+        <p>Total Benchmarks: 3 | Duration: 4.1e-1s</p>
+    </div>
+    <div class="summary">
+        <div class="card">
+            <div class="metric-value">3</div>
+            <div class="metric-label">Benchmarks Passed</div>
+        </div>
+        <div class="card">
+            <div class="metric-value">9.6e0×</div>
+            <div class="metric-label">Avg Speedup</div>
+        </div>
+        <div class="card">
+            <div class="metric-value">2.48e-1ms</div>
+            <div class="metric-label">Best P50 Latency</div>
+        </div>
+        <div class="card">
+            <div class="metric-value">4e3</div>
+            <div class="metric-label">Peak Throughput QPS</div>
+        </div>
+    </div>
+    <div class="benchmark-results">
+        <h2>📊 Detailed Results</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Benchmark</th>
+                    <th>Category</th>
+                    <th>P50 Latency</th>
+                    <th>P99 Latency</th>
+                    <th>Throughput</th>
+                    <th>Speedup</th>
+                    <th>Memory</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="category-mcp">
+                    <td><strong>MCP Tool Performance</strong></td>
+                    <td>mcp</td>
+                    <td>2.56e-1ms</td>
+                    <td>3.50e-1ms</td>
+                    <td>4e3 QPS</td>
+                    <td>1.0e1×</td>
+                    <td>5e1MB</td>
+                    <td class="status-pass">✅ PASS</td>
+                </tr>
+                <tr class="category-mcp">
+                    <td><strong>Concurrent Agent Load</strong></td>
+                    <td>mcp</td>
+                    <td>2.48e-1ms</td>
+                    <td>2.91e-1ms</td>
+                    <td>1e3 QPS</td>
+                    <td>5.0e0×</td>
+                    <td>8e1MB</td>
+                    <td class="status-pass">✅ PASS</td>
+                </tr>
+                <tr class="category-mcp">
+                    <td><strong>MCP Server Scaling</strong></td>
+                    <td>mcp</td>
+                    <td>2.54e-1ms</td>
+                    <td>2.78e-1ms</td>
+                    <td>1e3 QPS</td>
+                    <td>1.4e1×</td>
+                    <td>1e2MB</td>
+                    <td class="status-pass">✅ PASS</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

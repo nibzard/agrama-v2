@@ -182,9 +182,18 @@ const MockMCPServer = struct {
     pub fn simulateConcurrentLoad(self: *MockMCPServer, concurrent_agents: u32, requests_per_agent: u32) ![]f64 {
         var all_latencies = ArrayList(f64).init(self.allocator);
 
-        // Create test agents
+        // Create test agents - track IDs for cleanup
+        var agent_ids = ArrayList([]const u8).init(self.allocator);
+        defer {
+            for (agent_ids.items) |agent_id| {
+                self.allocator.free(agent_id);
+            }
+            agent_ids.deinit();
+        }
+
         for (0..concurrent_agents) |i| {
             const agent_id = try std.fmt.allocPrint(self.allocator, "agent_{}", .{i});
+            try agent_ids.append(agent_id);
             const agent = Agent{
                 .id = agent_id,
                 .name = agent_id,
