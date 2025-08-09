@@ -21,7 +21,7 @@ const BenchmarkConfig = benchmark_runner.BenchmarkConfig;
 const BenchmarkInterface = benchmark_runner.BenchmarkInterface;
 const BenchmarkCategory = benchmark_runner.BenchmarkCategory;
 const percentile = benchmark_runner.percentile;
-const mean = benchmark_runner.mean;
+const mean = benchmark_runner.benchmark_mean;
 const PERFORMANCE_TARGETS = benchmark_runner.PERFORMANCE_TARGETS;
 
 const print = std.debug.print;
@@ -342,13 +342,13 @@ fn benchmarkMCPTools(allocator: Allocator, config: BenchmarkConfig) !BenchmarkRe
     };
     try server.connectAgent(test_agent);
 
-    print("    ⚡ Running tool benchmarks...\n");
+    print("    ⚡ Running tool benchmarks...\n", .{});
 
     const tool_names = [_][]const u8{ "read_code", "write_code", "analyze_dependencies", "get_context" };
     var all_latencies = ArrayList(f64).init(allocator);
     defer all_latencies.deinit();
 
-    var rng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
+    var rng = std.Random.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
 
     // Warmup
     for (0..config.warmup_iterations) |_| {
@@ -408,7 +408,7 @@ fn benchmarkMCPTools(allocator: Allocator, config: BenchmarkConfig) !BenchmarkRe
 }
 
 /// Concurrent Agent Load Benchmark
-fn benchmarkConcurrentAgents(allocator: Allocator, config: BenchmarkConfig) !BenchmarkResult {
+fn benchmarkConcurrentAgents(allocator: Allocator, _: BenchmarkConfig) !BenchmarkResult {
     const max_agents = @min(PERFORMANCE_TARGETS.CONCURRENT_AGENTS, 50); // Limit for testing
     const requests_per_agent = 10;
 
@@ -424,7 +424,7 @@ fn benchmarkConcurrentAgents(allocator: Allocator, config: BenchmarkConfig) !Ben
         .execution_fn = readCodeTool,
     });
 
-    print("    🚀 Simulating concurrent load...\n");
+    print("    🚀 Simulating concurrent load...\n", .{});
 
     var timer = try Timer.start();
     const latencies = try server.simulateConcurrentLoad(max_agents, requests_per_agent);
@@ -471,7 +471,7 @@ fn benchmarkMCPScaling(allocator: Allocator, config: BenchmarkConfig) !Benchmark
     const agent_counts = [_]u32{ 5, 10, 20, 30 };
     const requests_per_test = 50;
 
-    print("  📊 MCP server scaling analysis...\n");
+    print("  📊 MCP server scaling analysis...\n", .{});
 
     var all_latencies = ArrayList(f64).init(allocator);
     defer all_latencies.deinit();

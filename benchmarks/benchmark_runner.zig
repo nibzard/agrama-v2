@@ -12,10 +12,10 @@
 //!   zig build bench -Dcompare=true    - Compare against baseline
 
 const std = @import("std");
-const Timer = std.time.Timer;
-const Allocator = std.mem.Allocator;
-const ArrayList = std.ArrayList;
-const HashMap = std.HashMap;
+pub const Timer = std.time.Timer;
+pub const Allocator = std.mem.Allocator;
+pub const ArrayList = std.ArrayList;
+pub const HashMap = std.HashMap;
 const print = std.debug.print;
 
 /// Global performance targets that all benchmarks must validate
@@ -211,7 +211,7 @@ pub const BenchmarkRunner = struct {
         defer benchmarks.deinit();
 
         print("\n🚀 Running {} benchmarks\n", .{@tagName(category)});
-        print("=" ** 60 ++ "\n");
+        print("=" ** 60 ++ "\n", .{});
 
         for (benchmarks.items) |benchmark| {
             try self.runSingle(benchmark);
@@ -222,8 +222,8 @@ pub const BenchmarkRunner = struct {
 
     /// Run all benchmarks across all categories
     pub fn runAll(self: *BenchmarkRunner) !void {
-        print("\n🔥 Running comprehensive Agrama benchmark suite\n");
-        print("=" ** 80 ++ "\n");
+        print("\n🔥 Running comprehensive Agrama benchmark suite\n", .{});
+        print("=" ** 80 ++ "\n", .{});
 
         inline for (std.meta.fields(BenchmarkCategory)) |field| {
             const category = @field(BenchmarkCategory, field.name);
@@ -324,13 +324,13 @@ pub const BenchmarkRunner = struct {
         _ = self;
         _ = benchmark_name;
         // TODO: Implement profiling integration (perf, flamegraph generation)
-        print("🔍 Profiling data saved to benchmarks/profiles/\n");
+        print("🔍 Profiling data saved to benchmarks/profiles/\n", .{});
     }
 
     /// Generate report for a specific benchmark category
     fn generateCategoryReport(self: *BenchmarkRunner, category: BenchmarkCategory) !void {
         print("\n📈 Category Report: {s}\n", .{@tagName(category)});
-        print("=" ** 50 ++ "\n");
+        print("=" ** 50 ++ "\n", .{});
 
         var category_results = ArrayList(BenchmarkResult).init(self.allocator);
         defer category_results.deinit();
@@ -367,7 +367,7 @@ pub const BenchmarkRunner = struct {
 
         const pass_rate = @as(f64, @floatFromInt(total_passed)) / @as(f64, @floatFromInt(category_results.items.len));
         if (pass_rate >= 1.0) {
-            print("🟢 Category Status: ALL BENCHMARKS PASSED\n");
+            print("🟢 Category Status: ALL BENCHMARKS PASSED\n", .{});
         } else if (pass_rate >= 0.8) {
             print("🟡 Category Status: MOSTLY PASSING ({:.0}% pass rate)\n", .{pass_rate * 100});
         } else {
@@ -377,12 +377,12 @@ pub const BenchmarkRunner = struct {
 
     /// Generate comprehensive report across all benchmarks
     fn generateComprehensiveReport(self: *BenchmarkRunner) !void {
-        print("\n" ++ "=" ** 80 ++ "\n");
-        print("🏆 AGRAMA PERFORMANCE BENCHMARK REPORT\n");
-        print("=" ** 80 ++ "\n");
+        print("\n" ++ "=" ** 80 ++ "\n", .{});
+        print("🏆 AGRAMA PERFORMANCE BENCHMARK REPORT\n", .{});
+        print("=" ** 80 ++ "\n", .{});
 
         if (self.results.items.len == 0) {
-            print("No benchmarks were executed.\n");
+            print("No benchmarks were executed.\n", .{});
             return;
         }
 
@@ -398,7 +398,7 @@ pub const BenchmarkRunner = struct {
             }
         }
 
-        print("📊 Overall Results:\n");
+        print("📊 Overall Results:\n", .{});
         print("   Total Benchmarks: {}\n", .{self.results.items.len});
         print("   Passed: {} ✅\n", .{total_passed});
         print("   Failed: {} ❌\n", .{total_failed});
@@ -407,7 +407,7 @@ pub const BenchmarkRunner = struct {
         print("   Pass Rate: {:.1}%\n", .{pass_rate * 100});
 
         // Performance claims validation
-        print("\n🚀 Performance Claims Validation:\n");
+        print("\n🚀 Performance Claims Validation:\n", .{});
         print("   HNSW 100-1000× improvement: {s}\n", .{if (self.validateHNSWClaims()) "✅ VALIDATED" else "❌ NOT MET"});
         print("   FRE 5-50× improvement: {s}\n", .{if (self.validateFREClaims()) "✅ VALIDATED" else "❌ NOT MET"});
         print("   Sub-10ms hybrid queries: {s}\n", .{if (self.validateDatabaseClaims()) "✅ VALIDATED" else "❌ NOT MET"});
@@ -422,21 +422,21 @@ pub const BenchmarkRunner = struct {
         }
         avg_cpu /= @as(f64, @floatFromInt(self.results.items.len));
 
-        print("\n💾 Resource Utilization:\n");
+        print("\n💾 Resource Utilization:\n", .{});
         print("   Peak Memory Usage: {:.1} MB\n", .{max_memory});
         print("   Average CPU Usage: {:.1}%\n", .{avg_cpu});
 
         // Final verdict
-        print("\n🏁 FINAL VERDICT:\n");
+        print("\n🏁 FINAL VERDICT:\n", .{});
         if (pass_rate >= 1.0) {
-            print("🟢 ALL PERFORMANCE TARGETS MET - AGRAMA IS READY FOR PRODUCTION!\n");
+            print("🟢 ALL PERFORMANCE TARGETS MET - AGRAMA IS READY FOR PRODUCTION!\n", .{});
         } else if (pass_rate >= 0.8) {
-            print("🟡 MOST TARGETS MET - MINOR OPTIMIZATIONS NEEDED\n");
+            print("🟡 MOST TARGETS MET - MINOR OPTIMIZATIONS NEEDED\n", .{});
         } else {
-            print("🔴 PERFORMANCE TARGETS NOT MET - SIGNIFICANT WORK REQUIRED\n");
+            print("🔴 PERFORMANCE TARGETS NOT MET - SIGNIFICANT WORK REQUIRED\n", .{});
         }
 
-        print("=" ** 80 ++ "\n");
+        print("=" ** 80 ++ "\n", .{});
     }
 
     /// Validate HNSW performance claims
@@ -538,7 +538,7 @@ pub const BenchmarkUtils = struct {
     /// Generate realistic test data with configurable distribution
     pub fn generateRealisticData(allocator: Allocator, size: usize, distribution: DataDistribution) ![]f64 {
         var data = try allocator.alloc(f64, size);
-        var rng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
+        var rng = std.Random.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
 
         switch (distribution) {
             .uniform => {

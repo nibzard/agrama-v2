@@ -106,12 +106,12 @@ const RegressionDetector = struct {
     }
 
     /// Save current results as new baseline
-    pub fn saveBaseline(self: *RegressionDetector, results: []BenchmarkResult, file_path: []const u8) !void {
+    pub fn saveBaseline(_: *RegressionDetector, results: []BenchmarkResult, file_path: []const u8) !void {
         const file = try std.fs.cwd().createFile(file_path, .{});
         defer file.close();
 
         // TODO: Serialize to JSON (simplified for now)
-        try file.writer().print("# Agrama Performance Baseline\n");
+        try file.writer().print("# Agrama Performance Baseline\n", .{});
         try file.writer().print("# Generated: {}\n", .{std.time.timestamp()});
         try file.writer().print("# Benchmarks: {}\n", .{results.len});
 
@@ -419,23 +419,23 @@ const BenchmarkSuite = struct {
 
     /// Run the complete benchmark suite
     pub fn runSuite(self: *BenchmarkSuite) !void {
-        print("\n");
-        print("🔥" ** 40 ++ "\n");
-        print("🚀 AGRAMA COMPREHENSIVE BENCHMARK SUITE\n");
-        print("🔥" ** 40 ++ "\n");
-        print("\n");
+        print("\n", .{});
+        print("🔥" ** 40 ++ "\n", .{});
+        print("🚀 AGRAMA COMPREHENSIVE BENCHMARK SUITE\n", .{});
+        print("🔥" ** 40 ++ "\n", .{});
+        print("\n", .{});
 
         if (self.config.quick_mode) {
-            print("⚡ Running in QUICK MODE (reduced dataset sizes)\n");
+            print("⚡ Running in QUICK MODE (reduced dataset sizes)\n", .{});
         } else {
-            print("🎯 Running in FULL VALIDATION MODE\n");
+            print("🎯 Running in FULL VALIDATION MODE\n", .{});
         }
 
-        print("📊 Configuration:\n");
+        print("📊 Configuration:\n", .{});
         print("   Dataset Size: {}\n", .{self.config.getDatasetSize()});
         print("   Iterations: {}\n", .{self.config.getIterations()});
         print("   Max Duration: {} minutes\n", .{self.config.max_duration_minutes});
-        print("\n");
+        print("\n", .{});
 
         // Load baseline if requested
         if (self.config.compare_baseline) {
@@ -475,27 +475,27 @@ const BenchmarkSuite = struct {
 
     /// Register all available benchmarks
     fn registerAllBenchmarks(self: *BenchmarkSuite) !void {
-        print("📋 Registering benchmark suites...\n");
+        print("📋 Registering benchmark suites...\n", .{});
 
         try hnsw_benchmarks.registerHNSWBenchmarks(&self.runner.registry);
-        print("   ✅ HNSW benchmarks registered\n");
+        print("   ✅ HNSW benchmarks registered\n", .{});
 
         try fre_benchmarks.registerFREBenchmarks(&self.runner.registry);
-        print("   ✅ FRE benchmarks registered\n");
+        print("   ✅ FRE benchmarks registered\n", .{});
 
         try database_benchmarks.registerDatabaseBenchmarks(&self.runner.registry);
-        print("   ✅ Database benchmarks registered\n");
+        print("   ✅ Database benchmarks registered\n", .{});
 
         try mcp_benchmarks.registerMCPBenchmarks(&self.runner.registry);
-        print("   ✅ MCP benchmarks registered\n");
+        print("   ✅ MCP benchmarks registered\n", .{});
 
         print("📊 Total benchmarks registered: {}\n\n", .{self.runner.registry.benchmarks.items.len});
     }
 
     /// Validate all performance claims
     fn validatePerformanceClaims(self: *BenchmarkSuite) !void {
-        print("\n🎯 PERFORMANCE CLAIMS VALIDATION\n");
-        print("=" ** 50 ++ "\n");
+        print("\n🎯 PERFORMANCE CLAIMS VALIDATION\n", .{});
+        print("=" ** 50 ++ "\n", .{});
 
         var claims_met: u32 = 0;
         const total_claims: u32 = 4;
@@ -525,7 +525,7 @@ const BenchmarkSuite = struct {
 
     /// Generate comprehensive reports
     fn generateReports(self: *BenchmarkSuite) !void {
-        print("\n📄 Generating reports...\n");
+        print("\n📄 Generating reports...\n", .{});
 
         // Create results directory
         std.fs.cwd().makeDir("benchmarks/results") catch {};
@@ -552,12 +552,12 @@ const BenchmarkSuite = struct {
             defer self.allocator.free(regressions);
 
             if (regressions.len > 0) {
-                print("\n⚠️  PERFORMANCE REGRESSIONS DETECTED:\n");
+                print("\n⚠️  PERFORMANCE REGRESSIONS DETECTED:\n", .{});
                 for (regressions) |regression| {
                     print("   🔴 {s} ({s}): {:.1}% degradation ({:.3} → {:.3})\n", .{ regression.benchmark_name, regression.metric, regression.degradation_percent, regression.baseline_value, regression.current_value });
                 }
             } else {
-                print("✅ No performance regressions detected\n");
+                print("✅ No performance regressions detected\n", .{});
             }
         }
     }
@@ -565,7 +565,7 @@ const BenchmarkSuite = struct {
     /// Print final summary
     fn printFinalSummary(self: *BenchmarkSuite) !void {
         print("\n" ++ "🏁" ** 40 ++ "\n");
-        print("FINAL BENCHMARK SUMMARY\n");
+        print("FINAL BENCHMARK SUMMARY\n", .{});
         print("🏁" ** 40 ++ "\n");
 
         var total_passed: usize = 0;
@@ -577,32 +577,32 @@ const BenchmarkSuite = struct {
 
         const pass_rate = @as(f64, @floatFromInt(total_passed)) / @as(f64, @floatFromInt(self.runner.results.items.len));
 
-        print("📊 Results:\n");
+        print("📊 Results:\n", .{});
         print("   Total Benchmarks: {}\n", .{self.runner.results.items.len});
         print("   Passed: {} ✅\n", .{total_passed});
         print("   Failed: {} ❌\n", .{total_failed});
         print("   Pass Rate: {:.1}%\n", .{pass_rate * 100});
 
         // Overall verdict
-        print("\n🏆 OVERALL VERDICT:\n");
+        print("\n🏆 OVERALL VERDICT:\n", .{});
         if (pass_rate >= 1.0) {
-            print("🟢 EXCELLENT - All benchmarks passed! Agrama is ready for production.\n");
+            print("🟢 EXCELLENT - All benchmarks passed! Agrama is ready for production.\n", .{});
         } else if (pass_rate >= 0.9) {
-            print("🟡 GOOD - Most benchmarks passed. Minor optimizations recommended.\n");
+            print("🟡 GOOD - Most benchmarks passed. Minor optimizations recommended.\n", .{});
         } else if (pass_rate >= 0.7) {
-            print("🟠 NEEDS WORK - Several benchmarks failed. Optimization required.\n");
+            print("🟠 NEEDS WORK - Several benchmarks failed. Optimization required.\n", .{});
         } else {
-            print("🔴 CRITICAL - Many benchmarks failed. Major performance work needed.\n");
+            print("🔴 CRITICAL - Many benchmarks failed. Major performance work needed.\n", .{});
         }
 
-        print("\n🔗 Reports generated in: benchmarks/results/\n");
-        print("🚀 Run with --help for more options\n");
-        print("\n");
+        print("\n🔗 Reports generated in: benchmarks/results/\n", .{});
+        print("🚀 Run with --help for more options\n", .{});
+        print("\n", .{});
     }
 };
 
 /// Command-line argument parsing
-fn parseArgs(allocator: Allocator, args: [][]const u8) !SuiteConfig {
+fn parseArgs(allocator: Allocator, args: [][:0]u8) !SuiteConfig {
     var config = SuiteConfig{};
 
     var i: usize = 1; // Skip program name
@@ -658,7 +658,7 @@ fn printUsage() void {
         \\  zig run benchmarks/benchmark_suite.zig -- --quick --category hnsw
         \\  zig run benchmarks/benchmark_suite.zig -- --compare baseline.json
         \\
-    );
+    , .{});
 }
 
 /// Main entry point

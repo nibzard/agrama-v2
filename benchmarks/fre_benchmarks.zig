@@ -21,7 +21,7 @@ const BenchmarkConfig = benchmark_runner.BenchmarkConfig;
 const BenchmarkInterface = benchmark_runner.BenchmarkInterface;
 const BenchmarkCategory = benchmark_runner.BenchmarkCategory;
 const percentile = benchmark_runner.percentile;
-const mean = benchmark_runner.mean;
+const mean = benchmark_runner.benchmark_mean;
 const PERFORMANCE_TARGETS = benchmark_runner.PERFORMANCE_TARGETS;
 
 const print = std.debug.print;
@@ -188,7 +188,12 @@ const MockFRE = struct {
 
     /// Find shortest paths using FRE approach
     pub fn shortestPath(self: *MockFRE, start: u32, target: u32) !?[]u32 {
-        return self.traverse(start, target);
+        const path = try self.traverse(start, target);
+        if (path.len > 0) {
+            return path;
+        } else {
+            return null;
+        }
     }
 
     /// Multi-target traversal (common in dependency analysis)
@@ -315,7 +320,7 @@ const GraphGenerator = struct {
 
     pub fn generateGraph(allocator: Allocator, nodes: u32, edges: u32, topology: GraphTopology) !Graph {
         var graph = Graph.init(allocator, nodes);
-        var rng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
+        var rng = std.Random.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
 
         switch (topology) {
             .random => {
@@ -335,7 +340,7 @@ const GraphGenerator = struct {
                 var degree_sum: u32 = 0;
                 var node_degrees = try allocator.alloc(u32, nodes);
                 defer allocator.free(node_degrees);
-                std.mem.set(u32, node_degrees, 0);
+                @memset(node_degrees, 0);
 
                 // Start with a small complete graph
                 const initial_nodes: u32 = @min(3, nodes);
@@ -442,7 +447,7 @@ fn benchmarkFREVsDijkstra(allocator: Allocator, config: BenchmarkConfig) !Benchm
     defer dijkstra.deinit();
 
     // Generate test queries
-    var rng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
+    var rng = std.Random.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
     var queries = try allocator.alloc(struct { start: u32, target: u32 }, query_count);
     defer allocator.free(queries);
 
@@ -451,7 +456,7 @@ fn benchmarkFREVsDijkstra(allocator: Allocator, config: BenchmarkConfig) !Benchm
         query.target = rng.random().intRangeAtMost(u32, 0, nodes - 1);
     }
 
-    print("  ⚡ Running FRE queries...\n");
+    print("  ⚡ Running FRE queries...\n", .{});
 
     // Benchmark FRE
     var fre_latencies = ArrayList(f64).init(allocator);
@@ -475,7 +480,7 @@ fn benchmarkFREVsDijkstra(allocator: Allocator, config: BenchmarkConfig) !Benchm
         }
     }
 
-    print("  🐌 Running Dijkstra baseline...\n");
+    print("  🐌 Running Dijkstra baseline...\n", .{});
 
     // Benchmark Dijkstra
     var dijkstra_latencies = ArrayList(f64).init(allocator);
@@ -531,7 +536,7 @@ fn benchmarkFREVsDijkstra(allocator: Allocator, config: BenchmarkConfig) !Benchm
 fn benchmarkFREScaling(allocator: Allocator, config: BenchmarkConfig) !BenchmarkResult {
     const sizes = [_]u32{ 1_000, 2_500, 5_000, 7_500 };
 
-    print("  📊 FRE scaling analysis across different graph sizes...\n");
+    print("  📊 FRE scaling analysis across different graph sizes...\n", .{});
 
     var all_latencies = ArrayList(f64).init(allocator);
     defer all_latencies.deinit();
@@ -556,7 +561,7 @@ fn benchmarkFREScaling(allocator: Allocator, config: BenchmarkConfig) !Benchmark
         var size_latencies = ArrayList(f64).init(allocator);
         defer size_latencies.deinit();
 
-        var rng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())) + nodes);
+        var rng = std.Random.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())) + nodes);
         var timer = try Timer.start();
 
         for (0..20) |_| {
@@ -624,7 +629,7 @@ fn benchmarkFREMultiTarget(allocator: Allocator, config: BenchmarkConfig) !Bench
     const edges = nodes * 4; // Denser graph for dependency simulation
     const queries = @min(config.iterations, 50);
 
-    print("  🎯 FRE multi-target dependency analysis simulation...\n");
+    print("  🎯 FRE multi-target dependency analysis simulation...\n", .{});
 
     var graph = try GraphGenerator.generateGraph(allocator, nodes, edges, .dependency);
     defer graph.deinit();
@@ -635,9 +640,9 @@ fn benchmarkFREMultiTarget(allocator: Allocator, config: BenchmarkConfig) !Bench
     var latencies = ArrayList(f64).init(allocator);
     defer latencies.deinit();
 
-    var rng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
+    var rng = std.Random.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
 
-    print("    🔍 Running multi-target queries...\n");
+    print("    🔍 Running multi-target queries...\n", .{});
 
     var timer = try Timer.start();
     for (0..queries) |_| {
@@ -645,7 +650,7 @@ fn benchmarkFREMultiTarget(allocator: Allocator, config: BenchmarkConfig) !Bench
 
         // Generate 5-10 targets per query (simulating dependency analysis)
         const target_count = rng.random().intRangeAtMost(usize, 5, 10);
-        var targets = try allocator.alloc(u32, target_count);
+        const targets = try allocator.alloc(u32, target_count);
         defer allocator.free(targets);
 
         for (targets) |*target| {

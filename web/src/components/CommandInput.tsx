@@ -16,10 +16,26 @@ interface CommandSuggestion {
 }
 
 const COMMAND_TEMPLATES: CommandSuggestion[] = [
+  // Semantic Search Commands (HNSW)
+  { text: "Find similar to error handling patterns", description: "HNSW semantic search", category: "Semantic Search" },
+  { text: "Search for database connection code", description: "Vector similarity search", category: "Semantic Search" },
+  { text: "Find authentication related functions", description: "Semantic code discovery", category: "Semantic Search" },
+  { text: "Locate similar API endpoint patterns", description: "Pattern matching via HNSW", category: "Semantic Search" },
+  
+  // Dependency Analysis Commands (FRE)
+  { text: "Show impact of changing the User model", description: "FRE dependency analysis", category: "Dependencies" },
+  { text: "Analyze dependencies of the main database module", description: "Graph traversal analysis", category: "Dependencies" },
+  { text: "Find all code affected by API changes", description: "Impact analysis via FRE", category: "Dependencies" },
+  { text: "Show dependency graph for authentication system", description: "Visualize code dependencies", category: "Dependencies" },
+  
+  // Multi-Agent Collaboration Commands (CRDT)
+  { text: "Have agents collaborate on refactoring this module", description: "CRDT multi-agent editing", category: "Collaboration" },
+  { text: "Coordinate agents to implement feature across multiple files", description: "Distributed collaboration", category: "Collaboration" },
+  { text: "Show real-time collaboration conflicts and resolutions", description: "CRDT conflict visualization", category: "Collaboration" },
+  
   // Code Analysis Commands
   { text: "Analyze the main function and explain what it does", description: "Get code analysis", category: "Analysis" },
   { text: "Find all TODO comments in the codebase", description: "Search for tasks", category: "Search" },
-  { text: "Show dependencies for the database module", description: "Dependency analysis", category: "Analysis" },
   { text: "Explain the error handling pattern used here", description: "Pattern explanation", category: "Analysis" },
   
   // Code Generation Commands  
@@ -34,10 +50,10 @@ const COMMAND_TEMPLATES: CommandSuggestion[] = [
   { text: "Find potential performance bottlenecks", description: "Performance analysis", category: "Project" },
   { text: "Check for code duplication", description: "Quality check", category: "Project" },
   
-  // Collaboration Commands
-  { text: "Summarize what all agents have accomplished today", description: "Activity summary", category: "Collaboration" },
-  { text: "Show me the decision history for this feature", description: "Decision tracking", category: "Collaboration" },
-  { text: "Review the last 10 changes for potential issues", description: "Change review", category: "Collaboration" },
+  // Performance Commands
+  { text: "Show HNSW search performance metrics", description: "Algorithm performance", category: "Performance" },
+  { text: "Analyze FRE graph traversal efficiency", description: "Traversal optimization", category: "Performance" },
+  { text: "Monitor CRDT operation latency", description: "Collaboration performance", category: "Performance" },
 ];
 
 export const CommandInput: React.FC<CommandInputProps> = ({

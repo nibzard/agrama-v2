@@ -21,7 +21,7 @@ const BenchmarkConfig = benchmark_runner.BenchmarkConfig;
 const BenchmarkInterface = benchmark_runner.BenchmarkInterface;
 const BenchmarkCategory = benchmark_runner.BenchmarkCategory;
 const percentile = benchmark_runner.percentile;
-const mean = benchmark_runner.mean;
+const mean = benchmark_runner.benchmark_mean;
 const PERFORMANCE_TARGETS = benchmark_runner.PERFORMANCE_TARGETS;
 
 const print = std.debug.print;
@@ -32,7 +32,7 @@ const HNSWConfig = struct {
     max_connections: u32 = 16, // M parameter - connections per node
     max_connections_0: u32 = 32, // M0 parameter - connections at layer 0
     ef_construction: u32 = 200, // Exploration factor during construction
-    ml: f32 = 1.0 / std.math.ln2_f32, // Level generation factor
+    ml: f32 = 1.0 / @log(2.0), // Level generation factor
     dimension: u32 = 1536, // Vector dimension (OpenAI embedding size)
 };
 
@@ -85,7 +85,7 @@ const MockHNSW = struct {
     pub fn search(self: *MockHNSW, query: []f32, k: u32, ef: u32) ![]u32 {
         _ = ef; // Search exploration factor (not used in mock)
 
-        var results = try self.allocator.alloc(u32, @min(k, @as(u32, @intCast(self.vectors.len))));
+        const results = try self.allocator.alloc(u32, @min(k, @as(u32, @intCast(self.vectors.len))));
 
         // Simulate HNSW search complexity: O(log n)
         const n = @as(f64, @floatFromInt(self.vectors.len));
@@ -169,7 +169,7 @@ const LinearScan = struct {
 
         // Return top-k results
         const result_count = @min(k, @as(u32, @intCast(similarities.len)));
-        var results = try self.allocator.alloc(u32, result_count);
+        const results = try self.allocator.alloc(u32, result_count);
         for (results, 0..) |*result, i| {
             result.* = similarities[i].index;
         }
@@ -195,8 +195,8 @@ const LinearScan = struct {
 
 /// Generate realistic vector embeddings for testing
 fn generateVectorDataset(allocator: Allocator, count: usize, dimension: u32, distribution: VectorDistribution) ![][]f32 {
-    var vectors = try allocator.alloc([]f32, count);
-    var rng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
+    const vectors = try allocator.alloc([]f32, count);
+    var rng = std.Random.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
 
     for (vectors, 0..) |*vector, i| {
         vector.* = try allocator.alloc(f32, dimension);
@@ -206,11 +206,11 @@ fn generateVectorDataset(allocator: Allocator, count: usize, dimension: u32, dis
                 // Generate vectors with normal distribution (more realistic for embeddings)
                 for (vector.*, 0..) |*component, j| {
                     if (j % 2 == 0 and j + 1 < dimension) {
-                        const u1 = rng.random().float(f32);
-                        const u2 = rng.random().float(f32);
+                        const uniform1 = rng.random().float(f32);
+                        const uniform2 = rng.random().float(f32);
 
-                        const z0 = @sqrt(-2.0 * std.math.log(u1)) * @cos(2.0 * std.math.pi * u2);
-                        const z1 = @sqrt(-2.0 * std.math.log(u1)) * @sin(2.0 * std.math.pi * u2);
+                        const z0 = @sqrt(-2.0 * @log(uniform1)) * @cos(2.0 * std.math.pi * uniform2);
+                        const z1 = @sqrt(-2.0 * @log(uniform1)) * @sin(2.0 * std.math.pi * uniform2);
 
                         component.* = z0;
                         vector.*[j + 1] = z1;
@@ -333,7 +333,7 @@ fn benchmarkHNSWQuery(allocator: Allocator, config: BenchmarkConfig) !BenchmarkR
     defer linear.deinit();
     try linear.build(vectors);
 
-    print("  🚀 Running HNSW queries...\n");
+    print("  🚀 Running HNSW queries...\n", .{});
 
     // Benchmark HNSW queries
     var hnsw_latencies = ArrayList(f64).init(allocator);
@@ -356,7 +356,7 @@ fn benchmarkHNSWQuery(allocator: Allocator, config: BenchmarkConfig) !BenchmarkR
         allocator.free(results);
     }
 
-    print("  🐌 Running linear scan baseline...\n");
+    print("  🐌 Running linear scan baseline...\n", .{});
 
     // Benchmark linear scan for comparison
     var linear_latencies = ArrayList(f64).init(allocator);
@@ -415,7 +415,7 @@ fn benchmarkHNSWMemory(allocator: Allocator, config: BenchmarkConfig) !Benchmark
     const sizes = [_]usize{ 1_000, 10_000, 100_000, 500_000 }; // Test various sizes
     const hnsw_config = HNSWConfig{};
 
-    print("  💾 Testing memory scaling across different dataset sizes...\n");
+    print("  💾 Testing memory scaling across different dataset sizes...\n", .{});
 
     var memory_results = ArrayList(f64).init(allocator);
     defer memory_results.deinit();
@@ -485,7 +485,7 @@ fn benchmarkHNSWScaling(allocator: Allocator, config: BenchmarkConfig) !Benchmar
     const sizes = [_]usize{ 1_000, 5_000, 10_000, 50_000 }; // Reasonable sizes for scaling test
     const hnsw_config = HNSWConfig{};
 
-    print("  📈 Analyzing performance scaling with dataset size...\n");
+    print("  📈 Analyzing performance scaling with dataset size...\n", .{});
 
     var scaling_latencies = ArrayList(f64).init(allocator);
     defer scaling_latencies.deinit();

@@ -23,7 +23,7 @@ const BenchmarkConfig = benchmark_runner.BenchmarkConfig;
 const BenchmarkInterface = benchmark_runner.BenchmarkInterface;
 const BenchmarkCategory = benchmark_runner.BenchmarkCategory;
 const percentile = benchmark_runner.percentile;
-const mean = benchmark_runner.mean;
+const mean = benchmark_runner.benchmark_mean;
 const PERFORMANCE_TARGETS = benchmark_runner.PERFORMANCE_TARGETS;
 
 const print = std.debug.print;
@@ -171,11 +171,11 @@ const MockTemporalDB = struct {
         const node_id = @as(u32, @intCast(self.nodes.count()));
         const timestamp = std.time.timestamp();
 
-        var node = TemporalNode.init(self.allocator, node_id, content, timestamp);
+        const node = TemporalNode.init(self.allocator, node_id, content, timestamp);
         try self.nodes.put(node_id, node);
 
         if (embedding) |emb| {
-            var owned_embedding = try self.allocator.dupe(f32, emb);
+            const owned_embedding = try self.allocator.dupe(f32, emb);
             try self.embeddings.put(node_id, owned_embedding);
         }
 
@@ -206,7 +206,7 @@ const MockTemporalDB = struct {
     /// Hybrid query combining semantic search and graph traversal
     pub fn hybridQuery(self: *MockTemporalDB, query_embedding: []f32, semantic_k: u32, max_hops: u32) ![]u32 {
         // Step 1: Semantic search using embeddings
-        var semantic_results = try self.semanticSearch(query_embedding, semantic_k);
+        const semantic_results = try self.semanticSearch(query_embedding, semantic_k);
         defer self.allocator.free(semantic_results);
 
         // Step 2: Graph expansion from semantic results
@@ -271,7 +271,7 @@ const MockTemporalDB = struct {
 
         // Return top-k results
         const result_count = @min(k, @as(u32, @intCast(similarities.items.len)));
-        var results = try self.allocator.alloc(u32, result_count);
+        const results = try self.allocator.alloc(u32, result_count);
         for (results, 0..) |*result, i| {
             result.* = similarities.items[i].node_id;
         }
@@ -366,9 +366,11 @@ const MockTemporalDB = struct {
 
 /// Generate realistic test data for database benchmarking
 const TestDataGenerator = struct {
-    pub fn generateCodeNodes(allocator: Allocator, count: usize) ![]struct { content: []const u8, embedding: []f32 } {
-        var nodes = try allocator.alloc(@TypeOf(.{ .content = "", .embedding = &[_]f32{} }), count);
-        var rng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
+    const NodeType = struct { content: []const u8, embedding: []f32 };
+    
+    pub fn generateCodeNodes(allocator: Allocator, count: usize) ![]NodeType {
+        const nodes = try allocator.alloc(NodeType, count);
+        var rng = std.Random.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
 
         const sample_contents = [_][]const u8{
             "function calculateDistance(a, b) { return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2); }",
@@ -414,7 +416,7 @@ const TestDataGenerator = struct {
         return nodes;
     }
 
-    pub fn freeCodeNodes(allocator: Allocator, nodes: []struct { content: []const u8, embedding: []f32 }) void {
+    pub fn freeCodeNodes(allocator: Allocator, nodes: []NodeType) void {
         for (nodes) |node| {
             allocator.free(node.embedding);
         }
@@ -434,7 +436,7 @@ fn benchmarkHybridQuery(allocator: Allocator, config: BenchmarkConfig) !Benchmar
     defer db.deinit();
 
     // Generate test data
-    print("    📦 Generating test data...\n");
+    print("    📦 Generating test data...\n", .{});
     const test_nodes = try TestDataGenerator.generateCodeNodes(allocator, node_count);
     defer TestDataGenerator.freeCodeNodes(allocator, test_nodes);
 
@@ -448,7 +450,7 @@ fn benchmarkHybridQuery(allocator: Allocator, config: BenchmarkConfig) !Benchmar
     }
 
     // Create some edges for graph traversal
-    var rng = std.rand.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
+    var rng = std.Random.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
     const edge_count = node_count / 2; // Sparse connectivity
     for (0..edge_count) |_| {
         const from = node_ids.items[rng.random().intRangeAtMost(usize, 0, node_ids.items.len - 1)];
@@ -458,7 +460,7 @@ fn benchmarkHybridQuery(allocator: Allocator, config: BenchmarkConfig) !Benchmar
         }
     }
 
-    print("    🚀 Running hybrid queries...\n");
+    print("    🚀 Running hybrid queries...\n", .{});
 
     // Generate query embeddings
     var query_embeddings = ArrayList([]f32).init(allocator);
@@ -470,7 +472,7 @@ fn benchmarkHybridQuery(allocator: Allocator, config: BenchmarkConfig) !Benchmar
     }
 
     for (0..query_count) |_| {
-        var query_embedding = try allocator.alloc(f32, 1536);
+        const query_embedding = try allocator.alloc(f32, 1536);
         for (query_embedding) |*component| {
             component.* = rng.random().float(f32);
         }
@@ -549,7 +551,7 @@ fn benchmarkStorageCompression(allocator: Allocator, config: BenchmarkConfig) !B
     defer db.deinit();
 
     // Generate and add test data
-    print("    📦 Populating database...\n");
+    print("    📦 Populating database...\n", .{});
     const test_nodes = try TestDataGenerator.generateCodeNodes(allocator, node_count);
     defer TestDataGenerator.freeCodeNodes(allocator, test_nodes);
 
@@ -566,7 +568,7 @@ fn benchmarkStorageCompression(allocator: Allocator, config: BenchmarkConfig) !B
         try insertion_latencies.append(latency_ms);
     }
 
-    print("    🗜️  Creating anchor snapshots...\n");
+    print("    🗜️  Creating anchor snapshots...\n", .{});
 
     // Create periodic anchors to test compression
     const anchor_intervals = [_]usize{ node_count / 4, node_count / 2, node_count * 3 / 4, node_count };
@@ -613,7 +615,7 @@ fn benchmarkStorageCompression(allocator: Allocator, config: BenchmarkConfig) !B
 fn benchmarkDatabaseScaling(allocator: Allocator, config: BenchmarkConfig) !BenchmarkResult {
     const sizes = [_]usize{ 1_000, 5_000, 10_000, 25_000 };
 
-    print("  📈 Database scaling analysis across different sizes...\n");
+    print("  📈 Database scaling analysis across different sizes...\n", .{});
 
     var all_latencies = ArrayList(f64).init(allocator);
     defer all_latencies.deinit();
