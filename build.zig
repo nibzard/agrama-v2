@@ -114,6 +114,23 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_lib_unit_tests.step);
     test_step.dependOn(&run_exe_unit_tests.step);
 
+    // Integration tests
+    const integration_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/integration_test.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
+    // Add all source dependencies to integration tests
+    integration_tests.root_module.addImport("agrama_lib", lib_mod);
+    
+    const run_integration_tests = b.addRunArtifact(integration_tests);
+
+    const integration_step = b.step("test-integration", "Run integration tests");
+    integration_step.dependOn(&run_integration_tests.step);
+
     // Benchmark infrastructure (module for potential future use)
     _ = b.createModule(.{
         .root_source_file = b.path("benchmarks/benchmark_runner.zig"),

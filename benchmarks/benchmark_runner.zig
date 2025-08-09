@@ -81,11 +81,11 @@ pub const BenchmarkResult = struct {
         _ = options;
 
         try writer.print("Benchmark: {s} ({s})\n", .{ self.name, @tagName(self.category) });
-        try writer.print("Dataset: {} items, {} iterations, {:.2}s duration\n", .{ self.dataset_size, self.iterations, self.duration_seconds });
-        try writer.print("Latency:  P50={:.3}ms P90={:.3}ms P99={:.3}ms P99.9={:.3}ms\n", .{ self.p50_latency, self.p90_latency, self.p99_latency, self.p99_9_latency });
-        try writer.print("Performance: {:.1} QPS, {:.1} ops/sec, {:.1}× speedup\n", .{ self.throughput_qps, self.operations_per_second, self.speedup_factor });
-        try writer.print("Resources: {:.1}MB memory, {:.1}% CPU\n", .{ self.memory_used_mb, self.cpu_utilization });
-        try writer.print("Status: {} {s}\n", .{ if (self.passed_targets) "✅" else "❌", if (self.passed_targets) "PASSED" else "FAILED" });
+        try writer.print("Dataset: {d} items, {d} iterations, {d:.2}s duration\n", .{ self.dataset_size, self.iterations, self.duration_seconds });
+        try writer.print("Latency:  P50={d:.3}ms P90={d:.3}ms P99={d:.3}ms P99.9={d:.3}ms\n", .{ self.p50_latency, self.p90_latency, self.p99_latency, self.p99_9_latency });
+        try writer.print("Performance: {d:.1} QPS, {d:.1} ops/sec, {d:.1}× speedup\n", .{ self.throughput_qps, self.operations_per_second, self.speedup_factor });
+        try writer.print("Resources: {d:.1}MB memory, {d:.1}% CPU\n", .{ self.memory_used_mb, self.cpu_utilization });
+        try writer.print("Status: {s} {s}\n", .{ if (self.passed_targets) "✅" else "❌", if (self.passed_targets) "PASSED" else "FAILED" });
     }
 };
 
@@ -210,7 +210,7 @@ pub const BenchmarkRunner = struct {
         const benchmarks = self.registry.findByCategory(category);
         defer benchmarks.deinit();
 
-        print("\n🚀 Running {} benchmarks\n", .{@tagName(category)});
+        print("\n🚀 Running {s} benchmarks\n", .{@tagName(category)});
         print("=" ** 60 ++ "\n", .{});
 
         for (benchmarks.items) |benchmark| {
@@ -243,7 +243,7 @@ pub const BenchmarkRunner = struct {
 
         // Run the benchmark
         var result = benchmark.runFn(self.allocator, self.config) catch |err| {
-            print("❌ Benchmark failed: {}\n", .{err});
+            print("❌ Benchmark failed: {any}\n", .{err});
             return;
         };
 
@@ -254,10 +254,10 @@ pub const BenchmarkRunner = struct {
         try self.results.append(result);
 
         // Display immediate results
-        print("{}\n", .{result});
+        print("{any}\n", .{result});
 
         const total_time = std.time.milliTimestamp() - start_time;
-        print("⏱️  Total execution time: {}ms\n", .{total_time});
+        print("⏱️  Total execution time: {d}ms\n", .{total_time});
 
         if (self.config.save_results) {
             try self.saveResult(result);
@@ -361,17 +361,17 @@ pub const BenchmarkRunner = struct {
         avg_p50 /= @as(f64, @floatFromInt(category_results.items.len));
         avg_throughput /= @as(f64, @floatFromInt(category_results.items.len));
 
-        print("Benchmarks: {} total, {} passed, {} failed\n", .{ category_results.items.len, total_passed, category_results.items.len - total_passed });
-        print("Average P50 Latency: {:.3}ms\n", .{avg_p50});
-        print("Average Throughput: {:.1} QPS\n", .{avg_throughput});
+        print("Benchmarks: {d} total, {d} passed, {d} failed\n", .{ category_results.items.len, total_passed, category_results.items.len - total_passed });
+        print("Average P50 Latency: {d:.3}ms\n", .{avg_p50});
+        print("Average Throughput: {d:.1} QPS\n", .{avg_throughput});
 
         const pass_rate = @as(f64, @floatFromInt(total_passed)) / @as(f64, @floatFromInt(category_results.items.len));
         if (pass_rate >= 1.0) {
             print("🟢 Category Status: ALL BENCHMARKS PASSED\n", .{});
         } else if (pass_rate >= 0.8) {
-            print("🟡 Category Status: MOSTLY PASSING ({:.0}% pass rate)\n", .{pass_rate * 100});
+            print("🟡 Category Status: MOSTLY PASSING ({d:.0}% pass rate)\n", .{pass_rate * 100});
         } else {
-            print("🔴 Category Status: FAILING ({:.0}% pass rate)\n", .{pass_rate * 100});
+            print("🔴 Category Status: FAILING ({d:.0}% pass rate)\n", .{pass_rate * 100});
         }
     }
 
@@ -399,12 +399,12 @@ pub const BenchmarkRunner = struct {
         }
 
         print("📊 Overall Results:\n", .{});
-        print("   Total Benchmarks: {}\n", .{self.results.items.len});
-        print("   Passed: {} ✅\n", .{total_passed});
-        print("   Failed: {} ❌\n", .{total_failed});
+        print("   Total Benchmarks: {d}\n", .{self.results.items.len});
+        print("   Passed: {d} ✅\n", .{total_passed});
+        print("   Failed: {d} ❌\n", .{total_failed});
 
         const pass_rate = @as(f64, @floatFromInt(total_passed)) / @as(f64, @floatFromInt(self.results.items.len));
-        print("   Pass Rate: {:.1}%\n", .{pass_rate * 100});
+        print("   Pass Rate: {d:.1}%\n", .{pass_rate * 100});
 
         // Performance claims validation
         print("\n🚀 Performance Claims Validation:\n", .{});
@@ -423,8 +423,8 @@ pub const BenchmarkRunner = struct {
         avg_cpu /= @as(f64, @floatFromInt(self.results.items.len));
 
         print("\n💾 Resource Utilization:\n", .{});
-        print("   Peak Memory Usage: {:.1} MB\n", .{max_memory});
-        print("   Average CPU Usage: {:.1}%\n", .{avg_cpu});
+        print("   Peak Memory Usage: {d:.1} MB\n", .{max_memory});
+        print("   Average CPU Usage: {d:.1}%\n", .{avg_cpu});
 
         // Final verdict
         print("\n🏁 FINAL VERDICT:\n", .{});
@@ -440,7 +440,7 @@ pub const BenchmarkRunner = struct {
     }
 
     /// Validate HNSW performance claims
-    fn validateHNSWClaims(self: *BenchmarkRunner) bool {
+    pub fn validateHNSWClaims(self: *BenchmarkRunner) bool {
         for (self.results.items) |result| {
             if (result.category == .hnsw) {
                 if (result.speedup_factor >= PERFORMANCE_TARGETS.HNSW_SPEEDUP_VS_LINEAR and result.passed_targets) {
@@ -452,7 +452,7 @@ pub const BenchmarkRunner = struct {
     }
 
     /// Validate FRE performance claims
-    fn validateFREClaims(self: *BenchmarkRunner) bool {
+    pub fn validateFREClaims(self: *BenchmarkRunner) bool {
         for (self.results.items) |result| {
             if (result.category == .fre) {
                 if (result.speedup_factor >= PERFORMANCE_TARGETS.FRE_SPEEDUP_VS_DIJKSTRA and result.passed_targets) {
@@ -464,7 +464,7 @@ pub const BenchmarkRunner = struct {
     }
 
     /// Validate database performance claims
-    fn validateDatabaseClaims(self: *BenchmarkRunner) bool {
+    pub fn validateDatabaseClaims(self: *BenchmarkRunner) bool {
         for (self.results.items) |result| {
             if (result.category == .database) {
                 if (result.p50_latency <= PERFORMANCE_TARGETS.HYBRID_QUERY_P50_MS and result.passed_targets) {
@@ -476,7 +476,7 @@ pub const BenchmarkRunner = struct {
     }
 
     /// Validate MCP server performance claims
-    fn validateMCPClaims(self: *BenchmarkRunner) bool {
+    pub fn validateMCPClaims(self: *BenchmarkRunner) bool {
         for (self.results.items) |result| {
             if (result.category == .mcp) {
                 if (result.p50_latency <= PERFORMANCE_TARGETS.MCP_TOOL_RESPONSE_MS and result.passed_targets) {

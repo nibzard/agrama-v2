@@ -112,11 +112,11 @@ const RegressionDetector = struct {
 
         // TODO: Serialize to JSON (simplified for now)
         try file.writer().print("# Agrama Performance Baseline\n", .{});
-        try file.writer().print("# Generated: {}\n", .{std.time.timestamp()});
-        try file.writer().print("# Benchmarks: {}\n", .{results.len});
+        try file.writer().print("# Generated: {d}\n", .{std.time.timestamp()});
+        try file.writer().print("# Benchmarks: {d}\n", .{results.len});
 
         for (results) |result| {
-            try file.writer().print("benchmark,{s},{},{:.3},{:.3},{:.1},{:.1}\n", .{ result.name, result.dataset_size, result.p50_latency, result.p99_latency, result.throughput_qps, result.speedup_factor });
+            try file.writer().print("benchmark,{s},{d},{d:.3},{d:.3},{d:.1},{d:.1}\n", .{ result.name, result.dataset_size, result.p50_latency, result.p99_latency, result.throughput_qps, result.speedup_factor });
         }
 
         print("💾 Saved baseline to: {s}\n", .{file_path});
@@ -345,8 +345,8 @@ const ReportGenerator = struct {
 
         // Simplified JSON generation (would use std.json in production)
         try file.writer().writeAll("{\n  \"agrama_benchmark_report\": {\n");
-        try file.writer().print("    \"timestamp\": {},\n", .{std.time.timestamp()});
-        try file.writer().print("    \"total_benchmarks\": {},\n", .{results.len});
+        try file.writer().print("    \"timestamp\": {d},\n", .{std.time.timestamp()});
+        try file.writer().print("    \"total_benchmarks\": {d},\n", .{results.len});
         try file.writer().writeAll("    \"results\": [\n");
 
         for (results, 0..) |result, i| {
@@ -432,9 +432,9 @@ const BenchmarkSuite = struct {
         }
 
         print("📊 Configuration:\n", .{});
-        print("   Dataset Size: {}\n", .{self.config.getDatasetSize()});
-        print("   Iterations: {}\n", .{self.config.getIterations()});
-        print("   Max Duration: {} minutes\n", .{self.config.max_duration_minutes});
+        print("   Dataset Size: {d}\n", .{self.config.getDatasetSize()});
+        print("   Iterations: {d}\n", .{self.config.getIterations()});
+        print("   Max Duration: {d} minutes\n", .{self.config.max_duration_minutes});
         print("\n", .{});
 
         // Load baseline if requested
@@ -489,7 +489,7 @@ const BenchmarkSuite = struct {
         try mcp_benchmarks.registerMCPBenchmarks(&self.runner.registry);
         print("   ✅ MCP benchmarks registered\n", .{});
 
-        print("📊 Total benchmarks registered: {}\n\n", .{self.runner.registry.benchmarks.items.len});
+        print("📊 Total benchmarks registered: {d}\n\n", .{self.runner.registry.benchmarks.items.len});
     }
 
     /// Validate all performance claims
@@ -520,7 +520,7 @@ const BenchmarkSuite = struct {
         print("Sub-100ms MCP responses: {s}\n", .{if (mcp_validated) "✅ VALIDATED" else "❌ NOT MET"});
         if (mcp_validated) claims_met += 1;
 
-        print("\n📊 Performance Claims Summary: {}/{} validated ({:.0}%)\n", .{ claims_met, total_claims, (@as(f64, @floatFromInt(claims_met)) / @as(f64, @floatFromInt(total_claims))) * 100 });
+        print("\n📊 Performance Claims Summary: {d}/{d} validated ({d:.0}%)\n", .{ claims_met, total_claims, (@as(f64, @floatFromInt(claims_met)) / @as(f64, @floatFromInt(total_claims))) * 100 });
     }
 
     /// Generate comprehensive reports
@@ -554,7 +554,7 @@ const BenchmarkSuite = struct {
             if (regressions.len > 0) {
                 print("\n⚠️  PERFORMANCE REGRESSIONS DETECTED:\n", .{});
                 for (regressions) |regression| {
-                    print("   🔴 {s} ({s}): {:.1}% degradation ({:.3} → {:.3})\n", .{ regression.benchmark_name, regression.metric, regression.degradation_percent, regression.baseline_value, regression.current_value });
+                    print("   🔴 {s} ({s}): {d:.1}% degradation ({d:.3} → {d:.3})\n", .{ regression.benchmark_name, regression.metric, regression.degradation_percent, regression.baseline_value, regression.current_value });
                 }
             } else {
                 print("✅ No performance regressions detected\n", .{});
@@ -564,9 +564,9 @@ const BenchmarkSuite = struct {
 
     /// Print final summary
     fn printFinalSummary(self: *BenchmarkSuite) !void {
-        print("\n" ++ "🏁" ** 40 ++ "\n");
+        print("\n" ++ "🏁" ** 40 ++ "\n", .{});
         print("FINAL BENCHMARK SUMMARY\n", .{});
-        print("🏁" ** 40 ++ "\n");
+        print("🏁" ** 40 ++ "\n", .{});
 
         var total_passed: usize = 0;
         var total_failed: usize = 0;
@@ -578,10 +578,10 @@ const BenchmarkSuite = struct {
         const pass_rate = @as(f64, @floatFromInt(total_passed)) / @as(f64, @floatFromInt(self.runner.results.items.len));
 
         print("📊 Results:\n", .{});
-        print("   Total Benchmarks: {}\n", .{self.runner.results.items.len});
-        print("   Passed: {} ✅\n", .{total_passed});
-        print("   Failed: {} ❌\n", .{total_failed});
-        print("   Pass Rate: {:.1}%\n", .{pass_rate * 100});
+        print("   Total Benchmarks: {d}\n", .{self.runner.results.items.len});
+        print("   Passed: {d} ✅\n", .{total_passed});
+        print("   Failed: {d} ❌\n", .{total_failed});
+        print("   Pass Rate: {d:.1}%\n", .{pass_rate * 100});
 
         // Overall verdict
         print("\n🏆 OVERALL VERDICT:\n", .{});
@@ -679,7 +679,7 @@ pub fn main() !void {
     defer suite.deinit();
 
     suite.runSuite() catch |err| {
-        print("❌ Benchmark suite failed: {}\n", .{err});
+        print("❌ Benchmark suite failed: {any}\n", .{err});
         std.process.exit(1);
     };
 }

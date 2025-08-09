@@ -429,7 +429,7 @@ fn benchmarkHybridQuery(allocator: Allocator, config: BenchmarkConfig) !Benchmar
     const node_count = @min(config.dataset_size, 50_000); // Reasonable size for testing
     const query_count = @min(config.iterations, 200);
 
-    print("  🔍 Testing hybrid queries on {} nodes with {} queries...\n", .{ node_count, query_count });
+    print("  🔍 Testing hybrid queries on {d} nodes with {d} queries...\n", .{ node_count, query_count });
 
     // Create database
     var db = MockTemporalDB.init(allocator);
@@ -545,7 +545,7 @@ fn benchmarkHybridQuery(allocator: Allocator, config: BenchmarkConfig) !Benchmar
 fn benchmarkStorageCompression(allocator: Allocator, config: BenchmarkConfig) !BenchmarkResult {
     const node_count = @min(config.dataset_size, 20_000);
 
-    print("  💾 Testing storage compression with {} nodes...\n", .{node_count});
+    print("  💾 Testing storage compression with {d} nodes...\n", .{node_count});
 
     var db = MockTemporalDB.init(allocator);
     defer db.deinit();
@@ -626,7 +626,7 @@ fn benchmarkDatabaseScaling(allocator: Allocator, config: BenchmarkConfig) !Benc
     for (sizes) |size| {
         if (size > config.dataset_size) continue;
 
-        print("    🔬 Testing with {} nodes...\n", .{size});
+        print("    🔬 Testing with {d} nodes...\n", .{size});
 
         var db = MockTemporalDB.init(allocator);
         defer db.deinit();
@@ -652,7 +652,7 @@ fn benchmarkDatabaseScaling(allocator: Allocator, config: BenchmarkConfig) !Benc
 
         try memory_usage.append(db.memory_used_mb);
 
-        print("      Avg latency: {:.3}ms, Memory: {:.1}MB\n", .{ mean(size_latencies.items), db.memory_used_mb });
+        print("      Avg latency: {d:.3}ms, Memory: {d:.1}MB\n", .{ mean(size_latencies.items), db.memory_used_mb });
     }
 
     const overall_latency = mean(all_latencies.items);

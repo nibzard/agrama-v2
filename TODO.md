@@ -406,18 +406,112 @@ Target: 100-1000× performance improvements and multi-agent conflict resolution
 - **Observatory Enhancement**: Real-time visualization of functional collaborative workflows
 - **Enterprise Documentation**: Market-ready documentation of revolutionary working capabilities
 
-**SUCCESS METRICS - PHASE 4 ACHIEVEMENTS**
+**SUCCESS METRICS - PHASE 4 ACHIEVEMENTS + BM25 INTEGRATION TARGETS**
 ✅ **HNSW Performance**: O(log n) semantic search implemented with 42/42 tests passing
 ✅ **FRE Breakthrough**: O(m log^(2/3) n) graph traversal - first production implementation  
 ✅ **CRDT Collaboration**: Multi-agent conflict-free editing with sub-100ms sync
 ✅ **Comprehensive Testing**: Full benchmark suite with performance validation framework
 ✅ **GitHub Integration**: All code committed and ready for production deployment
+🎯 **BM25 Integration Target**: Sub-1ms lexical search with 15-30% precision improvements
+🎯 **Triple Hybrid Search**: BM25 + HNSW + FRE combined query engine with configurable weights
+🎯 **Code-Specific Optimization**: AST-aware tokenization and weighted scoring for code elements
 
 ### 🔧 PHASE 5 PRODUCTION OPTIMIZATION TASKS (Current Sprint)
 
 #### 🎯 IMMEDIATE PRIORITIES (Week 1-2)
 
 **🎉 CRITICAL BREAKTHROUGHS ACHIEVED - SYSTEM NOW FUNCTIONAL! 🎉**
+
+### 🔍 BM25 LEXICAL SEARCH INTEGRATION (Phase 5 Production Excellence)
+
+**CONTEXT**: Following successful resolution of critical memory safety issues, the system now needs BM25 lexical search to complete the triple hybrid search capability (BM25 + HNSW + FRE). This addresses the significant gap in keyword-based code discovery and provides 15-30% precision improvements.
+
+**STRATEGIC IMPORTANCE**: BM25 integration represents the final piece of comprehensive search architecture:
+- **Completes Search Triad**: Lexical (BM25) + Semantic (HNSW) + Graph (FRE) for complete code understanding  
+- **Fills Critical Gap**: Current system lacks keyword-based search crucial for developer workflows
+- **Performance Impact**: 15-30% precision improvement validated in SPECS.md analysis
+- **Enterprise Ready**: Triple hybrid search positions system as comprehensive enterprise solution
+- **Foundation Complete**: Establishes complete search infrastructure for all future features
+
+- [ ] **[P1]** Core: BM25 Lexical Search Integration Planning
+  - **Context**: Design triple hybrid search architecture combining BM25 + HNSW + FRE for comprehensive code search capabilities
+  - **Acceptance Criteria**: 
+    - Complete BM25 integration architecture with HNSW and FRE compatibility
+    - Code-specific BM25 scoring strategy defined (functions, variables, types, comments)
+    - Triple hybrid query engine design with configurable α, β, γ weights
+    - Memory allocation strategy for BM25 index structures
+  - **Dependencies**: System functional validation (current sprint), HNSW working (✅), FRE working (✅)
+  - **Estimate**: 2-3 days
+  - **Assignee**: @perf-engineer + @db-engineer
+  - **Labels**: #core #bm25 #search #design #phase5
+
+- [ ] **[P1]** Core: Implement BM25 Index with Inverted Indices
+  - **Context**: Create BM25Index struct with code-specific term extraction, frequency calculation, and inverted index management for sub-1ms lexical search
+  - **Acceptance Criteria**:
+    - BM25Index struct with efficient inverted index operations
+    - Code-aware tokenization (camelCase, snake_case, function signatures)
+    - Term frequency calculation with IDF scoring
+    - Sub-1ms search performance for typical code queries
+    - Memory-efficient storage with Zig allocator patterns
+  - **Dependencies**: BM25 planning complete, existing database structures (✅)
+  - **Estimate**: 1 week
+  - **Assignee**: @db-engineer
+  - **Labels**: #core #bm25 #index #search #performance #phase5
+
+- [ ] **[P1]** Core: Implement CodeDocument Structure
+  - **Context**: Design specialized document representation with function names, variables, types, comments, and code-aware tokenization for optimal BM25 scoring
+  - **Acceptance Criteria**:
+    - CodeDocument struct with semantic code element extraction
+    - Weighted term frequency for different code elements (functions 3x, variables 2x, types 2.5x, comments 1x)
+    - AST-aware tokenization preserving code structure
+    - Integration with existing temporal graph nodes
+    - Support for multiple programming languages
+  - **Dependencies**: BM25 index foundation, existing node structures (✅)
+  - **Estimate**: 1 week
+  - **Assignee**: @db-engineer + @mcp-specialist
+  - **Labels**: #core #bm25 #document #ast #tokenization #phase5
+
+- [ ] **[P1]** Core: Develop Triple Hybrid Query Engine
+  - **Context**: Integrate BM25 + HNSW + FRE with configurable α, β, γ weights for optimal lexical + semantic + graph scoring combination
+  - **Acceptance Criteria**:
+    - HybridQueryEngine supporting all three search types
+    - Configurable weight system (α for BM25, β for HNSW, γ for FRE)
+    - Score normalization and combination algorithms
+    - Query routing logic (lexical vs semantic vs graph emphasis)
+    - Sub-10ms response times for hybrid queries on 1M+ nodes
+  - **Dependencies**: BM25 index (in progress), HNSW working (✅), FRE working (✅)
+  - **Estimate**: 1-2 weeks
+  - **Assignee**: @perf-engineer + @db-engineer
+  - **Labels**: #core #hybrid #query-engine #performance #integration #phase5
+
+- [ ] **[P2]** Core: BM25 + HNSW Integration Optimization
+  - **Context**: Combine lexical and semantic search with hybrid scoring to address keyword vs semantic search gap for comprehensive code discovery
+  - **Acceptance Criteria**:
+    - Seamless BM25 + HNSW query execution
+    - Hybrid relevance scoring balancing lexical and semantic signals
+    - Query optimization routing (when to use BM25 vs HNSW vs both)
+    - 15-30% precision improvement over single-method search validated
+    - Performance maintained with sub-10ms P50 latency
+  - **Dependencies**: BM25 index complete, triple hybrid engine functional
+  - **Estimate**: 1 week
+  - **Assignee**: @perf-engineer
+  - **Labels**: #core #bm25 #hnsw #optimization #hybrid #phase5
+
+- [ ] **[P2]** Test: Comprehensive BM25 Testing and Validation
+  - **Context**: Unit tests for BM25 scoring, integration tests with HNSW/FRE, performance benchmarks validating 15-30% precision improvements
+  - **Acceptance Criteria**:
+    - BM25 unit tests for scoring accuracy and index operations
+    - Integration tests with existing HNSW and FRE systems
+    - Performance benchmarks demonstrating sub-1ms lexical search
+    - Precision/recall validation showing 15-30% improvement over baseline
+    - Memory usage profiling and leak detection
+    - Comprehensive test coverage for all BM25 components
+  - **Dependencies**: BM25 implementation complete, existing test framework (✅)
+  - **Estimate**: 1 week
+  - **Assignee**: @qa-engineer + @perf-engineer
+  - **Labels**: #test #bm25 #validation #benchmarks #integration #phase5
+
+### 🎯 EXISTING PHASE 5 PRIORITIES
 
 - [x] **[P0]** Core: CRDT Memory Corruption Critical Bug Fixes **RESOLVED**
   - **Context**: All segmentation faults and memory corruption in CRDT system eliminated by @db-engineer

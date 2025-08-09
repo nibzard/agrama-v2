@@ -324,26 +324,98 @@ A **Datalog-based query language** with temporal extensions:
 1. **Fine Ranking**: Full-dimension embeddings for final ordering
 1. **Temporal Filtering**: Time-range constraints applied last 
 
-**Hybrid HNSW-FRE Query Processing:**
+### BM25 Lexical Search Integration
+
+To complement HNSW semantic search, Agrama integrates **BM25 (Best Matching 25)** for traditional keyword-based relevance scoring. This provides hybrid search capabilities combining lexical (BM25), semantic (HNSW), and graph (FRE) signals for superior code discovery.
+
+**BM25-Enhanced Search Architecture:**
+
+```zig
+const BM25Index = struct {
+    // Inverted indices for different code granularities
+    function_index: InvertedIndex,
+    class_index: InvertedIndex,
+    module_index: InvertedIndex,
+    comment_index: InvertedIndex,
+    
+    // BM25 parameters (tuned for code)
+    k1: f32 = 1.5,     // Term frequency saturation point
+    b: f32 = 0.75,     // Length normalization factor
+    
+    pub fn computeBM25Score(
+        self: *BM25Index,
+        query_terms: []const []const u8,
+        document: CodeDocument
+    ) f32 {
+        var score: f32 = 0.0;
+        const doc_length = document.getTokenCount();
+        const avg_doc_length = self.getAverageDocumentLength();
+        
+        for (query_terms) |term| {
+            const tf = document.getTermFrequency(term);
+            const df = self.getDocumentFrequency(term);
+            const idf = @log(self.total_documents / df);
+            
+            const numerator = tf * (self.k1 + 1.0);
+            const denominator = tf + self.k1 * (1.0 - self.b + self.b * (doc_length / avg_doc_length));
+            
+            score += idf * (numerator / denominator);
+        }
+        
+        return score;
+    }
+};
+
+const CodeDocument = struct {
+    node_id: NodeID,
+    tokens: []const Token,
+    function_names: []const []const u8,
+    variable_names: []const []const u8,
+    comments: []const []const u8,
+    type_annotations: []const []const u8,
+    
+    pub fn getTermFrequency(self: *const CodeDocument, term: []const u8) f32 {
+        var count: f32 = 0.0;
+        
+        // Weighted term frequency for code elements
+        count += self.countInArray(self.function_names, term) * 3.0;      // Function names high weight
+        count += self.countInArray(self.variable_names, term) * 2.0;      // Variable names medium weight
+        count += self.countInArray(self.type_annotations, term) * 2.5;    // Types high weight
+        count += self.countInArray(self.comments, term) * 1.0;            // Comments base weight
+        
+        return count;
+    }
+};
+```
+
+**Hybrid BM25-HNSW-FRE Query Processing:**
 
 ```zig
 const HybridQueryEngine = struct {
     hnsw_index: *CodeSemanticIndex,
+    bm25_index: *BM25Index,
     fre: *FrontierReductionEngine,
     
-    pub fn executeHybridQuery(
+    pub fn executeTripleHybridQuery(
         self: *HybridQueryEngine,
-        query: HybridQuery
+        query: TripleHybridQuery
     ) !QueryResult {
-        // Phase 1: HNSW semantic pre-filtering (O(log n))
+        // Phase 1: BM25 lexical pre-filtering for keyword-rich queries
+        const lexical_candidates = if (query.hasKeywords()) 
+            try self.bm25_index.search(query.keywords, query.candidate_limit * 2)
+        else 
+            null;
+        
+        // Phase 2: HNSW semantic search (O(log n))
         const semantic_candidates = try self.hnsw_index.multiGranularitySearch(.{
             .embedding = query.semantic_vector,
             .k = query.candidate_limit,
             .precision = query.precision_target,
             .target_level = query.granularity,
+            .lexical_filter = lexical_candidates,  // Optional pre-filter
         });
         
-        // Phase 2: FRE graph constraint filtering (O(m log^(2/3) n))
+        // Phase 3: FRE graph constraint filtering (O(m log^(2/3) n))
         var graph_filtered = ArrayList(SearchResult).init(self.allocator);
         
         for (semantic_candidates.results) |candidate| {
@@ -354,23 +426,41 @@ const HybridQueryEngine = struct {
             );
             
             if (is_reachable) {
-                try graph_filtered.append(candidate);
+                // Compute hybrid relevance score
+                const bm25_score = if (lexical_candidates) |lex_cands|
+                    self.findBM25Score(lex_cands, candidate.node_id)
+                else 
+                    0.0;
+                
+                const hybrid_score = 
+                    query.alpha * candidate.similarity_score +        // Semantic weight
+                    query.beta * bm25_score +                          // Lexical weight  
+                    query.gamma * candidate.graph_centrality_score;   // Graph weight
+                
+                var hybrid_result = candidate;
+                hybrid_result.hybrid_score = hybrid_score;
+                try graph_filtered.append(hybrid_result);
             }
         }
         
-        // Phase 3: Temporal constraint application
+        // Phase 4: Temporal constraint application with relevance ranking
         const temporal_filtered = try self.applyTemporalConstraints(
             graph_filtered.items,
             query.time_range
         );
         
+        // Final ranking by hybrid score
+        std.sort.sort(SearchResult, temporal_filtered, {}, compareHybridScore);
+        
         return QueryResult{
             .results = temporal_filtered,
             .execution_stats = .{
+                .lexical_phase_ms = lexical_phase_time,
                 .semantic_phase_ms = semantic_phase_time,
                 .graph_phase_ms = graph_phase_time,
                 .total_candidates_considered = semantic_candidates.results.len,
                 .final_results = temporal_filtered.len,
+                .hybrid_scoring_enabled = true,
             },
         };
     }
@@ -379,11 +469,13 @@ const HybridQueryEngine = struct {
 
 Performance characteristics:
 
+- **Lexical Search**: O(k + r) where k = query terms, r = results (BM25 with inverted indices)
 - **Semantic Search**: O(log n) via HNSW instead of O(n) linear scan
 - **Graph Traversal**: O(m log^(2/3) n) via FRE instead of O(m + n log n) Dijkstra  
-- **Combined**: O(log n + m log^(2/3) n) - up to 1000× improvement for large graphs
+- **Triple Hybrid**: O(k + r + log n + m log^(2/3) n) - best of lexical, semantic, and graph
 - Sub-10ms latency for typical queries on 1M+ node graphs
 - 2-14× additional speedup through adaptive matryoshka dimensions
+- BM25 + HNSW combination provides 15-30% better precision than either alone for code search
 
 ## Knowledge Compaction and LLM Integration
 
@@ -576,10 +668,12 @@ Based on research benchmarks, the system targets:
 - **Concurrent Agents**: Support for 100+ simultaneous AI agents
 - **Transaction Throughput**: 100,000+ operations per second  
 - **Embedding Operations**: 2-14× speedup with matryoshka optimization  
+- **Lexical Search**: Sub-1ms BM25 scoring for keyword queries with inverted indices
 - **Semantic Search**: O(log n) performance via HNSW instead of O(n) linear scan
-- **Hybrid Queries**: Sub-10ms latency for combined semantic-graph-temporal queries
+- **Triple Hybrid Queries**: Sub-10ms latency for combined BM25+semantic+graph+temporal queries
+- **Search Precision**: 15-30% improvement in code discovery through BM25+HNSW hybrid scoring
 - **Conflict Resolution**: <10ms for CRDT merge operations
-- **Memory Usage**: Fixed allocation with <10GB for 1M nodes
+- **Memory Usage**: Fixed allocation with <10GB for 1M nodes, +20% for BM25 inverted indices
 
 ## Security and Safety Considerations
 

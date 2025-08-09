@@ -405,7 +405,9 @@ pub const HNSWIndex = struct {
         // Search from entry level down to level 1
         var level = entry_level;
         while (level > 0) : (level -= 1) {
-            current_candidates = try self.searchLayer(&query, current_candidates.items, 1, level);
+            const next_candidates = try self.searchLayer(&query, current_candidates.items, 1, level);
+            current_candidates.deinit(); // Free previous candidates
+            current_candidates = next_candidates;
         }
 
         // Search level 0 with ef parameter
