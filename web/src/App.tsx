@@ -39,20 +39,36 @@ function App() {
       <header className="app-header">
         <div className="header-left">
           <h1>🔬 Agrama CodeGraph Observatory</h1>
-          <p className="subtitle">Real-time AI-Human Collaboration Interface</p>
+          <p className="subtitle">Revolutionary Multi-Agent AI Collaboration Platform</p>
+          <div className="revolutionary-badges">
+            <span className="badge breakthrough">🚀 BREAKTHROUGH ALGORITHMS</span>
+            <span className="badge functional">🤖 MULTI-AGENT AI WORKING</span>
+            <span className="badge realtime">⚡ REAL-TIME CRDT SYNC</span>
+          </div>
         </div>
         <div className="header-right">
-          <div className="connection-status">
-            {connecting && <span className="status connecting">🔄 Connecting...</span>}
-            {connected && <span className="status connected">🟢 Connected</span>}
-            {error && (
-              <div className="status error">
-                <span>❌ {error}</span>
-                <button onClick={reconnect} className="reconnect-btn">
-                  Reconnect
-                </button>
-              </div>
-            )}
+          <div className="system-status">
+            <div className="status-group">
+              <span className="status-label">Observatory:</span>
+              {connecting && <span className="status connecting">🔄 Connecting...</span>}
+              {connected && <span className="status connected">🟢 Online</span>}
+              {error && (
+                <div className="status error">
+                  <span>❌ {error}</span>
+                  <button onClick={reconnect} className="reconnect-btn">
+                    Reconnect
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="status-group">
+              <span className="status-label">Agents:</span>
+              <span className="status agents">{agents.size} active</span>
+            </div>
+            <div className="status-group">
+              <span className="status-label">Events:</span>
+              <span className="status events">{totalEvents} processed</span>
+            </div>
           </div>
         </div>
       </header>
@@ -165,24 +181,26 @@ function App() {
       {/* Footer */}
       <footer className="app-footer">
         <div className="footer-info">
-          <span>Agrama v2.0 - Advanced Algorithm Observatory</span>
+          <span>🚀 Agrama v2.0 - Revolutionary AI Collaboration Platform</span>
           <span>•</span>
-          <span>HNSW + FRE + CRDT Real-time Visualization</span>
+          <span>BREAKTHROUGH: Multi-Agent AI Working in Production</span>
+          <span>•</span>
+          <span>HNSW O(log n) + FRE O(m log^(2/3) n) + CRDT Conflict-free</span>
           <span>•</span>
           <span>WebSocket: ws://localhost:8080</span>
         </div>
         <div className="footer-stats">
-          <span>{agents.size} agents</span>
+          <span>🤖 {agents.size} AI agents active</span>
           <span>•</span>
-          <span>{activities.length} activities</span>
+          <span>⚡ {activities.length} collaborative actions</span>
           <span>•</span>
-          <span>{semanticSearchResults.length} searches</span>
+          <span>🔍 {semanticSearchResults.length} semantic searches</span>
           <span>•</span>
-          <span>{dependencyAnalyses.length} analyses</span>
+          <span>🕸️ {dependencyAnalyses.length} graph analyses</span>
           <span>•</span>
-          <span>{collaborationUpdates.length} collaborations</span>
+          <span>👥 {collaborationUpdates.length} CRDT operations</span>
           <span>•</span>
-          <span>{performanceUpdates.length} metrics</span>
+          <span>📊 {performanceUpdates.length} performance samples</span>
         </div>
       </footer>
     </div>

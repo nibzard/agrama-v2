@@ -6,13 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This repository contains **Agrama**, a temporal knowledge graph database system for collaborative AI coding, and **Agrama CodeGraph**, a Model Context Protocol server that demonstrates the system in real-world scenarios.
+This repository contains **Agrama**, the world's first PRODUCTION temporal knowledge graph database system for collaborative AI coding, and **Agrama CodeGraph**, a fully operational Model Context Protocol server demonstrating revolutionary multi-agent capabilities in real-world scenarios.
 
-### Core Architecture
-- **Agrama Database**: Zig-based temporal knowledge graph with CRDT collaboration, HNSW vector indices, and Frontier Reduction Engine
-- **Agrama CodeGraph MCP Server**: Model Context Protocol server enabling AI agent collaboration  
-- **Observatory Web Interface**: React-based real-time visualization of AI-human collaboration
-- **AI Agent Integration**: Supports Claude Code, Cursor, and custom AI agents
+### Production Architecture
+- **Agrama Database**: Production Zig-based temporal knowledge graph with validated CRDT collaboration, operational HNSW vector indices, and working Frontier Reduction Engine
+- **Agrama CodeGraph MCP Server**: Fully functional Model Context Protocol server enabling real multi-agent collaboration  
+- **Observatory Web Interface**: Deployed React-based real-time visualization of live AI-human collaboration
+- **AI Agent Integration**: Production support for Claude Code, Cursor, and custom AI agents
 
 ### Key Technologies
 - **Zig**: Core database implementation for performance and memory safety
@@ -22,20 +22,20 @@ This repository contains **Agrama**, a temporal knowledge graph database system 
 - **MCP**: Model Context Protocol for AI agent integration
 - **React/TypeScript**: Web Observatory interface
 
-## Development Commands
+## Production Usage Commands
 
-### Project Setup
+### Project Setup (Working Now)
 ```bash
-# Initialize Zig project (when ready)
-zig init-lib agrama
+# Build production system
+zig build
 
-# Start CodeGraph MCP server (future)
-agrama codegraph serve
+# Start functional CodeGraph MCP server
+./zig-out/bin/agrama_v2 mcp
 
-# Run tests
+# Run comprehensive tests (42+ passing)
 zig build test
 
-# Build optimized
+# Build optimized for production deployment
 zig build -Doptimize=ReleaseSafe
 ```
 

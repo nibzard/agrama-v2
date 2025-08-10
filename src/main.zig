@@ -237,9 +237,9 @@ fn testDatabaseCommand(allocator: std.mem.Allocator) !void {
 
     // Test basic file operations
     std.log.info("✅ Testing file save/load...", .{});
-    try db.saveFile("test/example.txt", "Hello, Agrama Database!");
+    try db.saveFile("tests/example.txt", "Hello, Agrama Database!");
 
-    const content = try db.getFile("test/example.txt");
+    const content = try db.getFile("tests/example.txt");
     if (!std.mem.eql(u8, content, "Hello, Agrama Database!")) {
         std.log.err("❌ Content mismatch", .{});
         return;
@@ -248,10 +248,10 @@ fn testDatabaseCommand(allocator: std.mem.Allocator) !void {
 
     // Test history functionality
     std.log.info("✅ Testing file history...", .{});
-    try db.saveFile("test/example.txt", "Version 2");
-    try db.saveFile("test/example.txt", "Version 3");
+    try db.saveFile("tests/example.txt", "Version 2");
+    try db.saveFile("tests/example.txt", "Version 3");
 
-    const history = try db.getHistory("test/example.txt", 3);
+    const history = try db.getHistory("tests/example.txt", 3);
     defer allocator.free(history);
 
     if (history.len != 3) {

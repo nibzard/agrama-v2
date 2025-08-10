@@ -28,7 +28,6 @@ pub const TestResult = struct {
     pub fn format(self: TestResult, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
-        const status = if (self.passed) "PASS" else "FAIL";
         const status_symbol = if (self.passed) "✅" else "❌";
 
         try writer.print("{s} [{s}] {s} ({:.2}ms)", .{ status_symbol, @tagName(self.category), self.name, self.duration_ms });
@@ -43,6 +42,13 @@ pub const TestResult = struct {
     }
 };
 
+/// Category statistics structure
+const CategoryStats = struct {
+    total: usize = 0,
+    passed: usize = 0,
+    failed: usize = 0,
+};
+
 /// Test suite statistics
 pub const TestSuiteStats = struct {
     total_tests: usize = 0,
@@ -51,15 +57,7 @@ pub const TestSuiteStats = struct {
     total_duration_ms: f64 = 0,
     total_memory_leaks: usize = 0,
 
-    by_category: std.EnumMap(TestCategory, struct {
-        total: usize = 0,
-        passed: usize = 0,
-        failed: usize = 0,
-    }) = std.EnumMap(TestCategory, struct {
-        total: usize = 0,
-        passed: usize = 0,
-        failed: usize = 0,
-    }){},
+    by_category: std.EnumMap(TestCategory, CategoryStats) = std.EnumMap(TestCategory, CategoryStats){},
 
     pub fn passRate(self: TestSuiteStats) f64 {
         if (self.total_tests == 0) return 0.0;
@@ -71,7 +69,12 @@ pub const TestSuiteStats = struct {
         self.total_duration_ms += result.duration_ms;
         self.total_memory_leaks += result.memory_leaks;
 
-        var category_stats = &self.by_category.getPtr(result.category).?.*;
+        // Ensure category exists in map
+        if (!self.by_category.contains(result.category)) {
+            self.by_category.put(result.category, CategoryStats{});
+        }
+        
+        var category_stats = self.by_category.getPtr(result.category).?;
         category_stats.total += 1;
 
         if (result.passed) {
@@ -167,12 +170,12 @@ pub const TestRunner = struct {
         try self.runTestFile("simple_perf_test.zig", .performance);
     }
 
-    fn runFuzzTests(self: *TestRunner) !void {
+    fn runFuzzTests(_: *TestRunner) !void {
         // TODO: Implement fuzz testing
         std.debug.print("   ⚠️  Fuzz tests not yet implemented\n", .{});
     }
 
-    fn runRegressionTests(self: *TestRunner) !void {
+    fn runRegressionTests(_: *TestRunner) !void {
         // TODO: Implement regression testing
         std.debug.print("   ⚠️  Regression tests not yet implemented\n", .{});
     }

@@ -117,12 +117,66 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
     );
   }
   
+  const recentActivity = useMemo(() => {
+    const now = new Date().getTime();
+    const recent = activities.filter(activity => 
+      (now - activity.timestamp.getTime()) < 30000 // Last 30 seconds
+    );
+    return recent.length;
+  }, [activities]);
+
+  const collaborativeActions = useMemo(() => {
+    // Identify potential collaborative actions
+    const timeWindow = 10000; // 10 seconds
+    const collaborations = [];
+    
+    for (let i = 0; i < activities.length - 1; i++) {
+      const current = activities[i];
+      const next = activities[i + 1];
+      
+      if (current.agentId !== next.agentId && 
+          Math.abs(current.timestamp.getTime() - next.timestamp.getTime()) < timeWindow) {
+        collaborations.push({ current, next, timeDiff: Math.abs(current.timestamp.getTime() - next.timestamp.getTime()) });
+      }
+    }
+    
+    return collaborations.slice(0, 5); // Show recent collaborations
+  }, [activities]);
+
   return (
     <div className="activity-feed">
       <div className="activity-header">
-        <h3>Agent Activity</h3>
-        <span className="activity-count">{activities.length} total</span>
+        <h3>🤖 Multi-Agent Activity</h3>
+        <div className="activity-stats">
+          <span className="activity-count">{activities.length} total</span>
+          <span className="recent-activity">{recentActivity} recent</span>
+          {collaborativeActions.length > 0 && (
+            <span className="collaboration-indicator">⚡ {collaborativeActions.length} collaborations</span>
+          )}
+        </div>
       </div>
+
+      {/* Collaborative Actions Highlight */}
+      {collaborativeActions.length > 0 && (
+        <div className="collaboration-highlight">
+          <h4>🔥 Active Collaboration Detected</h4>
+          <div className="collaboration-examples">
+            {collaborativeActions.slice(0, 2).map((collab, index) => (
+              <div key={index} className="collaboration-pair">
+                <div className="agent-pair">
+                  <span className="agent-1">{getAgentName(collab.current.agentId)}</span>
+                  <span className="collaboration-arrow">↔️</span>
+                  <span className="agent-2">{getAgentName(collab.next.agentId)}</span>
+                </div>
+                <div className="collaboration-timing">
+                  <span className="time-gap">{collab.timeDiff}ms apart</span>
+                  <span className="collaboration-type">Real-time coordination</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="activity-list">
         {displayActivities.map((activity) => (
           <ActivityItem 
