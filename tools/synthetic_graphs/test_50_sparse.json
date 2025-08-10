@@ -1,0 +1,2665 @@
+{
+  "entities": [
+    {
+      "name": "metrics",
+      "type": "service",
+      "description": "Generated service for synthetic benchmarking (FastAPI based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "react-dashboard",
+      "type": "project",
+      "description": "Generated project for synthetic benchmarking (React based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "monitoring",
+      "type": "service",
+      "description": "Generated service for synthetic benchmarking (FastAPI based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "ml-pipeline",
+      "type": "project",
+      "description": "Generated project for synthetic benchmarking (Next.js based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "nexus-platform",
+      "type": "project",
+      "description": "Generated project for synthetic benchmarking (FastAPI based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "react-dashboard",
+      "type": "project",
+      "description": "Generated project for synthetic benchmarking (Django based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "load-balancer",
+      "type": "service",
+      "description": "Generated service for synthetic benchmarking (Django based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "schema.sql",
+      "type": "file",
+      "description": "Generated file for synthetic benchmarking (Express based)",
+      "file_path": "/src/files/schema.sql",
+      "language": "Go"
+    },
+    {
+      "name": "quantum-db",
+      "type": "project",
+      "description": "Generated project for synthetic benchmarking (Next.js based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "nexus-platform",
+      "type": "project",
+      "description": "Generated project for synthetic benchmarking (Django based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "user-service",
+      "type": "component",
+      "description": "Generated component for synthetic benchmarking (Axum based)",
+      "file_path": "/src/components/user_service",
+      "language": "Go"
+    },
+    {
+      "name": "Profiler",
+      "type": "tool",
+      "description": "Generated tool for synthetic benchmarking (Spring based)",
+      "file_path": null,
+      "language": "TypeScript"
+    },
+    {
+      "name": "tracing",
+      "type": "service",
+      "description": "Generated service for synthetic benchmarking (Express based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "containerization",
+      "type": "concept",
+      "description": "Generated concept for synthetic benchmarking (Gin based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "load-balancer",
+      "type": "service",
+      "description": "Generated service for synthetic benchmarking (Spring based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "index.tsx",
+      "type": "file",
+      "description": "Generated file for synthetic benchmarking (React based)",
+      "file_path": "/src/files/index.tsx",
+      "language": "Go"
+    },
+    {
+      "name": "react-dashboard",
+      "type": "project",
+      "description": "Generated project for synthetic benchmarking (FastAPI based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "config.yml",
+      "type": "file",
+      "description": "Generated file for synthetic benchmarking (Axum based)",
+      "file_path": "/src/files/config.yml",
+      "language": "Kotlin"
+    },
+    {
+      "name": "main.py",
+      "type": "file",
+      "description": "Generated file for synthetic benchmarking (FastAPI based)",
+      "file_path": "/src/files/main.py",
+      "language": "Go"
+    },
+    {
+      "name": "data-processor",
+      "type": "component",
+      "description": "Generated component for synthetic benchmarking (Next.js based)",
+      "file_path": "/src/components/data_processor",
+      "language": "Rust"
+    },
+    {
+      "name": "index.tsx-0",
+      "type": "file",
+      "description": "Generated file for synthetic benchmarking (Express based)",
+      "file_path": "/src/files/index.tsx_0",
+      "language": "TypeScript"
+    },
+    {
+      "name": "web-client-1",
+      "type": "component",
+      "description": "Generated component for synthetic benchmarking (Spring based)",
+      "file_path": "/src/components/web_client_1",
+      "language": "C++"
+    },
+    {
+      "name": "message-queue-2",
+      "type": "component",
+      "description": "Generated component for synthetic benchmarking (React based)",
+      "file_path": "/src/components/message_queue_2",
+      "language": "TypeScript"
+    },
+    {
+      "name": "data-processor-3",
+      "type": "component",
+      "description": "Generated component for synthetic benchmarking (React based)",
+      "file_path": "/src/components/data_processor_3",
+      "language": "Rust"
+    },
+    {
+      "name": "observability-4",
+      "type": "concept",
+      "description": "Generated concept for synthetic benchmarking (Django based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "ml-pipeline-5",
+      "type": "project",
+      "description": "Generated project for synthetic benchmarking (FastAPI based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "Dockerfile-6",
+      "type": "file",
+      "description": "Generated file for synthetic benchmarking (Spring based)",
+      "file_path": "/src/files/Dockerfile_6",
+      "language": "Python"
+    },
+    {
+      "name": "qa-engineer-7",
+      "type": "agent",
+      "description": "Generated agent for synthetic benchmarking (Django based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "cache-layer-8",
+      "type": "component",
+      "description": "Generated component for synthetic benchmarking (React based)",
+      "file_path": "/src/components/cache_layer_8",
+      "language": "Kotlin"
+    },
+    {
+      "name": "main.py-9",
+      "type": "file",
+      "description": "Generated file for synthetic benchmarking (Axum based)",
+      "file_path": "/src/files/main.py_9",
+      "language": "TypeScript"
+    },
+    {
+      "name": "schema.sql-10",
+      "type": "file",
+      "description": "Generated file for synthetic benchmarking (Django based)",
+      "file_path": "/src/files/schema.sql_10",
+      "language": "TypeScript"
+    },
+    {
+      "name": "qa-engineer-11",
+      "type": "agent",
+      "description": "Generated agent for synthetic benchmarking (Gin based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "CodeAssistant-12",
+      "type": "tool",
+      "description": "Generated tool for synthetic benchmarking (Django based)",
+      "file_path": null,
+      "language": "Kotlin"
+    },
+    {
+      "name": "tracing-13",
+      "type": "service",
+      "description": "Generated service for synthetic benchmarking (Django based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "quantum-db-14",
+      "type": "project",
+      "description": "Generated project for synthetic benchmarking (Express based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "database-15",
+      "type": "service",
+      "description": "Generated service for synthetic benchmarking (Next.js based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "CI/CD-16",
+      "type": "concept",
+      "description": "Generated concept for synthetic benchmarking (FastAPI based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "message-queue-17",
+      "type": "component",
+      "description": "Generated component for synthetic benchmarking (React based)",
+      "file_path": "/src/components/message_queue_17",
+      "language": "Python"
+    },
+    {
+      "name": "web-client-18",
+      "type": "component",
+      "description": "Generated component for synthetic benchmarking (Gin based)",
+      "file_path": "/src/components/web_client_18",
+      "language": "Rust"
+    },
+    {
+      "name": "event-sourcing-19",
+      "type": "concept",
+      "description": "Generated concept for synthetic benchmarking (React based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "README.md-0",
+      "type": "file",
+      "description": "Generated file for synthetic benchmarking (Next.js based)",
+      "file_path": "/src/files/README.md_0",
+      "language": "Java"
+    },
+    {
+      "name": "microservices-1",
+      "type": "concept",
+      "description": "Generated concept for synthetic benchmarking (Axum based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "react-dashboard-2",
+      "type": "project",
+      "description": "Generated project for synthetic benchmarking (Django based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "microservices-3",
+      "type": "concept",
+      "description": "Generated concept for synthetic benchmarking (Spring based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "logging-4",
+      "type": "service",
+      "description": "Generated service for synthetic benchmarking (Axum based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "auth-module-5",
+      "type": "component",
+      "description": "Generated component for synthetic benchmarking (Next.js based)",
+      "file_path": "/src/components/auth_module_5",
+      "language": "TypeScript"
+    },
+    {
+      "name": "microservices-6",
+      "type": "concept",
+      "description": "Generated concept for synthetic benchmarking (Express based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "react-dashboard-7",
+      "type": "project",
+      "description": "Generated project for synthetic benchmarking (Express based)",
+      "file_path": null,
+      "language": null
+    },
+    {
+      "name": "message-queue-8",
+      "type": "component",
+      "description": "Generated component for synthetic benchmarking (Axum based)",
+      "file_path": "/src/components/message_queue_8",
+      "language": "Go"
+    },
+    {
+      "name": "BuildTool-9",
+      "type": "tool",
+      "description": "Generated tool for synthetic benchmarking (Express based)",
+      "file_path": null,
+      "language": "TypeScript"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "react-dashboard",
+      "target": "metrics",
+      "type": "depends_on",
+      "confidence": 0.9,
+      "context": "React dashboard consumes metrics service API to display performance data"
+    },
+    {
+      "source": "react-dashboard",
+      "target": "monitoring",
+      "type": "depends_on",
+      "confidence": 0.85,
+      "context": "Dashboard integrates with monitoring service for real-time system health visualization"
+    },
+    {
+      "source": "index.tsx",
+      "target": "react-dashboard",
+      "type": "contained_in",
+      "confidence": 0.95,
+      "context": "Main React component file is part of the dashboard project"
+    },
+    {
+      "source": "main.py",
+      "target": "nexus-platform",
+      "type": "contained_in",
+      "confidence": 0.9,
+      "context": "FastAPI application entry point for the nexus platform"
+    },
+    {
+      "source": "config.yml",
+      "target": "user-service",
+      "type": "contained_in",
+      "confidence": 0.88,
+      "context": "Configuration file for the Axum-based user service component"
+    },
+    {
+      "source": "schema.sql",
+      "target": "quantum-db",
+      "type": "contained_in",
+      "confidence": 0.92,
+      "context": "Database schema definition file for the quantum database project"
+    },
+    {
+      "source": "ml-pipeline",
+      "target": "data-processor",
+      "type": "depends_on",
+      "confidence": 0.87,
+      "context": "ML pipeline uses data processor component for input data transformation"
+    },
+    {
+      "source": "data-processor",
+      "target": "quantum-db",
+      "type": "depends_on",
+      "confidence": 0.83,
+      "context": "Data processor component reads from and writes to quantum database"
+    },
+    {
+      "source": "load-balancer",
+      "target": "user-service",
+      "type": "routes_to",
+      "confidence": 0.91,
+      "context": "Load balancer distributes incoming requests to user service instances"
+    },
+    {
+      "source": "load-balancer",
+      "target": "metrics",
+      "type": "routes_to",
+      "confidence": 0.89,
+      "context": "Load balancer forwards metrics requests to appropriate service instances"
+    },
+    {
+      "source": "monitoring",
+      "target": "tracing",
+      "type": "depends_on",
+      "confidence": 0.86,
+      "context": "Monitoring service integrates with tracing service for distributed request tracking"
+    },
+    {
+      "source": "tracing",
+      "target": "user-service",
+      "type": "monitors",
+      "confidence": 0.84,
+      "context": "Tracing service instruments user service for request flow analysis"
+    },
+    {
+      "source": "Profiler",
+      "target": "nexus-platform",
+      "type": "analyzes",
+      "confidence": 0.82,
+      "context": "Profiler tool analyzes performance characteristics of nexus platform"
+    },
+    {
+      "source": "Profiler",
+      "target": "main.py",
+      "type": "modifies",
+      "confidence": 0.75,
+      "context": "Profiler may inject instrumentation code into main application file"
+    },
+    {
+      "source": "containerization",
+      "target": "user-service",
+      "type": "packages",
+      "confidence": 0.88,
+      "context": "Containerization concept applied to package user service for deployment"
+    },
+    {
+      "source": "containerization",
+      "target": "metrics",
+      "type": "packages",
+      "confidence": 0.87,
+      "context": "Metrics service is containerized for scalable deployment"
+    },
+    {
+      "source": "nexus-platform",
+      "target": "user-service",
+      "type": "depends_on",
+      "confidence": 0.9,
+      "context": "Nexus platform integrates user service for authentication and user management"
+    },
+    {
+      "source": "ml-pipeline",
+      "target": "metrics",
+      "type": "depends_on",
+      "confidence": 0.81,
+      "context": "ML pipeline reports training and inference metrics to metrics service"
+    },
+    {
+      "source": "react-dashboard",
+      "target": "index.tsx",
+      "type": "contains",
+      "confidence": 0.95,
+      "context": "Dashboard project contains the main React component file"
+    },
+    {
+      "source": "quantum-db",
+      "target": "schema.sql",
+      "type": "contains",
+      "confidence": 0.93,
+      "context": "Database project includes schema definition file"
+    },
+    {
+      "source": "user-service",
+      "target": "config.yml",
+      "type": "contains",
+      "confidence": 0.89,
+      "context": "User service component includes configuration file"
+    },
+    {
+      "source": "monitoring",
+      "target": "load-balancer",
+      "type": "monitors",
+      "confidence": 0.85,
+      "context": "Monitoring service tracks load balancer health and performance metrics"
+    },
+    {
+      "source": "tracing",
+      "target": "ml-pipeline",
+      "type": "monitors",
+      "confidence": 0.79,
+      "context": "Tracing service provides observability for ML pipeline execution"
+    },
+    {
+      "source": "nexus-platform",
+      "target": "quantum-db",
+      "type": "depends_on",
+      "confidence": 0.84,
+      "context": "Nexus platform uses quantum database for data persistence"
+    },
+    {
+      "source": "data-processor",
+      "target": "tracing",
+      "type": "integrates_with",
+      "confidence": 0.78,
+      "context": "Data processor component includes tracing for processing pipeline visibility"
+    },
+    {
+      "source": "Profiler",
+      "target": "data-processor",
+      "type": "analyzes",
+      "confidence": 0.8,
+      "context": "Profiler tool measures data processor component performance"
+    },
+    {
+      "source": "containerization",
+      "target": "load-balancer",
+      "type": "packages",
+      "confidence": 0.86,
+      "context": "Load balancer service is containerized for deployment flexibility"
+    },
+    {
+      "source": "ml-pipeline",
+      "target": "nexus-platform",
+      "type": "integrates_with",
+      "confidence": 0.77,
+      "context": "ML pipeline integrates with nexus platform for model deployment"
+    },
+    {
+      "source": "monitoring",
+      "target": "data-processor",
+      "type": "monitors",
+      "confidence": 0.83,
+      "context": "Monitoring service tracks data processor component health and throughput"
+    },
+    {
+      "source": "react-dashboard",
+      "target": "user-service",
+      "type": "depends_on",
+      "confidence": 0.88,
+      "context": "Dashboard authenticates users through user service API"
+    },
+    {
+      "source": "tracing-13",
+      "target": "load-balancer",
+      "type": "extends",
+      "confidence": 0.75,
+      "context": "Synthetic relationship between service and service"
+    },
+    {
+      "source": "BuildTool-9",
+      "target": "react-dashboard-2",
+      "type": "configures",
+      "confidence": 0.73,
+      "context": "Synthetic relationship between tool and project"
+    },
+    {
+      "source": "logging-4",
+      "target": "index.tsx-0",
+      "type": "modifies",
+      "confidence": 0.96,
+      "context": "Synthetic relationship between service and file"
+    },
+    {
+      "source": "user-service",
+      "target": "metrics",
+      "type": "contains",
+      "confidence": 0.81,
+      "context": "Synthetic relationship between component and service"
+    },
+    {
+      "source": "microservices-3",
+      "target": "monitoring",
+      "type": "modifies",
+      "confidence": 0.89,
+      "context": "Synthetic relationship between concept and service"
+    },
+    {
+      "source": "web-client-1",
+      "target": "react-dashboard-7",
+      "type": "uses",
+      "confidence": 0.84,
+      "context": "Synthetic relationship between component and project"
+    },
+    {
+      "source": "react-dashboard",
+      "target": "web-client-1",
+      "type": "contains",
+      "confidence": 0.76,
+      "context": "Synthetic relationship between project and component"
+    },
+    {
+      "source": "CodeAssistant-12",
+      "target": "microservices-6",
+      "type": "configures",
+      "confidence": 0.84,
+      "context": "Synthetic relationship between tool and concept"
+    },
+    {
+      "source": "microservices-6",
+      "target": "CI/CD-16",
+      "type": "depends_on",
+      "confidence": 0.99,
+      "context": "Synthetic relationship between concept and concept"
+    },
+    {
+      "source": "web-client-1",
+      "target": "config.yml",
+      "type": "analyzes",
+      "confidence": 0.75,
+      "context": "Synthetic relationship between component and file"
+    },
+    {
+      "source": "CodeAssistant-12",
+      "target": "cache-layer-8",
+      "type": "monitors",
+      "confidence": 0.78,
+      "context": "Synthetic relationship between tool and component"
+    },
+    {
+      "source": "schema.sql-10",
+      "target": "index.tsx",
+      "type": "calls",
+      "confidence": 0.93,
+      "context": "Synthetic relationship between file and file"
+    },
+    {
+      "source": "microservices-6",
+      "target": "containerization",
+      "type": "configures",
+      "confidence": 0.86,
+      "context": "Synthetic relationship between concept and concept"
+    },
+    {
+      "source": "message-queue-8",
+      "target": "web-client-18",
+      "type": "creates",
+      "confidence": 0.94,
+      "context": "Synthetic relationship between component and component"
+    },
+    {
+      "source": "Profiler",
+      "target": "database-15",
+      "type": "analyzes",
+      "confidence": 0.76,
+      "context": "Synthetic relationship between tool and service"
+    },
+    {
+      "source": "README.md-0",
+      "target": "config.yml",
+      "type": "creates",
+      "confidence": 0.95,
+      "context": "Synthetic relationship between file and file"
+    },
+    {
+      "source": "cache-layer-8",
+      "target": "nexus-platform",
+      "type": "implements",
+      "confidence": 0.84,
+      "context": "Synthetic relationship between component and project"
+    },
+    {
+      "source": "quantum-db-14",
+      "target": "ml-pipeline",
+      "type": "includes",
+      "confidence": 0.73,
+      "context": "Synthetic relationship between project and project"
+    },
+    {
+      "source": "message-queue-17",
+      "target": "schema.sql-10",
+      "type": "calls",
+      "confidence": 0.74,
+      "context": "Synthetic relationship between component and file"
+    },
+    {
+      "source": "data-processor",
+      "target": "Profiler",
+      "type": "extends",
+      "confidence": 0.75,
+      "context": "Synthetic relationship between component and tool"
+    },
+    {
+      "source": "load-balancer",
+      "target": "cache-layer-8",
+      "type": "extends",
+      "confidence": 0.76,
+      "context": "Synthetic relationship between service and component"
+    },
+    {
+      "source": "tracing-13",
+      "target": "web-client-1",
+      "type": "modifies",
+      "confidence": 0.87,
+      "context": "Synthetic relationship between service and component"
+    },
+    {
+      "source": "logging-4",
+      "target": "index.tsx-0",
+      "type": "depends_on",
+      "confidence": 0.84,
+      "context": "Synthetic relationship between service and file"
+    },
+    {
+      "source": "containerization",
+      "target": "schema.sql-10",
+      "type": "references",
+      "confidence": 0.95,
+      "context": "Synthetic relationship between concept and file"
+    },
+    {
+      "source": "user-service",
+      "target": "microservices-6",
+      "type": "includes",
+      "confidence": 0.82,
+      "context": "Synthetic relationship between component and concept"
+    },
+    {
+      "source": "microservices-6",
+      "target": "database-15",
+      "type": "creates",
+      "confidence": 0.88,
+      "context": "Synthetic relationship between concept and service"
+    },
+    {
+      "source": "message-queue-8",
+      "target": "CodeAssistant-12",
+      "type": "depends_on",
+      "confidence": 0.71,
+      "context": "Synthetic relationship between component and tool"
+    },
+    {
+      "source": "schema.sql-10",
+      "target": "microservices-1",
+      "type": "analyzes",
+      "confidence": 0.75,
+      "context": "Synthetic relationship between file and concept"
+    },
+    {
+      "source": "data-processor",
+      "target": "observability-4",
+      "type": "references",
+      "confidence": 0.92,
+      "context": "Synthetic relationship between component and concept"
+    },
+    {
+      "source": "Dockerfile-6",
+      "target": "qa-engineer-11",
+      "type": "monitors",
+      "confidence": 0.75,
+      "context": "Synthetic relationship between file and agent"
+    },
+    {
+      "source": "index.tsx-0",
+      "target": "CI/CD-16",
+      "type": "references",
+      "confidence": 0.98,
+      "context": "Synthetic relationship between file and concept"
+    },
+    {
+      "source": "microservices-1",
+      "target": "microservices-3",
+      "type": "uses",
+      "confidence": 0.96,
+      "context": "Synthetic relationship between concept and concept"
+    },
+    {
+      "source": "event-sourcing-19",
+      "target": "observability-4",
+      "type": "creates",
+      "confidence": 0.77,
+      "context": "Synthetic relationship between concept and concept"
+    },
+    {
+      "source": "schema.sql",
+      "target": "nexus-platform",
+      "type": "modifies",
+      "confidence": 0.81,
+      "context": "Synthetic relationship between file and project"
+    },
+    {
+      "source": "main.py-9",
+      "target": "main.py",
+      "type": "implements",
+      "confidence": 0.97,
+      "context": "Synthetic relationship between file and file"
+    },
+    {
+      "source": "data-processor-3",
+      "target": "CodeAssistant-12",
+      "type": "deploys",
+      "confidence": 0.88,
+      "context": "Synthetic relationship between component and tool"
+    },
+    {
+      "source": "quantum-db",
+      "target": "microservices-3",
+      "type": "deploys",
+      "confidence": 0.87,
+      "context": "Synthetic relationship between project and concept"
+    },
+    {
+      "source": "microservices-6",
+      "target": "user-service",
+      "type": "monitors",
+      "confidence": 0.88,
+      "context": "Synthetic relationship between concept and component"
+    },
+    {
+      "source": "config.yml",
+      "target": "observability-4",
+      "type": "deploys",
+      "confidence": 0.88,
+      "context": "Synthetic relationship between file and concept"
+    },
+    {
+      "source": "load-balancer",
+      "target": "message-queue-17",
+      "type": "includes",
+      "confidence": 0.83,
+      "context": "Synthetic relationship between service and component"
+    },
+    {
+      "source": "BuildTool-9",
+      "target": "nexus-platform",
+      "type": "monitors",
+      "confidence": 0.83,
+      "context": "Synthetic relationship between tool and project"
+    },
+    {
+      "source": "metrics",
+      "target": "main.py",
+      "type": "depends_on",
+      "confidence": 0.82,
+      "context": "Synthetic relationship between service and file"
+    },
+    {
+      "source": "qa-engineer-11",
+      "target": "observability-4",
+      "type": "contains",
+      "confidence": 0.73,
+      "context": "Synthetic relationship between agent and concept"
+    },
+    {
+      "source": "nexus-platform",
+      "target": "data-processor",
+      "type": "monitors",
+      "confidence": 0.98,
+      "context": "Synthetic relationship between project and component"
+    },
+    {
+      "source": "nexus-platform",
+      "target": "message-queue-17",
+      "type": "modifies",
+      "confidence": 0.8,
+      "context": "Synthetic relationship between project and component"
+    },
+    {
+      "source": "Dockerfile-6",
+      "target": "index.tsx-0",
+      "type": "modifies",
+      "confidence": 0.82,
+      "context": "Synthetic relationship between file and file"
+    },
+    {
+      "source": "event-sourcing-19",
+      "target": "config.yml",
+      "type": "analyzes",
+      "confidence": 0.93,
+      "context": "Synthetic relationship between concept and file"
+    },
+    {
+      "source": "qa-engineer-11",
+      "target": "main.py",
+      "type": "extends",
+      "confidence": 0.75,
+      "context": "Synthetic relationship between agent and file"
+    },
+    {
+      "source": "react-dashboard-7",
+      "target": "BuildTool-9",
+      "type": "references",
+      "confidence": 0.97,
+      "context": "Synthetic relationship between project and tool"
+    },
+    {
+      "source": "index.tsx-0",
+      "target": "data-processor-3",
+      "type": "contains",
+      "confidence": 0.76,
+      "context": "Synthetic relationship between file and component"
+    },
+    {
+      "source": "tracing",
+      "target": "BuildTool-9",
+      "type": "configures",
+      "confidence": 0.97,
+      "context": "Synthetic relationship between service and tool"
+    },
+    {
+      "source": "load-balancer",
+      "target": "nexus-platform",
+      "type": "implements",
+      "confidence": 0.92,
+      "context": "Synthetic relationship between service and project"
+    },
+    {
+      "source": "quantum-db",
+      "target": "message-queue-17",
+      "type": "includes",
+      "confidence": 0.93,
+      "context": "Synthetic relationship between project and component"
+    },
+    {
+      "source": "message-queue-2",
+      "target": "index.tsx-0",
+      "type": "calls",
+      "confidence": 0.93,
+      "context": "Synthetic relationship between component and file"
+    },
+    {
+      "source": "data-processor",
+      "target": "microservices-1",
+      "type": "contains",
+      "confidence": 0.95,
+      "context": "Synthetic relationship between component and concept"
+    },
+    {
+      "source": "main.py-9",
+      "target": "message-queue-2",
+      "type": "implements",
+      "confidence": 0.83,
+      "context": "Synthetic relationship between file and component"
+    },
+    {
+      "source": "cache-layer-8",
+      "target": "schema.sql",
+      "type": "configures",
+      "confidence": 0.86,
+      "context": "Synthetic relationship between component and file"
+    },
+    {
+      "source": "config.yml",
+      "target": "react-dashboard-2",
+      "type": "references",
+      "confidence": 0.95,
+      "context": "Synthetic relationship between file and project"
+    },
+    {
+      "source": "Dockerfile-6",
+      "target": "nexus-platform",
+      "type": "calls",
+      "confidence": 0.77,
+      "context": "Synthetic relationship between file and project"
+    },
+    {
+      "source": "message-queue-17",
+      "target": "load-balancer",
+      "type": "depends_on",
+      "confidence": 0.77,
+      "context": "Synthetic relationship between component and service"
+    },
+    {
+      "source": "qa-engineer-11",
+      "target": "main.py",
+      "type": "implements",
+      "confidence": 0.86,
+      "context": "Synthetic relationship between agent and file"
+    },
+    {
+      "source": "index.tsx",
+      "target": "nexus-platform",
+      "type": "references",
+      "confidence": 0.99,
+      "context": "Synthetic relationship between file and project"
+    },
+    {
+      "source": "react-dashboard",
+      "target": "ml-pipeline",
+      "type": "configures",
+      "confidence": 0.96,
+      "context": "Synthetic relationship between project and project"
+    },
+    {
+      "source": "react-dashboard",
+      "target": "logging-4",
+      "type": "creates",
+      "confidence": 0.85,
+      "context": "Synthetic relationship between project and service"
+    },
+    {
+      "source": "auth-module-5",
+      "target": "react-dashboard-7",
+      "type": "extends",
+      "confidence": 0.74,
+      "context": "Synthetic relationship between component and project"
+    },
+    {
+      "source": "cache-layer-8",
+      "target": "Dockerfile-6",
+      "type": "monitors",
+      "confidence": 0.83,
+      "context": "Synthetic relationship between component and file"
+    },
+    {
+      "source": "microservices-3",
+      "target": "react-dashboard",
+      "type": "modifies",
+      "confidence": 0.98,
+      "context": "Synthetic relationship between concept and project"
+    },
+    {
+      "source": "ml-pipeline-5",
+      "target": "nexus-platform",
+      "type": "depends_on",
+      "confidence": 0.83,
+      "context": "Synthetic relationship between project and project"
+    },
+    {
+      "source": "config.yml",
+      "target": "Dockerfile-6",
+      "type": "uses",
+      "confidence": 0.76
+    },
+    {
+      "source": "CI/CD-16",
+      "target": "database-15",
+      "type": "implements",
+      "confidence": 0.82
+    },
+    {
+      "source": "ml-pipeline-5",
+      "target": "auth-module-5",
+      "type": "inherits_from",
+      "confidence": 0.7
+    },
+    {
+      "source": "observability-4",
+      "target": "qa-engineer-11",
+      "type": "calls",
+      "confidence": 0.86
+    },
+    {
+      "source": "Profiler",
+      "target": "schema.sql-10",
+      "type": "references",
+      "confidence": 0.84
+    },
+    {
+      "source": "data-processor",
+      "target": "database-15",
+      "type": "contains",
+      "confidence": 0.86
+    },
+    {
+      "source": "CI/CD-16",
+      "target": "load-balancer",
+      "type": "uses",
+      "confidence": 0.6
+    },
+    {
+      "source": "load-balancer",
+      "target": "microservices-1",
+      "type": "references",
+      "confidence": 0.64
+    },
+    {
+      "source": "react-dashboard",
+      "target": "microservices-6",
+      "type": "calls",
+      "confidence": 0.81
+    },
+    {
+      "source": "web-client-1",
+      "target": "microservices-6",
+      "type": "extends",
+      "confidence": 0.82
+    },
+    {
+      "source": "main.py",
+      "target": "data-processor-3",
+      "type": "imports",
+      "confidence": 0.63
+    },
+    {
+      "source": "react-dashboard-2",
+      "target": "main.py-9",
+      "type": "imports",
+      "confidence": 0.7
+    },
+    {
+      "source": "database-15",
+      "target": "microservices-1",
+      "type": "inherits_from",
+      "confidence": 0.83
+    },
+    {
+      "source": "metrics",
+      "target": "react-dashboard-2",
+      "type": "depends_on",
+      "confidence": 0.63
+    },
+    {
+      "source": "message-queue-17",
+      "target": "quantum-db",
+      "type": "extends",
+      "confidence": 0.7
+    },
+    {
+      "source": "CodeAssistant-12",
+      "target": "index.tsx",
+      "type": "extends",
+      "confidence": 0.64
+    },
+    {
+      "source": "message-queue-8",
+      "target": "index.tsx",
+      "type": "implements",
+      "confidence": 0.79
+    },
+    {
+      "source": "event-sourcing-19",
+      "target": "qa-engineer-7",
+      "type": "implements",
+      "confidence": 0.66
+    },
+    {
+      "source": "user-service",
+      "target": "logging-4",
+      "type": "imports",
+      "confidence": 0.63
+    },
+    {
+      "source": "observability-4",
+      "target": "config.yml",
+      "type": "depends_on",
+      "confidence": 0.71
+    },
+    {
+      "source": "react-dashboard-7",
+      "target": "web-client-18",
+      "type": "configures",
+      "confidence": 0.83
+    },
+    {
+      "source": "index.tsx-0",
+      "target": "message-queue-8",
+      "type": "calls",
+      "confidence": 0.7
+    },
+    {
+      "source": "qa-engineer-7",
+      "target": "ml-pipeline-5",
+      "type": "calls",
+      "confidence": 0.88
+    },
+    {
+      "source": "main.py",
+      "target": "web-client-18",
+      "type": "calls",
+      "confidence": 0.79
+    },
+    {
+      "source": "microservices-1",
+      "target": "cache-layer-8",
+      "type": "extends",
+      "confidence": 0.74
+    },
+    {
+      "source": "schema.sql-10",
+      "target": "quantum-db",
+      "type": "extends",
+      "confidence": 0.73
+    },
+    {
+      "source": "observability-4",
+      "target": "containerization",
+      "type": "contains",
+      "confidence": 0.75
+    },
+    {
+      "source": "react-dashboard-7",
+      "target": "CodeAssistant-12",
+      "type": "contains",
+      "confidence": 0.67
+    },
+    {
+      "source": "load-balancer",
+      "target": "index.tsx",
+      "type": "inherits_from",
+      "confidence": 0.65
+    },
+    {
+      "source": "event-sourcing-19",
+      "target": "tracing-13",
+      "type": "implements",
+      "confidence": 0.8
+    },
+    {
+      "source": "event-sourcing-19",
+      "target": "quantum-db",
+      "type": "uses",
+      "confidence": 0.8
+    },
+    {
+      "source": "main.py-9",
+      "target": "index.tsx",
+      "type": "contains",
+      "confidence": 0.79
+    },
+    {
+      "source": "BuildTool-9",
+      "target": "data-processor-3",
+      "type": "inherits_from",
+      "confidence": 0.69
+    },
+    {
+      "source": "qa-engineer-7",
+      "target": "message-queue-17",
+      "type": "inherits_from",
+      "confidence": 0.78
+    },
+    {
+      "source": "message-queue-8",
+      "target": "metrics",
+      "type": "implements",
+      "confidence": 0.73
+    },
+    {
+      "source": "message-queue-2",
+      "target": "nexus-platform",
+      "type": "uses",
+      "confidence": 0.81
+    },
+    {
+      "source": "event-sourcing-19",
+      "target": "BuildTool-9",
+      "type": "uses",
+      "confidence": 0.78
+    },
+    {
+      "source": "Dockerfile-6",
+      "target": "web-client-1",
+      "type": "contains",
+      "confidence": 0.65
+    },
+    {
+      "source": "monitoring",
+      "target": "web-client-1",
+      "type": "references",
+      "confidence": 0.75
+    },
+    {
+      "source": "microservices-1",
+      "target": "main.py-9",
+      "type": "configures",
+      "confidence": 0.62
+    },
+    {
+      "source": "Dockerfile-6",
+      "target": "tracing",
+      "type": "inherits_from",
+      "confidence": 0.78
+    },
+    {
+      "source": "index.tsx-0",
+      "target": "react-dashboard-2",
+      "type": "imports",
+      "confidence": 0.63
+    },
+    {
+      "source": "database-15",
+      "target": "message-queue-17",
+      "type": "inherits_from",
+      "confidence": 0.72
+    },
+    {
+      "source": "ml-pipeline-5",
+      "target": "monitoring",
+      "type": "extends",
+      "confidence": 0.64
+    },
+    {
+      "source": "quantum-db-14",
+      "target": "qa-engineer-7",
+      "type": "references",
+      "confidence": 0.84
+    },
+    {
+      "source": "qa-engineer-11",
+      "target": "config.yml",
+      "type": "uses",
+      "confidence": 0.89
+    },
+    {
+      "source": "data-processor",
+      "target": "qa-engineer-11",
+      "type": "contains",
+      "confidence": 0.83
+    },
+    {
+      "source": "nexus-platform",
+      "target": "message-queue-2",
+      "type": "references",
+      "confidence": 0.78
+    },
+    {
+      "source": "metrics",
+      "target": "Profiler",
+      "type": "references",
+      "confidence": 0.84
+    },
+    {
+      "source": "load-balancer",
+      "target": "config.yml",
+      "type": "depends_on",
+      "confidence": 0.62
+    },
+    {
+      "source": "data-processor-3",
+      "target": "database-15",
+      "type": "imports",
+      "confidence": 0.83
+    },
+    {
+      "source": "CodeAssistant-12",
+      "target": "BuildTool-9",
+      "type": "uses",
+      "confidence": 0.82
+    },
+    {
+      "source": "data-processor-3",
+      "target": "monitoring",
+      "type": "inherits_from",
+      "confidence": 0.84
+    },
+    {
+      "source": "ml-pipeline-5",
+      "target": "message-queue-2",
+      "type": "imports",
+      "confidence": 0.69
+    },
+    {
+      "source": "README.md-0",
+      "target": "message-queue-8",
+      "type": "uses",
+      "confidence": 0.81
+    },
+    {
+      "source": "qa-engineer-11",
+      "target": "load-balancer",
+      "type": "inherits_from",
+      "confidence": 0.8
+    },
+    {
+      "source": "load-balancer",
+      "target": "database-15",
+      "type": "extends",
+      "confidence": 0.78
+    },
+    {
+      "source": "Profiler",
+      "target": "ml-pipeline",
+      "type": "depends_on",
+      "confidence": 0.77
+    },
+    {
+      "source": "web-client-18",
+      "target": "user-service",
+      "type": "inherits_from",
+      "confidence": 0.85
+    },
+    {
+      "source": "observability-4",
+      "target": "data-processor",
+      "type": "imports",
+      "confidence": 0.66
+    },
+    {
+      "source": "index.tsx-0",
+      "target": "qa-engineer-11",
+      "type": "calls",
+      "confidence": 0.85
+    },
+    {
+      "source": "index.tsx-0",
+      "target": "microservices-1",
+      "type": "configures",
+      "confidence": 0.63
+    },
+    {
+      "source": "auth-module-5",
+      "target": "logging-4",
+      "type": "implements",
+      "confidence": 0.73
+    },
+    {
+      "source": "quantum-db-14",
+      "target": "qa-engineer-11",
+      "type": "imports",
+      "confidence": 0.81
+    },
+    {
+      "source": "message-queue-17",
+      "target": "quantum-db-14",
+      "type": "imports",
+      "confidence": 0.9
+    },
+    {
+      "source": "README.md-0",
+      "target": "nexus-platform",
+      "type": "uses",
+      "confidence": 0.69
+    },
+    {
+      "source": "microservices-1",
+      "target": "load-balancer",
+      "type": "configures",
+      "confidence": 0.72
+    },
+    {
+      "source": "tracing-13",
+      "target": "ml-pipeline-5",
+      "type": "uses",
+      "confidence": 0.68
+    },
+    {
+      "source": "containerization",
+      "target": "BuildTool-9",
+      "type": "implements",
+      "confidence": 0.75
+    },
+    {
+      "source": "message-queue-17",
+      "target": "microservices-3",
+      "type": "configures",
+      "confidence": 0.83
+    },
+    {
+      "source": "react-dashboard",
+      "target": "qa-engineer-7",
+      "type": "configures",
+      "confidence": 0.71
+    },
+    {
+      "source": "schema.sql",
+      "target": "react-dashboard",
+      "type": "configures",
+      "confidence": 0.61
+    },
+    {
+      "source": "data-processor-3",
+      "target": "metrics",
+      "type": "imports",
+      "confidence": 0.73
+    },
+    {
+      "source": "message-queue-17",
+      "target": "README.md-0",
+      "type": "uses",
+      "confidence": 0.78
+    },
+    {
+      "source": "microservices-3",
+      "target": "Dockerfile-6",
+      "type": "uses",
+      "confidence": 0.82
+    },
+    {
+      "source": "qa-engineer-11",
+      "target": "nexus-platform",
+      "type": "calls",
+      "confidence": 0.64
+    },
+    {
+      "source": "message-queue-8",
+      "target": "containerization",
+      "type": "inherits_from",
+      "confidence": 0.81
+    },
+    {
+      "source": "ml-pipeline-5",
+      "target": "react-dashboard",
+      "type": "extends",
+      "confidence": 0.65
+    },
+    {
+      "source": "qa-engineer-11",
+      "target": "database-15",
+      "type": "depends_on",
+      "confidence": 0.9
+    },
+    {
+      "source": "database-15",
+      "target": "web-client-18",
+      "type": "contains",
+      "confidence": 0.73
+    },
+    {
+      "source": "auth-module-5",
+      "target": "schema.sql",
+      "type": "calls",
+      "confidence": 0.6
+    },
+    {
+      "source": "schema.sql-10",
+      "target": "containerization",
+      "type": "imports",
+      "confidence": 0.66
+    },
+    {
+      "source": "microservices-3",
+      "target": "logging-4",
+      "type": "implements",
+      "confidence": 0.71
+    },
+    {
+      "source": "BuildTool-9",
+      "target": "main.py-9",
+      "type": "inherits_from",
+      "confidence": 0.87
+    },
+    {
+      "source": "Dockerfile-6",
+      "target": "message-queue-8",
+      "type": "imports",
+      "confidence": 0.8
+    },
+    {
+      "source": "microservices-1",
+      "target": "auth-module-5",
+      "type": "calls",
+      "confidence": 0.83
+    },
+    {
+      "source": "web-client-18",
+      "target": "load-balancer",
+      "type": "extends",
+      "confidence": 0.7
+    },
+    {
+      "source": "CI/CD-16",
+      "target": "cache-layer-8",
+      "type": "depends_on",
+      "confidence": 0.68
+    },
+    {
+      "source": "data-processor-3",
+      "target": "microservices-6",
+      "type": "inherits_from",
+      "confidence": 0.82
+    },
+    {
+      "source": "ml-pipeline-5",
+      "target": "ml-pipeline",
+      "type": "extends",
+      "confidence": 0.76
+    },
+    {
+      "source": "message-queue-8",
+      "target": "logging-4",
+      "type": "configures",
+      "confidence": 0.64
+    },
+    {
+      "source": "database-15",
+      "target": "react-dashboard",
+      "type": "configures",
+      "confidence": 0.79
+    },
+    {
+      "source": "react-dashboard",
+      "target": "schema.sql-10",
+      "type": "uses",
+      "confidence": 0.87
+    },
+    {
+      "source": "react-dashboard-7",
+      "target": "Dockerfile-6",
+      "type": "references",
+      "confidence": 0.8
+    },
+    {
+      "source": "ml-pipeline",
+      "target": "config.yml",
+      "type": "contains",
+      "confidence": 0.86
+    },
+    {
+      "source": "observability-4",
+      "target": "message-queue-8",
+      "type": "depends_on",
+      "confidence": 0.72
+    },
+    {
+      "source": "microservices-3",
+      "target": "BuildTool-9",
+      "type": "imports",
+      "confidence": 0.77
+    },
+    {
+      "source": "react-dashboard",
+      "target": "CI/CD-16",
+      "type": "extends",
+      "confidence": 0.9
+    },
+    {
+      "source": "event-sourcing-19",
+      "target": "schema.sql",
+      "type": "calls",
+      "confidence": 0.65
+    },
+    {
+      "source": "Dockerfile-6",
+      "target": "message-queue-17",
+      "type": "depends_on",
+      "confidence": 0.62
+    },
+    {
+      "source": "nexus-platform",
+      "target": "schema.sql-10",
+      "type": "references",
+      "confidence": 0.73
+    },
+    {
+      "source": "microservices-3",
+      "target": "microservices-1",
+      "type": "extends",
+      "confidence": 0.74
+    },
+    {
+      "source": "database-15",
+      "target": "web-client-1",
+      "type": "extends",
+      "confidence": 0.89
+    },
+    {
+      "source": "BuildTool-9",
+      "target": "qa-engineer-7",
+      "type": "implements",
+      "confidence": 0.75
+    },
+    {
+      "source": "containerization",
+      "target": "microservices-6",
+      "type": "configures",
+      "confidence": 0.86
+    },
+    {
+      "source": "tracing",
+      "target": "Profiler",
+      "type": "uses",
+      "confidence": 0.86
+    },
+    {
+      "source": "message-queue-17",
+      "target": "database-15",
+      "type": "contains",
+      "confidence": 0.72
+    },
+    {
+      "source": "database-15",
+      "target": "nexus-platform",
+      "type": "contains",
+      "confidence": 0.63
+    },
+    {
+      "source": "nexus-platform",
+      "target": "tracing",
+      "type": "extends",
+      "confidence": 0.7
+    },
+    {
+      "source": "index.tsx",
+      "target": "monitoring",
+      "type": "uses",
+      "confidence": 0.71
+    },
+    {
+      "source": "BuildTool-9",
+      "target": "microservices-6",
+      "type": "implements",
+      "confidence": 0.87
+    },
+    {
+      "source": "qa-engineer-7",
+      "target": "react-dashboard",
+      "type": "imports",
+      "confidence": 0.75
+    },
+    {
+      "source": "quantum-db",
+      "target": "data-processor-3",
+      "type": "uses",
+      "confidence": 0.81
+    },
+    {
+      "source": "Dockerfile-6",
+      "target": "react-dashboard-7",
+      "type": "imports",
+      "confidence": 0.67
+    },
+    {
+      "source": "schema.sql",
+      "target": "auth-module-5",
+      "type": "references",
+      "confidence": 0.65
+    },
+    {
+      "source": "microservices-3",
+      "target": "README.md-0",
+      "type": "contains",
+      "confidence": 0.63
+    },
+    {
+      "source": "nexus-platform",
+      "target": "react-dashboard-2",
+      "type": "uses",
+      "confidence": 0.84
+    },
+    {
+      "source": "index.tsx-0",
+      "target": "CodeAssistant-12",
+      "type": "imports",
+      "confidence": 0.69
+    },
+    {
+      "source": "event-sourcing-19",
+      "target": "message-queue-2",
+      "type": "implements",
+      "confidence": 0.79
+    },
+    {
+      "source": "message-queue-17",
+      "target": "tracing",
+      "type": "depends_on",
+      "confidence": 0.89
+    },
+    {
+      "source": "quantum-db",
+      "target": "schema.sql-10",
+      "type": "references",
+      "confidence": 0.75
+    },
+    {
+      "source": "cache-layer-8",
+      "target": "web-client-1",
+      "type": "contains",
+      "confidence": 0.67
+    },
+    {
+      "source": "message-queue-2",
+      "target": "qa-engineer-7",
+      "type": "imports",
+      "confidence": 0.8
+    },
+    {
+      "source": "react-dashboard",
+      "target": "README.md-0",
+      "type": "contains",
+      "confidence": 0.64
+    },
+    {
+      "source": "tracing",
+      "target": "data-processor-3",
+      "type": "configures",
+      "confidence": 0.9
+    },
+    {
+      "source": "CodeAssistant-12",
+      "target": "metrics",
+      "type": "implements",
+      "confidence": 0.8
+    },
+    {
+      "source": "main.py",
+      "target": "react-dashboard",
+      "type": "calls",
+      "confidence": 0.84
+    },
+    {
+      "source": "database-15",
+      "target": "qa-engineer-7",
+      "type": "imports",
+      "confidence": 0.88
+    },
+    {
+      "source": "schema.sql",
+      "target": "qa-engineer-11",
+      "type": "extends",
+      "confidence": 0.66
+    },
+    {
+      "source": "config.yml",
+      "target": "metrics",
+      "type": "uses",
+      "confidence": 0.71
+    },
+    {
+      "source": "nexus-platform",
+      "target": "microservices-3",
+      "type": "configures",
+      "confidence": 0.69
+    },
+    {
+      "source": "CI/CD-16",
+      "target": "schema.sql",
+      "type": "imports",
+      "confidence": 0.75
+    },
+    {
+      "source": "index.tsx",
+      "target": "logging-4",
+      "type": "calls",
+      "confidence": 0.85
+    },
+    {
+      "source": "load-balancer",
+      "target": "schema.sql",
+      "type": "imports",
+      "confidence": 0.89
+    },
+    {
+      "source": "message-queue-17",
+      "target": "react-dashboard-2",
+      "type": "inherits_from",
+      "confidence": 0.78
+    },
+    {
+      "source": "tracing-13",
+      "target": "auth-module-5",
+      "type": "inherits_from",
+      "confidence": 0.63
+    },
+    {
+      "source": "schema.sql-10",
+      "target": "qa-engineer-11",
+      "type": "extends",
+      "confidence": 0.71
+    },
+    {
+      "source": "containerization",
+      "target": "react-dashboard-7",
+      "type": "inherits_from",
+      "confidence": 0.67
+    },
+    {
+      "source": "react-dashboard",
+      "target": "cache-layer-8",
+      "type": "implements",
+      "confidence": 0.9
+    },
+    {
+      "source": "ml-pipeline-5",
+      "target": "config.yml",
+      "type": "imports",
+      "confidence": 0.88
+    },
+    {
+      "source": "config.yml",
+      "target": "nexus-platform",
+      "type": "calls",
+      "confidence": 0.71
+    },
+    {
+      "source": "qa-engineer-11",
+      "target": "web-client-1",
+      "type": "contains",
+      "confidence": 0.62
+    },
+    {
+      "source": "nexus-platform",
+      "target": "qa-engineer-11",
+      "type": "configures",
+      "confidence": 0.84
+    },
+    {
+      "source": "monitoring",
+      "target": "observability-4",
+      "type": "inherits_from",
+      "confidence": 0.78
+    },
+    {
+      "source": "react-dashboard",
+      "target": "quantum-db",
+      "type": "depends_on",
+      "confidence": 0.64
+    },
+    {
+      "source": "react-dashboard-2",
+      "target": "message-queue-2",
+      "type": "depends_on",
+      "confidence": 0.76
+    },
+    {
+      "source": "microservices-3",
+      "target": "schema.sql-10",
+      "type": "references",
+      "confidence": 0.68
+    },
+    {
+      "source": "ml-pipeline-5",
+      "target": "cache-layer-8",
+      "type": "depends_on",
+      "confidence": 0.66
+    },
+    {
+      "source": "ml-pipeline",
+      "target": "main.py",
+      "type": "configures",
+      "confidence": 0.64
+    },
+    {
+      "source": "quantum-db-14",
+      "target": "tracing-13",
+      "type": "imports",
+      "confidence": 0.77
+    },
+    {
+      "source": "monitoring",
+      "target": "qa-engineer-11",
+      "type": "contains",
+      "confidence": 0.73
+    },
+    {
+      "source": "load-balancer",
+      "target": "microservices-3",
+      "type": "inherits_from",
+      "confidence": 0.78
+    },
+    {
+      "source": "main.py",
+      "target": "README.md-0",
+      "type": "inherits_from",
+      "confidence": 0.66
+    },
+    {
+      "source": "microservices-3",
+      "target": "message-queue-17",
+      "type": "contains",
+      "confidence": 0.72
+    },
+    {
+      "source": "tracing",
+      "target": "Dockerfile-6",
+      "type": "calls",
+      "confidence": 0.63
+    },
+    {
+      "source": "react-dashboard-2",
+      "target": "react-dashboard",
+      "type": "imports",
+      "confidence": 0.66
+    },
+    {
+      "source": "web-client-1",
+      "target": "database-15",
+      "type": "references",
+      "confidence": 0.81
+    },
+    {
+      "source": "event-sourcing-19",
+      "target": "index.tsx",
+      "type": "implements",
+      "confidence": 0.61
+    },
+    {
+      "source": "auth-module-5",
+      "target": "microservices-3",
+      "type": "imports",
+      "confidence": 0.85
+    },
+    {
+      "source": "schema.sql",
+      "target": "message-queue-8",
+      "type": "depends_on",
+      "confidence": 0.71
+    },
+    {
+      "source": "config.yml",
+      "target": "index.tsx-0",
+      "type": "extends",
+      "confidence": 0.67
+    },
+    {
+      "source": "Dockerfile-6",
+      "target": "containerization",
+      "type": "references",
+      "confidence": 0.87
+    },
+    {
+      "source": "nexus-platform",
+      "target": "schema.sql",
+      "type": "calls",
+      "confidence": 0.7
+    },
+    {
+      "source": "message-queue-8",
+      "target": "react-dashboard",
+      "type": "imports",
+      "confidence": 0.69
+    },
+    {
+      "source": "Dockerfile-6",
+      "target": "react-dashboard",
+      "type": "references",
+      "confidence": 0.88
+    },
+    {
+      "source": "nexus-platform",
+      "target": "index.tsx",
+      "type": "imports",
+      "confidence": 0.61
+    },
+    {
+      "source": "data-processor-3",
+      "target": "microservices-3",
+      "type": "contains",
+      "confidence": 0.69
+    },
+    {
+      "source": "qa-engineer-7",
+      "target": "react-dashboard-7",
+      "type": "contains",
+      "confidence": 0.82
+    },
+    {
+      "source": "CodeAssistant-12",
+      "target": "quantum-db",
+      "type": "contains",
+      "confidence": 0.85
+    },
+    {
+      "source": "main.py-9",
+      "target": "message-queue-17",
+      "type": "contains",
+      "confidence": 0.88
+    },
+    {
+      "source": "event-sourcing-19",
+      "target": "index.tsx-0",
+      "type": "contains",
+      "confidence": 0.79
+    },
+    {
+      "source": "tracing",
+      "target": "quantum-db",
+      "type": "contains",
+      "confidence": 0.89
+    },
+    {
+      "source": "Profiler",
+      "target": "react-dashboard",
+      "type": "depends_on",
+      "confidence": 0.68
+    },
+    {
+      "source": "observability-4",
+      "target": "metrics",
+      "type": "extends",
+      "confidence": 0.86
+    },
+    {
+      "source": "schema.sql",
+      "target": "main.py",
+      "type": "references",
+      "confidence": 0.82
+    },
+    {
+      "source": "metrics",
+      "target": "react-dashboard",
+      "type": "depends_on",
+      "confidence": 0.67
+    },
+    {
+      "source": "tracing",
+      "target": "qa-engineer-7",
+      "type": "uses",
+      "confidence": 0.61
+    },
+    {
+      "source": "cache-layer-8",
+      "target": "config.yml",
+      "type": "uses",
+      "confidence": 0.7
+    },
+    {
+      "source": "observability-4",
+      "target": "data-processor-3",
+      "type": "imports",
+      "confidence": 0.76
+    },
+    {
+      "source": "quantum-db",
+      "target": "main.py-9",
+      "type": "implements",
+      "confidence": 0.61
+    },
+    {
+      "source": "monitoring",
+      "target": "config.yml",
+      "type": "references",
+      "confidence": 0.62
+    },
+    {
+      "source": "react-dashboard",
+      "target": "nexus-platform",
+      "type": "configures",
+      "confidence": 0.64
+    },
+    {
+      "source": "index.tsx",
+      "target": "message-queue-2",
+      "type": "extends",
+      "confidence": 0.79
+    },
+    {
+      "source": "README.md-0",
+      "target": "main.py-9",
+      "type": "depends_on",
+      "confidence": 0.66
+    },
+    {
+      "source": "web-client-18",
+      "target": "quantum-db-14",
+      "type": "imports",
+      "confidence": 0.67
+    },
+    {
+      "source": "CodeAssistant-12",
+      "target": "tracing",
+      "type": "contains",
+      "confidence": 0.85
+    },
+    {
+      "source": "monitoring",
+      "target": "react-dashboard",
+      "type": "imports",
+      "confidence": 0.75
+    },
+    {
+      "source": "quantum-db",
+      "target": "react-dashboard",
+      "type": "depends_on",
+      "confidence": 0.76
+    },
+    {
+      "source": "schema.sql-10",
+      "target": "react-dashboard",
+      "type": "extends",
+      "confidence": 0.64
+    },
+    {
+      "source": "tracing-13",
+      "target": "event-sourcing-19",
+      "type": "extends",
+      "confidence": 0.88
+    },
+    {
+      "source": "message-queue-17",
+      "target": "main.py",
+      "type": "references",
+      "confidence": 0.84
+    },
+    {
+      "source": "metrics",
+      "target": "nexus-platform",
+      "type": "depends_on",
+      "confidence": 0.77
+    },
+    {
+      "source": "README.md-0",
+      "target": "react-dashboard-2",
+      "type": "uses",
+      "confidence": 0.63
+    },
+    {
+      "source": "message-queue-17",
+      "target": "containerization",
+      "type": "contains",
+      "confidence": 0.78
+    },
+    {
+      "source": "data-processor-3",
+      "target": "Profiler",
+      "type": "depends_on",
+      "confidence": 0.77
+    },
+    {
+      "source": "metrics",
+      "target": "message-queue-8",
+      "type": "calls",
+      "confidence": 0.73
+    },
+    {
+      "source": "metrics",
+      "target": "user-service",
+      "type": "inherits_from",
+      "confidence": 0.77
+    },
+    {
+      "source": "microservices-1",
+      "target": "qa-engineer-11",
+      "type": "calls",
+      "confidence": 0.71
+    },
+    {
+      "source": "react-dashboard",
+      "target": "tracing",
+      "type": "imports",
+      "confidence": 0.81
+    },
+    {
+      "source": "Dockerfile-6",
+      "target": "quantum-db-14",
+      "type": "references",
+      "confidence": 0.89
+    },
+    {
+      "source": "quantum-db-14",
+      "target": "CodeAssistant-12",
+      "type": "configures",
+      "confidence": 0.6
+    },
+    {
+      "source": "Profiler",
+      "target": "README.md-0",
+      "type": "inherits_from",
+      "confidence": 0.75
+    },
+    {
+      "source": "react-dashboard",
+      "target": "react-dashboard-2",
+      "type": "implements",
+      "confidence": 0.68
+    },
+    {
+      "source": "react-dashboard",
+      "target": "react-dashboard-7",
+      "type": "uses",
+      "confidence": 0.71
+    },
+    {
+      "source": "cache-layer-8",
+      "target": "quantum-db-14",
+      "type": "contains",
+      "confidence": 0.61
+    },
+    {
+      "source": "README.md-0",
+      "target": "cache-layer-8",
+      "type": "configures",
+      "confidence": 0.83
+    },
+    {
+      "source": "microservices-1",
+      "target": "logging-4",
+      "type": "references",
+      "confidence": 0.8
+    },
+    {
+      "source": "microservices-6",
+      "target": "quantum-db-14",
+      "type": "imports",
+      "confidence": 0.68
+    },
+    {
+      "source": "CodeAssistant-12",
+      "target": "Dockerfile-6",
+      "type": "extends",
+      "confidence": 0.88
+    },
+    {
+      "source": "react-dashboard",
+      "target": "Profiler",
+      "type": "calls",
+      "confidence": 0.8
+    },
+    {
+      "source": "tracing",
+      "target": "CodeAssistant-12",
+      "type": "imports",
+      "confidence": 0.63
+    },
+    {
+      "source": "database-15",
+      "target": "event-sourcing-19",
+      "type": "inherits_from",
+      "confidence": 0.62
+    },
+    {
+      "source": "nexus-platform",
+      "target": "BuildTool-9",
+      "type": "inherits_from",
+      "confidence": 0.88
+    },
+    {
+      "source": "logging-4",
+      "target": "user-service",
+      "type": "uses",
+      "confidence": 0.89
+    },
+    {
+      "source": "ml-pipeline-5",
+      "target": "database-15",
+      "type": "contains",
+      "confidence": 0.87
+    },
+    {
+      "source": "data-processor-3",
+      "target": "load-balancer",
+      "type": "uses",
+      "confidence": 0.84
+    },
+    {
+      "source": "nexus-platform",
+      "target": "CI/CD-16",
+      "type": "extends",
+      "confidence": 0.62
+    },
+    {
+      "source": "cache-layer-8",
+      "target": "react-dashboard-2",
+      "type": "configures",
+      "confidence": 0.81
+    },
+    {
+      "source": "Profiler",
+      "target": "ml-pipeline-5",
+      "type": "references",
+      "confidence": 0.6
+    },
+    {
+      "source": "logging-4",
+      "target": "schema.sql",
+      "type": "implements",
+      "confidence": 0.69
+    },
+    {
+      "source": "CodeAssistant-12",
+      "target": "data-processor",
+      "type": "references",
+      "confidence": 0.83
+    },
+    {
+      "source": "react-dashboard",
+      "target": "load-balancer",
+      "type": "depends_on",
+      "confidence": 0.63
+    },
+    {
+      "source": "load-balancer",
+      "target": "react-dashboard",
+      "type": "depends_on",
+      "confidence": 0.75
+    },
+    {
+      "source": "tracing-13",
+      "target": "main.py-9",
+      "type": "imports",
+      "confidence": 0.82
+    },
+    {
+      "source": "react-dashboard",
+      "target": "microservices-3",
+      "type": "imports",
+      "confidence": 0.84
+    },
+    {
+      "source": "metrics",
+      "target": "index.tsx-0",
+      "type": "inherits_from",
+      "confidence": 0.69
+    },
+    {
+      "source": "nexus-platform",
+      "target": "monitoring",
+      "type": "inherits_from",
+      "confidence": 0.87
+    },
+    {
+      "source": "index.tsx",
+      "target": "qa-engineer-11",
+      "type": "implements",
+      "confidence": 0.82
+    },
+    {
+      "source": "containerization",
+      "target": "logging-4",
+      "type": "inherits_from",
+      "confidence": 0.63
+    },
+    {
+      "source": "containerization",
+      "target": "microservices-1",
+      "type": "contains",
+      "confidence": 0.69
+    },
+    {
+      "source": "quantum-db",
+      "target": "index.tsx-0",
+      "type": "depends_on",
+      "confidence": 0.61
+    },
+    {
+      "source": "quantum-db-14",
+      "target": "nexus-platform",
+      "type": "configures",
+      "confidence": 0.88
+    },
+    {
+      "source": "message-queue-2",
+      "target": "react-dashboard-7",
+      "type": "imports",
+      "confidence": 0.66
+    },
+    {
+      "source": "web-client-1",
+      "target": "tracing",
+      "type": "uses",
+      "confidence": 0.81
+    },
+    {
+      "source": "data-processor",
+      "target": "config.yml",
+      "type": "implements",
+      "confidence": 0.73
+    },
+    {
+      "source": "ml-pipeline",
+      "target": "qa-engineer-7",
+      "type": "extends",
+      "confidence": 0.85
+    },
+    {
+      "source": "ml-pipeline-5",
+      "target": "Profiler",
+      "type": "uses",
+      "confidence": 0.64
+    },
+    {
+      "source": "logging-4",
+      "target": "metrics",
+      "type": "inherits_from",
+      "confidence": 0.67
+    },
+    {
+      "source": "BuildTool-9",
+      "target": "react-dashboard",
+      "type": "inherits_from",
+      "confidence": 0.63
+    },
+    {
+      "source": "Dockerfile-6",
+      "target": "config.yml",
+      "type": "implements",
+      "confidence": 0.61
+    },
+    {
+      "source": "schema.sql-10",
+      "target": "web-client-18",
+      "type": "calls",
+      "confidence": 0.77
+    },
+    {
+      "source": "BuildTool-9",
+      "target": "web-client-18",
+      "type": "contains",
+      "confidence": 0.85
+    },
+    {
+      "source": "schema.sql",
+      "target": "ml-pipeline-5",
+      "type": "depends_on",
+      "confidence": 0.84
+    },
+    {
+      "source": "containerization",
+      "target": "web-client-1",
+      "type": "implements",
+      "confidence": 0.88
+    },
+    {
+      "source": "quantum-db-14",
+      "target": "index.tsx-0",
+      "type": "calls",
+      "confidence": 0.71
+    },
+    {
+      "source": "react-dashboard-2",
+      "target": "nexus-platform",
+      "type": "inherits_from",
+      "confidence": 0.68
+    },
+    {
+      "source": "microservices-3",
+      "target": "react-dashboard-7",
+      "type": "imports",
+      "confidence": 0.74
+    },
+    {
+      "source": "message-queue-2",
+      "target": "config.yml",
+      "type": "calls",
+      "confidence": 0.88
+    },
+    {
+      "source": "BuildTool-9",
+      "target": "load-balancer",
+      "type": "imports",
+      "confidence": 0.87
+    },
+    {
+      "source": "monitoring",
+      "target": "cache-layer-8",
+      "type": "contains",
+      "confidence": 0.77
+    },
+    {
+      "source": "index.tsx-0",
+      "target": "microservices-6",
+      "type": "contains",
+      "confidence": 0.79
+    },
+    {
+      "source": "quantum-db",
+      "target": "monitoring",
+      "type": "uses",
+      "confidence": 0.74
+    },
+    {
+      "source": "schema.sql",
+      "target": "react-dashboard-7",
+      "type": "references",
+      "confidence": 0.73
+    },
+    {
+      "source": "Dockerfile-6",
+      "target": "metrics",
+      "type": "configures",
+      "confidence": 0.78
+    },
+    {
+      "source": "schema.sql",
+      "target": "config.yml",
+      "type": "configures",
+      "confidence": 0.63
+    },
+    {
+      "source": "quantum-db-14",
+      "target": "cache-layer-8",
+      "type": "extends",
+      "confidence": 0.85
+    },
+    {
+      "source": "web-client-18",
+      "target": "index.tsx-0",
+      "type": "extends",
+      "confidence": 0.66
+    },
+    {
+      "source": "main.py-9",
+      "target": "react-dashboard-7",
+      "type": "contains",
+      "confidence": 0.64
+    },
+    {
+      "source": "web-client-1",
+      "target": "nexus-platform",
+      "type": "imports",
+      "confidence": 0.73
+    },
+    {
+      "source": "main.py-9",
+      "target": "nexus-platform",
+      "type": "configures",
+      "confidence": 0.89
+    },
+    {
+      "source": "database-15",
+      "target": "load-balancer",
+      "type": "implements",
+      "confidence": 0.66
+    },
+    {
+      "source": "index.tsx-0",
+      "target": "schema.sql-10",
+      "type": "inherits_from",
+      "confidence": 0.82
+    },
+    {
+      "source": "auth-module-5",
+      "target": "web-client-18",
+      "type": "references",
+      "confidence": 0.65
+    },
+    {
+      "source": "quantum-db-14",
+      "target": "README.md-0",
+      "type": "configures",
+      "confidence": 0.71
+    },
+    {
+      "source": "web-client-1",
+      "target": "README.md-0",
+      "type": "contains",
+      "confidence": 0.87
+    },
+    {
+      "source": "qa-engineer-7",
+      "target": "microservices-3",
+      "type": "depends_on",
+      "confidence": 0.65
+    },
+    {
+      "source": "data-processor",
+      "target": "microservices-6",
+      "type": "calls",
+      "confidence": 0.61
+    },
+    {
+      "source": "data-processor-3",
+      "target": "react-dashboard",
+      "type": "imports",
+      "confidence": 0.65
+    },
+    {
+      "source": "tracing-13",
+      "target": "index.tsx",
+      "type": "inherits_from",
+      "confidence": 0.86
+    }
+  ],
+  "metadata": {
+    "generation_method": "pattern_expansion",
+    "target_size": 50,
+    "density_level": "sparse",
+    "actual_entities": 50,
+    "actual_relationships": 98,
+    "actual_avg_degree": 3.92,
+    "synthetic": true
+  }
+}

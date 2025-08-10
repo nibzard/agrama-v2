@@ -30,12 +30,15 @@ const print = std.debug.print;
 const ArrayList = std.ArrayList;
 const HashMap = std.HashMap;
 
-/// Mock temporal knowledge graph database
+/// Mock temporal knowledge graph database with optimized hybrid queries
 const MockTemporalDB = struct {
     // Core data structures
     nodes: HashMap(u32, TemporalNode, std.hash_map.AutoContext(u32), std.hash_map.default_max_load_percentage),
     edges: HashMap(u64, TemporalEdge, std.hash_map.AutoContext(u64), std.hash_map.default_max_load_percentage),
     embeddings: HashMap(u32, []f32, std.hash_map.AutoContext(u32), std.hash_map.default_max_load_percentage),
+
+    // Optimized data structures for O(n+m) complexity
+    adjacency_lists: HashMap(u32, ArrayList(u32), std.hash_map.AutoContext(u32), std.hash_map.default_max_load_percentage),
 
     // Temporal storage
     anchors: ArrayList(Anchor),
@@ -129,6 +132,7 @@ const MockTemporalDB = struct {
             .nodes = HashMap(u32, TemporalNode, std.hash_map.AutoContext(u32), std.hash_map.default_max_load_percentage).init(allocator),
             .edges = HashMap(u64, TemporalEdge, std.hash_map.AutoContext(u64), std.hash_map.default_max_load_percentage).init(allocator),
             .embeddings = HashMap(u32, []f32, std.hash_map.AutoContext(u32), std.hash_map.default_max_load_percentage).init(allocator),
+            .adjacency_lists = HashMap(u32, ArrayList(u32), std.hash_map.AutoContext(u32), std.hash_map.default_max_load_percentage).init(allocator),
             .anchors = ArrayList(Anchor).init(allocator),
             .deltas = ArrayList(Delta).init(allocator),
             .current_timestamp = std.time.timestamp(),
@@ -153,6 +157,13 @@ const MockTemporalDB = struct {
             self.allocator.free(entry.value_ptr.*);
         }
         self.embeddings.deinit();
+
+        // Clean up adjacency lists
+        var adj_iterator = self.adjacency_lists.iterator();
+        while (adj_iterator.next()) |entry| {
+            entry.value_ptr.deinit();
+        }
+        self.adjacency_lists.deinit();
 
         // Clean up temporal storage
         for (self.anchors.items) |anchor| {
@@ -183,7 +194,7 @@ const MockTemporalDB = struct {
         return node_id;
     }
 
-    /// Create an edge between nodes
+    /// Create an edge between nodes and maintain adjacency lists for O(n+m) traversal
     pub fn createEdge(self: *MockTemporalDB, from: u32, to: u32, edge_type: []const u8, weight: f32) !u64 {
         const edge_id = (@as(u64, from) << 32) | @as(u64, to);
         const timestamp = std.time.timestamp();
@@ -199,17 +210,25 @@ const MockTemporalDB = struct {
         };
 
         try self.edges.put(edge_id, edge);
+
+        // Maintain adjacency list for optimized traversal
+        const result = try self.adjacency_lists.getOrPut(from);
+        if (!result.found_existing) {
+            result.value_ptr.* = ArrayList(u32).init(self.allocator);
+        }
+        try result.value_ptr.append(to);
+
         self.updateMemoryUsage();
         return edge_id;
     }
 
-    /// Hybrid query combining semantic search and graph traversal
+    /// Optimized hybrid query combining semantic search and graph traversal (O(n+m) complexity)
     pub fn hybridQuery(self: *MockTemporalDB, query_embedding: []f32, semantic_k: u32, max_hops: u32) ![]u32 {
         // Step 1: Semantic search using embeddings
         const semantic_results = try self.semanticSearch(query_embedding, semantic_k);
         defer self.allocator.free(semantic_results);
 
-        // Step 2: Graph expansion from semantic results
+        // Step 2: Optimized graph expansion using adjacency lists
         var expanded_results = ArrayList(u32).init(self.allocator);
         var visited = HashMap(u32, bool, std.hash_map.AutoContext(u32), std.hash_map.default_max_load_percentage).init(self.allocator);
         defer visited.deinit();
@@ -225,7 +244,7 @@ const MockTemporalDB = struct {
             try expanded_results.append(node_id);
         }
 
-        // BFS expansion
+        // Optimized BFS expansion using adjacency lists (O(n+m) instead of O(n×m))
         var queue_idx: usize = 0;
         while (queue_idx < queue.items.len and expanded_results.items.len < 100) {
             const current = queue.items[queue_idx];
@@ -233,14 +252,14 @@ const MockTemporalDB = struct {
 
             if (current.hops >= max_hops) continue;
 
-            // Find outgoing edges
-            var edge_iterator = self.edges.iterator();
-            while (edge_iterator.next()) |entry| {
-                const edge = entry.value_ptr.*;
-                if (edge.from == current.node and !visited.contains(edge.to)) {
-                    try visited.put(edge.to, true);
-                    try queue.append(.{ .node = edge.to, .hops = current.hops + 1 });
-                    try expanded_results.append(edge.to);
+            // Use adjacency list for O(1) neighbor lookup instead of O(m) iteration
+            if (self.adjacency_lists.get(current.node)) |neighbors| {
+                for (neighbors.items) |neighbor_id| {
+                    if (!visited.contains(neighbor_id)) {
+                        try visited.put(neighbor_id, true);
+                        try queue.append(.{ .node = neighbor_id, .hops = current.hops + 1 });
+                        try expanded_results.append(neighbor_id);
+                    }
                 }
             }
         }

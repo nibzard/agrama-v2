@@ -277,7 +277,7 @@ const CandidateQueue = struct {
     }
 };
 
-/// Core HNSW index implementation
+/// Core HNSW index implementation with optimized bulk construction
 pub const HNSWIndex = struct {
     allocator: Allocator,
     vector_dimensions: u32,
@@ -287,6 +287,10 @@ pub const HNSWIndex = struct {
     max_connections_level0: u32, // M_L parameter - max connections at level 0
     level_multiplier: f32, // ml parameter for level generation
     ef_construction: usize, // ef parameter during construction
+
+    // Optimization infrastructure
+    bulk_mode: bool = false,
+    construction_arena: ?std.heap.ArenaAllocator = null,
 
     // Multi-level graph structure
     // layers[i] contains all nodes at level i and above
@@ -342,6 +346,11 @@ pub const HNSWIndex = struct {
             layer.deinit();
         }
         self.layers.deinit();
+
+        // Clean up construction arena if it exists
+        if (self.construction_arena) |*arena| {
+            arena.deinit();
+        }
     }
 
     /// Insert a new vector into the HNSW index
@@ -375,6 +384,167 @@ pub const HNSWIndex = struct {
         try self.connectNewNode(node_id, level);
 
         self.node_count += 1;
+    }
+
+    /// Optimized bulk construction for better performance (O(n log n) instead of O(n²))
+    pub fn bulkInsert(self: *HNSWIndex, vectors: []const Vector, node_ids: []const NodeID) !void {
+        if (vectors.len != node_ids.len) return error.MismatchedArrays;
+        if (vectors.len == 0) return;
+
+        // Enable bulk mode for optimized construction
+        self.bulk_mode = true;
+        defer self.bulk_mode = false;
+
+        // Initialize construction arena for temporary allocations
+        var arena = std.heap.ArenaAllocator.init(self.allocator);
+        self.construction_arena = arena;
+        defer {
+            arena.deinit();
+            self.construction_arena = null;
+        }
+
+        // Phase 1: Pre-generate levels for all nodes
+        const levels = try arena.allocator().alloc(u32, vectors.len);
+        for (levels) |*level| {
+            level.* = self.generateLevel();
+        }
+
+        // Find maximum level needed
+        const max_level = blk: {
+            var max: u32 = 0;
+            for (levels) |level| max = @max(max, level);
+            break :blk max;
+        };
+
+        // Pre-allocate all required layers
+        while (self.layers.items.len <= max_level) {
+            const new_layer = HashMap(NodeID, HNSWNode, HashContext, std.hash_map.default_max_load_percentage).init(self.allocator);
+            try self.layers.append(new_layer);
+        }
+
+        // Phase 2: Insert all nodes (without connections)
+        for (vectors, node_ids, levels) |vector, node_id, level| {
+            if (vector.dimensions != self.vector_dimensions) {
+                return error.DimensionMismatch;
+            }
+
+            // Create node at each layer from 0 to assigned level
+            for (0..level + 1) |layer_idx| {
+                const layer_num = @as(u32, @intCast(layer_idx));
+                const node = try HNSWNode.init(self.allocator, node_id, vector, layer_num);
+                try self.layers.items[layer_idx].put(node_id, node);
+            }
+
+            // Update entry point if this node has highest level
+            if (self.entry_point == null or level >= self.getNodeLevel(self.entry_point.?)) {
+                self.entry_point = node_id;
+            }
+
+            self.node_count += 1;
+        }
+
+        // Phase 3: Build connections using optimized algorithm
+        try self.buildConnectionsOptimized();
+    }
+
+    /// Optimized connection building using search instead of brute force iteration
+    fn buildConnectionsOptimized(self: *HNSWIndex) !void {
+        // Process nodes level by level, highest to lowest
+        var level: u32 = @as(u32, @intCast(self.layers.items.len - 1));
+        while (level > 0) : (level -= 1) {
+            // Only process nodes that have this as their maximum level
+            var layer_iterator = self.layers.items[level].iterator();
+            while (layer_iterator.next()) |entry| {
+                const node_id = entry.key_ptr.*;
+                const node_max_level = self.getNodeLevel(node_id);
+
+                // Only connect nodes at their maximum level to avoid duplicate work
+                if (node_max_level == level) {
+                    try self.connectNodeOptimized(node_id, level);
+                }
+            }
+        }
+
+        // Special handling for level 0 (all nodes exist here)
+        if (self.layers.items.len > 0) {
+            var level0_iterator = self.layers.items[0].iterator();
+            while (level0_iterator.next()) |entry| {
+                const node_id = entry.key_ptr.*;
+                try self.connectNodeOptimized(node_id, 0);
+            }
+        }
+    }
+
+    /// Connect a single node using optimized search-based approach
+    fn connectNodeOptimized(self: *HNSWIndex, node_id: NodeID, level: u32) !void {
+        const node_vector = self.getNodeVector(node_id) orelse return;
+        const max_conn = if (level == 0) self.max_connections_level0 else self.max_connections;
+
+        // Use search-based approach instead of brute force iteration
+        const search_params = HNSWSearchParams{
+            .k = max_conn * 2, // Search for more candidates than needed
+            .ef = @min(self.ef_construction, max_conn * 4), // Reasonable search width
+        };
+
+        // Find nearest neighbors using existing search infrastructure
+        const candidates = try self.searchAtSpecificLevel(node_vector, level, search_params.ef);
+        defer self.allocator.free(candidates);
+
+        // Connect to best candidates (excluding self)
+        var connections_made: u32 = 0;
+        for (candidates) |candidate| {
+            if (candidate.node_id == node_id) continue; // Skip self
+            if (connections_made >= max_conn) break;
+
+            // Add bidirectional connection
+            if (self.layers.items[level].getPtr(node_id)) |node| {
+                try node.addConnection(candidate.node_id);
+            }
+
+            if (self.layers.items[level].getPtr(candidate.node_id)) |neighbor| {
+                try neighbor.addConnection(node_id);
+
+                // Prune connections if neighbor has too many
+                if (neighbor.connections.items.len > max_conn) {
+                    try self.pruneConnections(candidate.node_id, level);
+                }
+            }
+
+            connections_made += 1;
+        }
+    }
+
+    /// Search at specific level using existing infrastructure
+    fn searchAtSpecificLevel(self: *HNSWIndex, query_vector: Vector, level: u32, ef: usize) ![]SearchResult {
+        // Get entry points from this level
+        var entry_points = ArrayList(SearchResult).init(self.allocator);
+        defer entry_points.deinit();
+
+        var layer_iterator = self.layers.items[level].iterator();
+        var entry_count: u32 = 0;
+        while (layer_iterator.next()) |entry| {
+            if (entry_count >= 3) break; // Limit to 3 entry points
+
+            const node_vector = entry.value_ptr.vector;
+            const similarity = query_vector.cosineSimilarity(&node_vector);
+            const distance = query_vector.euclideanDistance(&node_vector);
+
+            try entry_points.append(SearchResult{
+                .node_id = entry.key_ptr.*,
+                .similarity = similarity,
+                .distance = distance,
+            });
+
+            entry_count += 1;
+        }
+
+        if (entry_points.items.len == 0) {
+            return try self.allocator.alloc(SearchResult, 0);
+        }
+
+        // Use existing searchLayer infrastructure
+        const results = try self.searchLayer(&query_vector, entry_points.items, ef, level);
+        return try results.toOwnedSlice();
     }
 
     /// Search for k nearest neighbors
@@ -535,10 +705,14 @@ pub const HNSWIndex = struct {
             var candidates = ArrayList(SearchResult).init(self.allocator);
             defer candidates.deinit();
 
-            // Find all nodes at this level
+            // Find nodes at this level using more efficient approach
             var layer_iterator = self.layers.items[level].iterator();
+            var node_count: u32 = 0;
+            const max_candidates = @min(max_conn * 4, 100); // Limit candidates for performance
+
             while (layer_iterator.next()) |entry| {
                 if (entry.key_ptr.* == node_id) continue; // Skip self
+                if (node_count >= max_candidates) break; // Limit search space
 
                 const candidate_vector = entry.value_ptr.vector;
                 const similarity = node_vector.cosineSimilarity(&candidate_vector);
@@ -549,6 +723,7 @@ pub const HNSWIndex = struct {
                     .similarity = similarity,
                     .distance = distance,
                 });
+                node_count += 1;
             }
 
             // Sort by similarity and connect to best candidates

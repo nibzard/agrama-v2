@@ -123,7 +123,7 @@ export const DependencyGraphViz: React.FC<DependencyGraphVizProps> = ({
       .attr("marker-end", d => `url(#arrow-${d.type})`);
 
     // Create impact paths (if enabled)
-    let impactPaths: d3.Selection<SVGPathElement, any, SVGGElement, unknown> | null = null;
+    let impactPaths: d3.Selection<SVGPathElement, { path: string[]; weight: number; impactScore: number }, SVGGElement, unknown> | null = null;
     if (showImpactPaths && graphData.analysis.impactPaths.length > 0) {
       const pathGenerator = d3.line<DependencyNode>()
         .x(d => d.x!)
@@ -190,7 +190,7 @@ export const DependencyGraphViz: React.FC<DependencyGraphVizProps> = ({
 
     // Node interaction
     nodes
-      .on("mouseenter", (event, d) => {
+      .on("mouseenter", (_, d) => {
         setHoveredNode(d.id);
         
         // Highlight connected edges
@@ -227,7 +227,7 @@ export const DependencyGraphViz: React.FC<DependencyGraphVizProps> = ({
 
       if (impactPaths) {
         impactPaths.attr("d", path => {
-          const pathNodes = path.path.map(nodeId => 
+          const pathNodes = path.path.map((nodeId: string) => 
             graphData.nodes.find(n => n.id === nodeId)!
           ).filter(Boolean);
           return d3.line<DependencyNode>()

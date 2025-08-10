@@ -558,8 +558,8 @@ pub const BenchmarkUtils = struct {
                     const uniform1 = rng.random().float(f64);
                     const uniform2 = rng.random().float(f64);
 
-                    const z0 = @sqrt(-2.0 * std.math.log(uniform1)) * @cos(2.0 * std.math.pi * uniform2);
-                    const z1 = @sqrt(-2.0 * std.math.log(uniform1)) * @sin(2.0 * std.math.pi * uniform2);
+                    const z0 = @sqrt(-2.0 * std.math.log(f64, std.math.e, uniform1)) * @cos(2.0 * std.math.pi * uniform2);
+                    const z1 = @sqrt(-2.0 * std.math.log(f64, std.math.e, uniform1)) * @sin(2.0 * std.math.pi * uniform2);
 
                     data[i * 2] = z0;
                     if (i * 2 + 1 < size) {

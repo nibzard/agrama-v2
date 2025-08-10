@@ -23,6 +23,9 @@ pub const SemanticDatabase = struct {
     // Mapping from file paths to embeddings
     file_embeddings: HashMap([]const u8, hnsw.MatryoshkaEmbedding, HashContext, std.hash_map.default_max_load_percentage),
 
+    // Node ID to file path mapping for reverse lookup
+    node_to_path: HashMap(hnsw.NodeID, []const u8, std.hash_map.AutoContext(hnsw.NodeID), std.hash_map.default_max_load_percentage),
+
     // Node ID generation
     next_node_id: hnsw.NodeID,
 
@@ -65,6 +68,7 @@ pub const SemanticDatabase = struct {
             .function_index = function_index,
             .file_index = file_index,
             .file_embeddings = HashMap([]const u8, hnsw.MatryoshkaEmbedding, HashContext, std.hash_map.default_max_load_percentage).init(allocator),
+            .node_to_path = HashMap(hnsw.NodeID, []const u8, std.hash_map.AutoContext(hnsw.NodeID), std.hash_map.default_max_load_percentage).init(allocator),
             .next_node_id = 1,
             .hnsw_config = config,
         };
@@ -92,6 +96,13 @@ pub const SemanticDatabase = struct {
             mut_embedding.deinit(self.allocator);
         }
         self.file_embeddings.deinit();
+
+        // Clean up node to path mapping
+        var node_iterator = self.node_to_path.iterator();
+        while (node_iterator.next()) |entry| {
+            self.allocator.free(entry.value_ptr.*);
+        }
+        self.node_to_path.deinit();
     }
 
     /// Save file with optional semantic embedding for enhanced search
@@ -123,6 +134,10 @@ pub const SemanticDatabase = struct {
             // Create a deep copy of the embedding to own its memory
             const owned_embedding = try emb.clone(self.allocator);
             try self.file_embeddings.put(owned_path, owned_embedding);
+
+            // Store the node ID to path mapping for reverse lookup
+            const owned_path_copy = try self.allocator.dupe(u8, path);
+            try self.node_to_path.put(node_id, owned_path_copy);
         }
     }
 
@@ -222,18 +237,7 @@ pub const SemanticDatabase = struct {
 
     /// Find file path for a given node ID (reverse lookup)
     fn findPathForNodeId(self: *SemanticDatabase, node_id: hnsw.NodeID) ?[]const u8 {
-        // This is a placeholder - in a full implementation, we'd maintain a reverse index
-        // For now, we'll do a linear search through embeddings
-        var embedding_iterator = self.file_embeddings.iterator();
-        while (embedding_iterator.next()) |entry| {
-            // In practice, we'd store the node_id with the embedding
-            // For this demo, we'll use a simple hash-based mapping
-            const path_hash = std.hash_map.hashString(entry.key_ptr.*);
-            if ((@as(u64, @intCast(node_id)) % 1000000) == (path_hash % 1000000)) {
-                return entry.key_ptr.*;
-            }
-        }
-        return null;
+        return self.node_to_path.get(node_id);
     }
 
     /// Calculate graph distance between files (placeholder for FRE integration)
@@ -365,7 +369,7 @@ test "SemanticDatabase file operations" {
     defer semantic_db.deinit();
 
     // Test basic file operations
-    const test_path = "test/file.py";
+    const test_path = "src/file.py";
     const test_content = "def hello_world():\n    print('Hello, World!')";
 
     try semantic_db.saveFile(test_path, test_content);
@@ -402,7 +406,7 @@ test "SemanticDatabase embedding integration" {
     }
 
     // Save file with embedding
-    const test_path = "test/embedded_file.py";
+    const test_path = "src/embedded_file.py";
     const test_content = "def calculate(x):\n    return x * 2";
 
     try semantic_db.saveFileWithEmbedding(test_path, test_content, embedding);

@@ -114,6 +114,24 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_lib_unit_tests.step);
     test_step.dependOn(&run_exe_unit_tests.step);
 
+    // Comprehensive test runner
+    const comprehensive_tests = b.addExecutable(.{
+        .name = "comprehensive_test_runner",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/test_runner.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
+    // Add source dependencies to test runner
+    comprehensive_tests.root_module.addImport("agrama_lib", lib_mod);
+
+    const run_comprehensive_tests = b.addRunArtifact(comprehensive_tests);
+
+    const test_all_step = b.step("test-all", "Run comprehensive test suite");
+    test_all_step.dependOn(&run_comprehensive_tests.step);
+
     // Integration tests
     const integration_tests = b.addTest(.{
         .root_module = b.createModule(.{
@@ -125,7 +143,7 @@ pub fn build(b: *std.Build) void {
 
     // Add all source dependencies to integration tests
     integration_tests.root_module.addImport("agrama_lib", lib_mod);
-    
+
     const run_integration_tests = b.addRunArtifact(integration_tests);
 
     const integration_step = b.step("test-integration", "Run integration tests");
@@ -147,6 +165,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         }),
     });
+    benchmark_suite.root_module.addImport("agrama_lib", lib_mod);
 
     // Individual benchmark executables
     const hnsw_bench = b.addExecutable(.{
@@ -157,6 +176,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         }),
     });
+    hnsw_bench.root_module.addImport("agrama_lib", lib_mod);
 
     const fre_bench = b.addExecutable(.{
         .name = "fre_benchmark",
@@ -166,6 +186,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         }),
     });
+    fre_bench.root_module.addImport("agrama_lib", lib_mod);
 
     const db_bench = b.addExecutable(.{
         .name = "database_benchmark",
@@ -175,6 +196,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         }),
     });
+    db_bench.root_module.addImport("agrama_lib", lib_mod);
 
     const mcp_bench = b.addExecutable(.{
         .name = "mcp_benchmark",
@@ -184,13 +206,14 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         }),
     });
+    mcp_bench.root_module.addImport("agrama_lib", lib_mod);
 
-    // Install benchmark executables (temporarily disabled)
-    // b.installArtifact(benchmark_suite);
-    // b.installArtifact(hnsw_bench);
-    // b.installArtifact(fre_bench);
-    // b.installArtifact(db_bench);
-    // b.installArtifact(mcp_bench);
+    // Install benchmark executables
+    b.installArtifact(benchmark_suite);
+    b.installArtifact(hnsw_bench);
+    b.installArtifact(fre_bench);
+    b.installArtifact(db_bench);
+    b.installArtifact(mcp_bench);
 
     // Benchmark run commands
     const run_benchmark_suite = b.addRunArtifact(benchmark_suite);
@@ -239,7 +262,8 @@ pub fn build(b: *std.Build) void {
             .optimize = .ReleaseFast, // Force optimized build for validation
         }),
     });
-    // b.installArtifact(validate_benchmark_suite);
+    validate_benchmark_suite.root_module.addImport("agrama_lib", lib_mod);
+    b.installArtifact(validate_benchmark_suite);
 
     const run_validate_suite = b.addRunArtifact(validate_benchmark_suite);
     if (b.args) |args| {
@@ -255,4 +279,19 @@ pub fn build(b: *std.Build) void {
     regression_cmd.addArg("benchmarks/baseline.json");
     const regression_step = b.step("bench-regression", "Check for performance regressions against baseline");
     regression_step.dependOn(&regression_cmd.step);
+
+    // Security summary report
+    const security_summary = b.addExecutable(.{
+        .name = "websocket_security_summary",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tools/websocket_security_summary.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    b.installArtifact(security_summary);
+
+    const run_security_summary = b.addRunArtifact(security_summary);
+    const security_summary_step = b.step("security-report", "Display WebSocket security fix summary");
+    security_summary_step.dependOn(&run_security_summary.step);
 }

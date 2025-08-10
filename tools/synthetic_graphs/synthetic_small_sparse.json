@@ -1,0 +1,2502 @@
+{
+  "entities": [
+    {
+      "name": "nexus-platform",
+      "type": "project",
+      "description": "Main distributed AI-powered analytics platform with microservices architecture",
+      "file_path": "/",
+      "language": "Multi-language"
+    },
+    {
+      "name": "user-service",
+      "type": "component",
+      "description": "Microservice handling user authentication and profile management",
+      "file_path": "/services/user-service",
+      "language": "Go"
+    },
+    {
+      "name": "data-pipeline",
+      "type": "component",
+      "description": "Real-time data processing pipeline using Apache Kafka and Spark",
+      "file_path": "/services/data-pipeline",
+      "language": "Scala"
+    },
+    {
+      "name": "ml-inference-engine",
+      "type": "component",
+      "description": "Machine learning model serving infrastructure with auto-scaling",
+      "file_path": "/services/ml-inference",
+      "language": "Python"
+    },
+    {
+      "name": "web-dashboard",
+      "type": "component",
+      "description": "React-based frontend dashboard for data visualization and analytics",
+      "file_path": "/frontend/dashboard",
+      "language": "TypeScript"
+    },
+    {
+      "name": "api-gateway",
+      "type": "component",
+      "description": "Kong-based API gateway with rate limiting and authentication",
+      "file_path": "/infrastructure/gateway",
+      "language": "Lua"
+    },
+    {
+      "name": "CodeAssistant",
+      "type": "tool",
+      "description": "AI-powered code generation and refactoring assistant",
+      "language": "Python"
+    },
+    {
+      "name": "TestOrchestrator",
+      "type": "tool",
+      "description": "Automated testing framework coordinator for multi-service testing",
+      "language": "JavaScript"
+    },
+    {
+      "name": "DeployBot",
+      "type": "tool",
+      "description": "CI/CD automation tool for containerized deployments",
+      "language": "Go"
+    },
+    {
+      "name": "DocGenerator",
+      "type": "tool",
+      "description": "Automatic API documentation generator from code annotations",
+      "language": "Python"
+    },
+    {
+      "name": "SecurityScanner",
+      "type": "tool",
+      "description": "Vulnerability scanning and security compliance checker",
+      "language": "Rust"
+    },
+    {
+      "name": "docker-compose.yml",
+      "type": "file",
+      "description": "Docker composition file for local development environment",
+      "file_path": "/docker-compose.yml"
+    },
+    {
+      "name": "kubernetes-manifests",
+      "type": "file",
+      "description": "Kubernetes deployment configurations for production",
+      "file_path": "/k8s/manifests"
+    },
+    {
+      "name": "API_REFERENCE.md",
+      "type": "file",
+      "description": "Comprehensive API documentation with examples and schemas",
+      "file_path": "/docs/API_REFERENCE.md"
+    },
+    {
+      "name": "ARCHITECTURE.md",
+      "type": "file",
+      "description": "System architecture documentation with diagrams and design decisions",
+      "file_path": "/docs/ARCHITECTURE.md"
+    },
+    {
+      "name": "package.json",
+      "type": "file",
+      "description": "Node.js package configuration for frontend dependencies",
+      "file_path": "/frontend/dashboard/package.json"
+    },
+    {
+      "name": "requirements.txt",
+      "type": "file",
+      "description": "Python dependencies for ML inference service",
+      "file_path": "/services/ml-inference/requirements.txt"
+    },
+    {
+      "name": "Dockerfile",
+      "type": "file",
+      "description": "Container build configuration for user service",
+      "file_path": "/services/user-service/Dockerfile"
+    },
+    {
+      "name": "pytest.ini",
+      "type": "file",
+      "description": "Python testing configuration with coverage settings",
+      "file_path": "/services/ml-inference/pytest.ini"
+    },
+    {
+      "name": "jest.config.js",
+      "type": "file",
+      "description": "JavaScript testing framework configuration for frontend",
+      "file_path": "/frontend/dashboard/jest.config.js"
+    },
+    {
+      "name": "React",
+      "type": "framework",
+      "description": "Frontend JavaScript library for building user interfaces"
+    },
+    {
+      "name": "FastAPI",
+      "type": "framework",
+      "description": "Modern Python web framework for building APIs with automatic documentation"
+    },
+    {
+      "name": "Apache Kafka",
+      "type": "framework",
+      "description": "Distributed streaming platform for real-time data processing"
+    },
+    {
+      "name": "TensorFlow Serving",
+      "type": "framework",
+      "description": "Machine learning model serving system for production environments"
+    },
+    {
+      "name": "Gin",
+      "type": "framework",
+      "description": "HTTP web framework for Go with high performance"
+    },
+    {
+      "name": "TypeScript",
+      "type": "language",
+      "description": "Typed superset of JavaScript for large-scale application development"
+    },
+    {
+      "name": "Python",
+      "type": "language",
+      "description": "High-level programming language for data science and web development"
+    },
+    {
+      "name": "Go",
+      "type": "language",
+      "description": "Statically typed compiled language for system programming and microservices"
+    },
+    {
+      "name": "Scala",
+      "type": "language",
+      "description": "Functional programming language running on JVM for big data processing"
+    },
+    {
+      "name": "Rust",
+      "type": "language",
+      "description": "Systems programming language focused on safety and performance"
+    },
+    {
+      "name": "Senior ML Engineer",
+      "type": "role",
+      "description": "Experienced machine learning engineer specializing in production ML systems"
+    },
+    {
+      "name": "DevOps Architect",
+      "type": "role",
+      "description": "Infrastructure and deployment specialist for cloud-native applications"
+    },
+    {
+      "name": "Frontend Tech Lead",
+      "type": "role",
+      "description": "Technical leader for user interface development and user experience"
+    },
+    {
+      "name": "Backend Engineer",
+      "type": "role",
+      "description": "Software engineer focused on server-side logic and API development"
+    },
+    {
+      "name": "AI Research Scientist",
+      "type": "role",
+      "description": "Research specialist developing novel AI algorithms and models"
+    },
+    {
+      "name": "Microservices Architecture",
+      "type": "concept",
+      "description": "Distributed system design pattern with loosely coupled services"
+    },
+    {
+      "name": "Event-Driven Architecture",
+      "type": "concept",
+      "description": "Architectural pattern using events for communication between services"
+    },
+    {
+      "name": "CI/CD Pipeline",
+      "type": "concept",
+      "description": "Continuous integration and deployment automation workflow"
+    },
+    {
+      "name": "Model Versioning",
+      "type": "concept",
+      "description": "Machine learning model lifecycle management and version control"
+    },
+    {
+      "name": "API Rate Limiting",
+      "type": "concept",
+      "description": "Traffic control mechanism to prevent API abuse and ensure stability"
+    },
+    {
+      "name": "Alpha Release",
+      "type": "milestone",
+      "description": "Initial internal release with core functionality for testing"
+    },
+    {
+      "name": "Beta Launch",
+      "type": "milestone",
+      "description": "Public beta release with limited user access for feedback"
+    },
+    {
+      "name": "Production Deployment",
+      "type": "milestone",
+      "description": "Full production release with complete feature set"
+    },
+    {
+      "name": "Performance Optimization",
+      "type": "milestone",
+      "description": "System optimization phase focusing on scalability and efficiency"
+    },
+    {
+      "name": "Security Audit",
+      "type": "milestone",
+      "description": "Comprehensive security review and vulnerability assessment"
+    },
+    {
+      "name": "notification-service",
+      "type": "component",
+      "description": "Real-time notification system using WebSockets and push notifications",
+      "file_path": "/services/notification-service",
+      "language": "Node.js"
+    },
+    {
+      "name": "analytics-db",
+      "type": "component",
+      "description": "Time-series database for storing analytics and metrics data",
+      "file_path": "/infrastructure/database",
+      "language": "SQL"
+    },
+    {
+      "name": "monitoring-stack",
+      "type": "component",
+      "description": "Prometheus and Grafana based monitoring and alerting system",
+      "file_path": "/infrastructure/monitoring",
+      "language": "YAML"
+    },
+    {
+      "name": "load-balancer",
+      "type": "component",
+      "description": "NGINX-based load balancer with SSL termination and health checks",
+      "file_path": "/infrastructure/load-balancer",
+      "language": "NGINX"
+    },
+    {
+      "name": "Redis",
+      "type": "framework",
+      "description": "In-memory data structure store used for caching and session management"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "Model Versioning",
+      "target": "TensorFlow Serving",
+      "type": "implements",
+      "confidence": 0.75
+    },
+    {
+      "source": "SecurityScanner",
+      "target": "jest.config.js",
+      "type": "references",
+      "confidence": 0.66
+    },
+    {
+      "source": "Redis",
+      "target": "TestOrchestrator",
+      "type": "references",
+      "confidence": 0.87
+    },
+    {
+      "source": "Senior ML Engineer",
+      "target": "jest.config.js",
+      "type": "uses",
+      "confidence": 0.69
+    },
+    {
+      "source": "DeployBot",
+      "target": "jest.config.js",
+      "type": "implements",
+      "confidence": 0.62
+    },
+    {
+      "source": "React",
+      "target": "user-service",
+      "type": "configures",
+      "confidence": 0.77
+    },
+    {
+      "source": "kubernetes-manifests",
+      "target": "DeployBot",
+      "type": "inherits_from",
+      "confidence": 0.87
+    },
+    {
+      "source": "docker-compose.yml",
+      "target": "SecurityScanner",
+      "type": "uses",
+      "confidence": 0.67
+    },
+    {
+      "source": "FastAPI",
+      "target": "AI Research Scientist",
+      "type": "references",
+      "confidence": 0.9
+    },
+    {
+      "source": "Frontend Tech Lead",
+      "target": "Rust",
+      "type": "imports",
+      "confidence": 0.6
+    },
+    {
+      "source": "TypeScript",
+      "target": "Security Audit",
+      "type": "depends_on",
+      "confidence": 0.74
+    },
+    {
+      "source": "TypeScript",
+      "target": "Senior ML Engineer",
+      "type": "imports",
+      "confidence": 0.78
+    },
+    {
+      "source": "ARCHITECTURE.md",
+      "target": "pytest.ini",
+      "type": "calls",
+      "confidence": 0.81
+    },
+    {
+      "source": "data-pipeline",
+      "target": "ml-inference-engine",
+      "type": "references",
+      "confidence": 0.88
+    },
+    {
+      "source": "Gin",
+      "target": "Security Audit",
+      "type": "uses",
+      "confidence": 0.8
+    },
+    {
+      "source": "CI/CD Pipeline",
+      "target": "kubernetes-manifests",
+      "type": "implements",
+      "confidence": 0.84
+    },
+    {
+      "source": "FastAPI",
+      "target": "Frontend Tech Lead",
+      "type": "inherits_from",
+      "confidence": 0.65
+    },
+    {
+      "source": "TestOrchestrator",
+      "target": "Senior ML Engineer",
+      "type": "uses",
+      "confidence": 0.82
+    },
+    {
+      "source": "Apache Kafka",
+      "target": "user-service",
+      "type": "imports",
+      "confidence": 0.77
+    },
+    {
+      "source": "pytest.ini",
+      "target": "Go",
+      "type": "inherits_from",
+      "confidence": 0.7
+    },
+    {
+      "source": "api-gateway",
+      "target": "React",
+      "type": "depends_on",
+      "confidence": 0.67
+    },
+    {
+      "source": "Security Audit",
+      "target": "Rust",
+      "type": "contains",
+      "confidence": 0.71
+    },
+    {
+      "source": "Scala",
+      "target": "pytest.ini",
+      "type": "references",
+      "confidence": 0.88
+    },
+    {
+      "source": "API Rate Limiting",
+      "target": "pytest.ini",
+      "type": "depends_on",
+      "confidence": 0.89
+    },
+    {
+      "source": "DeployBot",
+      "target": "pytest.ini",
+      "type": "uses",
+      "confidence": 0.69
+    },
+    {
+      "source": "CodeAssistant",
+      "target": "nexus-platform",
+      "type": "references",
+      "confidence": 0.84
+    },
+    {
+      "source": "Backend Engineer",
+      "target": "notification-service",
+      "type": "extends",
+      "confidence": 0.89
+    },
+    {
+      "source": "kubernetes-manifests",
+      "target": "Redis",
+      "type": "contains",
+      "confidence": 0.78
+    },
+    {
+      "source": "Python",
+      "target": "notification-service",
+      "type": "references",
+      "confidence": 0.71
+    },
+    {
+      "source": "package.json",
+      "target": "Gin",
+      "type": "contains",
+      "confidence": 0.6
+    },
+    {
+      "source": "Redis",
+      "target": "user-service",
+      "type": "contains",
+      "confidence": 0.73
+    },
+    {
+      "source": "DocGenerator",
+      "target": "Security Audit",
+      "type": "contains",
+      "confidence": 0.89
+    },
+    {
+      "source": "Security Audit",
+      "target": "Senior ML Engineer",
+      "type": "extends",
+      "confidence": 0.71
+    },
+    {
+      "source": "user-service",
+      "target": "API Rate Limiting",
+      "type": "implements",
+      "confidence": 0.77
+    },
+    {
+      "source": "ARCHITECTURE.md",
+      "target": "Redis",
+      "type": "implements",
+      "confidence": 0.68
+    },
+    {
+      "source": "Go",
+      "target": "AI Research Scientist",
+      "type": "implements",
+      "confidence": 0.88
+    },
+    {
+      "source": "Security Audit",
+      "target": "AI Research Scientist",
+      "type": "configures",
+      "confidence": 0.63
+    },
+    {
+      "source": "DocGenerator",
+      "target": "Redis",
+      "type": "calls",
+      "confidence": 0.73
+    },
+    {
+      "source": "Scala",
+      "target": "Performance Optimization",
+      "type": "calls",
+      "confidence": 0.75
+    },
+    {
+      "source": "DevOps Architect",
+      "target": "Backend Engineer",
+      "type": "calls",
+      "confidence": 0.84
+    },
+    {
+      "source": "Go",
+      "target": "Gin",
+      "type": "contains",
+      "confidence": 0.7
+    },
+    {
+      "source": "SecurityScanner",
+      "target": "analytics-db",
+      "type": "inherits_from",
+      "confidence": 0.77
+    },
+    {
+      "source": "Production Deployment",
+      "target": "notification-service",
+      "type": "contains",
+      "confidence": 0.89
+    },
+    {
+      "source": "Scala",
+      "target": "Frontend Tech Lead",
+      "type": "implements",
+      "confidence": 0.62
+    },
+    {
+      "source": "user-service",
+      "target": "TestOrchestrator",
+      "type": "extends",
+      "confidence": 0.72
+    },
+    {
+      "source": "kubernetes-manifests",
+      "target": "monitoring-stack",
+      "type": "depends_on",
+      "confidence": 0.81
+    },
+    {
+      "source": "API_REFERENCE.md",
+      "target": "Event-Driven Architecture",
+      "type": "references",
+      "confidence": 0.81
+    },
+    {
+      "source": "Go",
+      "target": "web-dashboard",
+      "type": "implements",
+      "confidence": 0.72
+    },
+    {
+      "source": "Production Deployment",
+      "target": "Model Versioning",
+      "type": "configures",
+      "confidence": 0.89
+    },
+    {
+      "source": "monitoring-stack",
+      "target": "Microservices Architecture",
+      "type": "references",
+      "confidence": 0.79
+    },
+    {
+      "source": "user-service",
+      "target": "Apache Kafka",
+      "type": "contains",
+      "confidence": 0.72
+    },
+    {
+      "source": "DeployBot",
+      "target": "kubernetes-manifests",
+      "type": "calls",
+      "confidence": 0.68
+    },
+    {
+      "source": "Microservices Architecture",
+      "target": "DeployBot",
+      "type": "implements",
+      "confidence": 0.71
+    },
+    {
+      "source": "web-dashboard",
+      "target": "Apache Kafka",
+      "type": "inherits_from",
+      "confidence": 0.8
+    },
+    {
+      "source": "Apache Kafka",
+      "target": "Model Versioning",
+      "type": "imports",
+      "confidence": 0.63
+    },
+    {
+      "source": "DeployBot",
+      "target": "web-dashboard",
+      "type": "calls",
+      "confidence": 0.82
+    },
+    {
+      "source": "Microservices Architecture",
+      "target": "kubernetes-manifests",
+      "type": "uses",
+      "confidence": 0.69
+    },
+    {
+      "source": "Performance Optimization",
+      "target": "DeployBot",
+      "type": "extends",
+      "confidence": 0.74
+    },
+    {
+      "source": "Gin",
+      "target": "Event-Driven Architecture",
+      "type": "extends",
+      "confidence": 0.71
+    },
+    {
+      "source": "api-gateway",
+      "target": "Scala",
+      "type": "inherits_from",
+      "confidence": 0.64
+    },
+    {
+      "source": "API Rate Limiting",
+      "target": "requirements.txt",
+      "type": "extends",
+      "confidence": 0.65
+    },
+    {
+      "source": "Gin",
+      "target": "requirements.txt",
+      "type": "uses",
+      "confidence": 0.74
+    },
+    {
+      "source": "docker-compose.yml",
+      "target": "Redis",
+      "type": "depends_on",
+      "confidence": 0.85
+    },
+    {
+      "source": "Rust",
+      "target": "AI Research Scientist",
+      "type": "depends_on",
+      "confidence": 0.86
+    },
+    {
+      "source": "TestOrchestrator",
+      "target": "package.json",
+      "type": "references",
+      "confidence": 0.67
+    },
+    {
+      "source": "pytest.ini",
+      "target": "kubernetes-manifests",
+      "type": "extends",
+      "confidence": 0.75
+    },
+    {
+      "source": "package.json",
+      "target": "Performance Optimization",
+      "type": "contains",
+      "confidence": 0.85
+    },
+    {
+      "source": "API Rate Limiting",
+      "target": "Performance Optimization",
+      "type": "uses",
+      "confidence": 0.89
+    },
+    {
+      "source": "Go",
+      "target": "CodeAssistant",
+      "type": "calls",
+      "confidence": 0.62
+    },
+    {
+      "source": "React",
+      "target": "TensorFlow Serving",
+      "type": "configures",
+      "confidence": 0.75
+    },
+    {
+      "source": "Frontend Tech Lead",
+      "target": "Dockerfile",
+      "type": "configures",
+      "confidence": 0.61
+    },
+    {
+      "source": "TypeScript",
+      "target": "Python",
+      "type": "inherits_from",
+      "confidence": 0.85
+    },
+    {
+      "source": "Dockerfile",
+      "target": "web-dashboard",
+      "type": "configures",
+      "confidence": 0.66
+    },
+    {
+      "source": "Python",
+      "target": "ml-inference-engine",
+      "type": "extends",
+      "confidence": 0.65
+    },
+    {
+      "source": "Production Deployment",
+      "target": "docker-compose.yml",
+      "type": "inherits_from",
+      "confidence": 0.68
+    },
+    {
+      "source": "user-service",
+      "target": "Rust",
+      "type": "depends_on",
+      "confidence": 0.84
+    },
+    {
+      "source": "Python",
+      "target": "jest.config.js",
+      "type": "imports",
+      "confidence": 0.71
+    },
+    {
+      "source": "data-pipeline",
+      "target": "Backend Engineer",
+      "type": "extends",
+      "confidence": 0.72
+    },
+    {
+      "source": "Rust",
+      "target": "docker-compose.yml",
+      "type": "references",
+      "confidence": 0.61
+    },
+    {
+      "source": "TypeScript",
+      "target": "notification-service",
+      "type": "depends_on",
+      "confidence": 0.84
+    },
+    {
+      "source": "Microservices Architecture",
+      "target": "Dockerfile",
+      "type": "references",
+      "confidence": 0.76
+    },
+    {
+      "source": "api-gateway",
+      "target": "docker-compose.yml",
+      "type": "calls",
+      "confidence": 0.64
+    },
+    {
+      "source": "DocGenerator",
+      "target": "AI Research Scientist",
+      "type": "implements",
+      "confidence": 0.85
+    },
+    {
+      "source": "DeployBot",
+      "target": "DocGenerator",
+      "type": "implements",
+      "confidence": 0.63
+    },
+    {
+      "source": "Security Audit",
+      "target": "DeployBot",
+      "type": "inherits_from",
+      "confidence": 0.75
+    },
+    {
+      "source": "DevOps Architect",
+      "target": "web-dashboard",
+      "type": "imports",
+      "confidence": 0.62
+    },
+    {
+      "source": "Apache Kafka",
+      "target": "FastAPI",
+      "type": "implements",
+      "confidence": 0.6
+    },
+    {
+      "source": "SecurityScanner",
+      "target": "user-service",
+      "type": "references",
+      "confidence": 0.81
+    },
+    {
+      "source": "Senior ML Engineer",
+      "target": "Apache Kafka",
+      "type": "configures",
+      "confidence": 0.81
+    },
+    {
+      "source": "Event-Driven Architecture",
+      "target": "Go",
+      "type": "uses",
+      "confidence": 0.66
+    },
+    {
+      "source": "api-gateway",
+      "target": "data-pipeline",
+      "type": "configures",
+      "confidence": 0.72
+    },
+    {
+      "source": "TestOrchestrator",
+      "target": "data-pipeline",
+      "type": "implements",
+      "confidence": 0.73
+    },
+    {
+      "source": "Go",
+      "target": "notification-service",
+      "type": "calls",
+      "confidence": 0.66
+    },
+    {
+      "source": "CI/CD Pipeline",
+      "target": "nexus-platform",
+      "type": "implements",
+      "confidence": 0.63
+    },
+    {
+      "source": "Scala",
+      "target": "analytics-db",
+      "type": "extends",
+      "confidence": 0.78
+    },
+    {
+      "source": "Redis",
+      "target": "api-gateway",
+      "type": "imports",
+      "confidence": 0.65
+    },
+    {
+      "source": "ml-inference-engine",
+      "target": "jest.config.js",
+      "type": "calls",
+      "confidence": 0.75
+    },
+    {
+      "source": "DevOps Architect",
+      "target": "FastAPI",
+      "type": "uses",
+      "confidence": 0.7
+    },
+    {
+      "source": "API Rate Limiting",
+      "target": "CI/CD Pipeline",
+      "type": "implements",
+      "confidence": 0.86
+    },
+    {
+      "source": "Alpha Release",
+      "target": "package.json",
+      "type": "uses",
+      "confidence": 0.62
+    },
+    {
+      "source": "DevOps Architect",
+      "target": "SecurityScanner",
+      "type": "extends",
+      "confidence": 0.72
+    },
+    {
+      "source": "FastAPI",
+      "target": "package.json",
+      "type": "implements",
+      "confidence": 0.61
+    },
+    {
+      "source": "Dockerfile",
+      "target": "kubernetes-manifests",
+      "type": "contains",
+      "confidence": 0.81
+    },
+    {
+      "source": "React",
+      "target": "monitoring-stack",
+      "type": "inherits_from",
+      "confidence": 0.63
+    },
+    {
+      "source": "load-balancer",
+      "target": "DevOps Architect",
+      "type": "extends",
+      "confidence": 0.77
+    },
+    {
+      "source": "api-gateway",
+      "target": "TestOrchestrator",
+      "type": "configures",
+      "confidence": 0.79
+    },
+    {
+      "source": "DevOps Architect",
+      "target": "Production Deployment",
+      "type": "implements",
+      "confidence": 0.85
+    },
+    {
+      "source": "DevOps Architect",
+      "target": "pytest.ini",
+      "type": "extends",
+      "confidence": 0.68
+    },
+    {
+      "source": "Go",
+      "target": "kubernetes-manifests",
+      "type": "depends_on",
+      "confidence": 0.86
+    },
+    {
+      "source": "notification-service",
+      "target": "CI/CD Pipeline",
+      "type": "imports",
+      "confidence": 0.71
+    },
+    {
+      "source": "Frontend Tech Lead",
+      "target": "Gin",
+      "type": "extends",
+      "confidence": 0.85
+    },
+    {
+      "source": "Apache Kafka",
+      "target": "API Rate Limiting",
+      "type": "depends_on",
+      "confidence": 0.79
+    },
+    {
+      "source": "requirements.txt",
+      "target": "Frontend Tech Lead",
+      "type": "references",
+      "confidence": 0.79
+    },
+    {
+      "source": "Alpha Release",
+      "target": "CodeAssistant",
+      "type": "contains",
+      "confidence": 0.6
+    },
+    {
+      "source": "docker-compose.yml",
+      "target": "CodeAssistant",
+      "type": "references",
+      "confidence": 0.61
+    },
+    {
+      "source": "API Rate Limiting",
+      "target": "notification-service",
+      "type": "extends",
+      "confidence": 0.72
+    },
+    {
+      "source": "API Rate Limiting",
+      "target": "ml-inference-engine",
+      "type": "implements",
+      "confidence": 0.87
+    },
+    {
+      "source": "Frontend Tech Lead",
+      "target": "load-balancer",
+      "type": "contains",
+      "confidence": 0.67
+    },
+    {
+      "source": "notification-service",
+      "target": "Microservices Architecture",
+      "type": "calls",
+      "confidence": 0.73
+    },
+    {
+      "source": "React",
+      "target": "TestOrchestrator",
+      "type": "uses",
+      "confidence": 0.78
+    },
+    {
+      "source": "Microservices Architecture",
+      "target": "data-pipeline",
+      "type": "contains",
+      "confidence": 0.75
+    },
+    {
+      "source": "DocGenerator",
+      "target": "data-pipeline",
+      "type": "calls",
+      "confidence": 0.83
+    },
+    {
+      "source": "api-gateway",
+      "target": "jest.config.js",
+      "type": "extends",
+      "confidence": 0.78
+    },
+    {
+      "source": "monitoring-stack",
+      "target": "TensorFlow Serving",
+      "type": "imports",
+      "confidence": 0.67
+    },
+    {
+      "source": "Senior ML Engineer",
+      "target": "SecurityScanner",
+      "type": "implements",
+      "confidence": 0.77
+    },
+    {
+      "source": "API Rate Limiting",
+      "target": "Backend Engineer",
+      "type": "configures",
+      "confidence": 0.76
+    },
+    {
+      "source": "Beta Launch",
+      "target": "Redis",
+      "type": "contains",
+      "confidence": 0.61
+    },
+    {
+      "source": "Scala",
+      "target": "ml-inference-engine",
+      "type": "uses",
+      "confidence": 0.75
+    },
+    {
+      "source": "kubernetes-manifests",
+      "target": "FastAPI",
+      "type": "depends_on",
+      "confidence": 0.78
+    },
+    {
+      "source": "TypeScript",
+      "target": "ml-inference-engine",
+      "type": "uses",
+      "confidence": 0.77
+    },
+    {
+      "source": "notification-service",
+      "target": "api-gateway",
+      "type": "uses",
+      "confidence": 0.72
+    },
+    {
+      "source": "Security Audit",
+      "target": "Redis",
+      "type": "contains",
+      "confidence": 0.65
+    },
+    {
+      "source": "Senior ML Engineer",
+      "target": "API_REFERENCE.md",
+      "type": "references",
+      "confidence": 0.67
+    },
+    {
+      "source": "AI Research Scientist",
+      "target": "pytest.ini",
+      "type": "configures",
+      "confidence": 0.73
+    },
+    {
+      "source": "nexus-platform",
+      "target": "DeployBot",
+      "type": "references",
+      "confidence": 0.8
+    },
+    {
+      "source": "api-gateway",
+      "target": "TensorFlow Serving",
+      "type": "contains",
+      "confidence": 0.9
+    },
+    {
+      "source": "Dockerfile",
+      "target": "nexus-platform",
+      "type": "configures",
+      "confidence": 0.8
+    },
+    {
+      "source": "notification-service",
+      "target": "web-dashboard",
+      "type": "calls",
+      "confidence": 0.65
+    },
+    {
+      "source": "Security Audit",
+      "target": "TensorFlow Serving",
+      "type": "imports",
+      "confidence": 0.75
+    },
+    {
+      "source": "monitoring-stack",
+      "target": "Redis",
+      "type": "contains",
+      "confidence": 0.81
+    },
+    {
+      "source": "Go",
+      "target": "Production Deployment",
+      "type": "contains",
+      "confidence": 0.81
+    },
+    {
+      "source": "Event-Driven Architecture",
+      "target": "jest.config.js",
+      "type": "depends_on",
+      "confidence": 0.68
+    },
+    {
+      "source": "package.json",
+      "target": "DeployBot",
+      "type": "uses",
+      "confidence": 0.66
+    },
+    {
+      "source": "Event-Driven Architecture",
+      "target": "package.json",
+      "type": "references",
+      "confidence": 0.75
+    },
+    {
+      "source": "requirements.txt",
+      "target": "FastAPI",
+      "type": "calls",
+      "confidence": 0.82
+    },
+    {
+      "source": "pytest.ini",
+      "target": "Gin",
+      "type": "inherits_from",
+      "confidence": 0.69
+    },
+    {
+      "source": "ARCHITECTURE.md",
+      "target": "Scala",
+      "type": "imports",
+      "confidence": 0.82
+    },
+    {
+      "source": "Performance Optimization",
+      "target": "Redis",
+      "type": "depends_on",
+      "confidence": 0.77
+    },
+    {
+      "source": "Apache Kafka",
+      "target": "Gin",
+      "type": "uses",
+      "confidence": 0.88
+    },
+    {
+      "source": "kubernetes-manifests",
+      "target": "TypeScript",
+      "type": "calls",
+      "confidence": 0.66
+    },
+    {
+      "source": "ARCHITECTURE.md",
+      "target": "analytics-db",
+      "type": "extends",
+      "confidence": 0.73
+    },
+    {
+      "source": "user-service",
+      "target": "web-dashboard",
+      "type": "references",
+      "confidence": 0.85
+    },
+    {
+      "source": "kubernetes-manifests",
+      "target": "Go",
+      "type": "imports",
+      "confidence": 0.64
+    },
+    {
+      "source": "Python",
+      "target": "nexus-platform",
+      "type": "configures",
+      "confidence": 0.65
+    },
+    {
+      "source": "requirements.txt",
+      "target": "Scala",
+      "type": "extends",
+      "confidence": 0.74
+    },
+    {
+      "source": "user-service",
+      "target": "Python",
+      "type": "references",
+      "confidence": 0.89
+    },
+    {
+      "source": "Security Audit",
+      "target": "Production Deployment",
+      "type": "uses",
+      "confidence": 0.65
+    },
+    {
+      "source": "nexus-platform",
+      "target": "CodeAssistant",
+      "type": "inherits_from",
+      "confidence": 0.8
+    },
+    {
+      "source": "Performance Optimization",
+      "target": "Backend Engineer",
+      "type": "implements",
+      "confidence": 0.79
+    },
+    {
+      "source": "CodeAssistant",
+      "target": "Beta Launch",
+      "type": "contains",
+      "confidence": 0.65
+    },
+    {
+      "source": "TypeScript",
+      "target": "TestOrchestrator",
+      "type": "references",
+      "confidence": 0.75
+    },
+    {
+      "source": "TypeScript",
+      "target": "CI/CD Pipeline",
+      "type": "depends_on",
+      "confidence": 0.87
+    },
+    {
+      "source": "load-balancer",
+      "target": "Microservices Architecture",
+      "type": "extends",
+      "confidence": 0.82
+    },
+    {
+      "source": "requirements.txt",
+      "target": "analytics-db",
+      "type": "uses",
+      "confidence": 0.7
+    },
+    {
+      "source": "DeployBot",
+      "target": "Senior ML Engineer",
+      "type": "extends",
+      "confidence": 0.67
+    },
+    {
+      "source": "Backend Engineer",
+      "target": "user-service",
+      "type": "inherits_from",
+      "confidence": 0.66
+    },
+    {
+      "source": "docker-compose.yml",
+      "target": "API Rate Limiting",
+      "type": "imports",
+      "confidence": 0.87
+    },
+    {
+      "source": "web-dashboard",
+      "target": "ARCHITECTURE.md",
+      "type": "implements",
+      "confidence": 0.89
+    },
+    {
+      "source": "AI Research Scientist",
+      "target": "notification-service",
+      "type": "calls",
+      "confidence": 0.64
+    },
+    {
+      "source": "load-balancer",
+      "target": "TypeScript",
+      "type": "inherits_from",
+      "confidence": 0.74
+    },
+    {
+      "source": "React",
+      "target": "kubernetes-manifests",
+      "type": "imports",
+      "confidence": 0.9
+    },
+    {
+      "source": "Gin",
+      "target": "user-service",
+      "type": "imports",
+      "confidence": 0.73
+    },
+    {
+      "source": "monitoring-stack",
+      "target": "api-gateway",
+      "type": "implements",
+      "confidence": 0.81
+    },
+    {
+      "source": "TestOrchestrator",
+      "target": "CodeAssistant",
+      "type": "contains",
+      "confidence": 0.68
+    },
+    {
+      "source": "React",
+      "target": "Redis",
+      "type": "references",
+      "confidence": 0.66
+    },
+    {
+      "source": "DocGenerator",
+      "target": "ARCHITECTURE.md",
+      "type": "calls",
+      "confidence": 0.76
+    },
+    {
+      "source": "DocGenerator",
+      "target": "Backend Engineer",
+      "type": "references",
+      "confidence": 0.8
+    },
+    {
+      "source": "Python",
+      "target": "load-balancer",
+      "type": "configures",
+      "confidence": 0.83
+    },
+    {
+      "source": "Scala",
+      "target": "Dockerfile",
+      "type": "uses",
+      "confidence": 0.74
+    },
+    {
+      "source": "TensorFlow Serving",
+      "target": "CodeAssistant",
+      "type": "depends_on",
+      "confidence": 0.7
+    },
+    {
+      "source": "TypeScript",
+      "target": "DocGenerator",
+      "type": "uses",
+      "confidence": 0.77
+    },
+    {
+      "source": "API Rate Limiting",
+      "target": "DevOps Architect",
+      "type": "references",
+      "confidence": 0.86
+    },
+    {
+      "source": "kubernetes-manifests",
+      "target": "TestOrchestrator",
+      "type": "configures",
+      "confidence": 0.81
+    },
+    {
+      "source": "api-gateway",
+      "target": "package.json",
+      "type": "implements",
+      "confidence": 0.62
+    },
+    {
+      "source": "monitoring-stack",
+      "target": "Go",
+      "type": "configures",
+      "confidence": 0.67
+    },
+    {
+      "source": "ARCHITECTURE.md",
+      "target": "api-gateway",
+      "type": "calls",
+      "confidence": 0.67
+    },
+    {
+      "source": "analytics-db",
+      "target": "nexus-platform",
+      "type": "calls",
+      "confidence": 0.65
+    },
+    {
+      "source": "AI Research Scientist",
+      "target": "Performance Optimization",
+      "type": "references",
+      "confidence": 0.61
+    },
+    {
+      "source": "DocGenerator",
+      "target": "Frontend Tech Lead",
+      "type": "configures",
+      "confidence": 0.73
+    },
+    {
+      "source": "Beta Launch",
+      "target": "Frontend Tech Lead",
+      "type": "imports",
+      "confidence": 0.89
+    },
+    {
+      "source": "pytest.ini",
+      "target": "CI/CD Pipeline",
+      "type": "implements",
+      "confidence": 0.71
+    },
+    {
+      "source": "Rust",
+      "target": "Python",
+      "type": "extends",
+      "confidence": 0.72
+    },
+    {
+      "source": "Dockerfile",
+      "target": "Rust",
+      "type": "extends",
+      "confidence": 0.75
+    },
+    {
+      "source": "Rust",
+      "target": "TypeScript",
+      "type": "contains",
+      "confidence": 0.85
+    },
+    {
+      "source": "Dockerfile",
+      "target": "pytest.ini",
+      "type": "references",
+      "confidence": 0.68
+    },
+    {
+      "source": "pytest.ini",
+      "target": "TypeScript",
+      "type": "depends_on",
+      "confidence": 0.78
+    },
+    {
+      "source": "docker-compose.yml",
+      "target": "Frontend Tech Lead",
+      "type": "depends_on",
+      "confidence": 0.85
+    },
+    {
+      "source": "pytest.ini",
+      "target": "DevOps Architect",
+      "type": "inherits_from",
+      "confidence": 0.76
+    },
+    {
+      "source": "DocGenerator",
+      "target": "Beta Launch",
+      "type": "imports",
+      "confidence": 0.66
+    },
+    {
+      "source": "jest.config.js",
+      "target": "nexus-platform",
+      "type": "references",
+      "confidence": 0.66
+    },
+    {
+      "source": "CodeAssistant",
+      "target": "Senior ML Engineer",
+      "type": "inherits_from",
+      "confidence": 0.82
+    },
+    {
+      "source": "Microservices Architecture",
+      "target": "docker-compose.yml",
+      "type": "inherits_from",
+      "confidence": 0.69
+    },
+    {
+      "source": "Event-Driven Architecture",
+      "target": "SecurityScanner",
+      "type": "imports",
+      "confidence": 0.66
+    },
+    {
+      "source": "TensorFlow Serving",
+      "target": "Dockerfile",
+      "type": "implements",
+      "confidence": 0.76
+    },
+    {
+      "source": "Dockerfile",
+      "target": "CodeAssistant",
+      "type": "contains",
+      "confidence": 0.72
+    },
+    {
+      "source": "Performance Optimization",
+      "target": "CodeAssistant",
+      "type": "imports",
+      "confidence": 0.71
+    },
+    {
+      "source": "CI/CD Pipeline",
+      "target": "CodeAssistant",
+      "type": "contains",
+      "confidence": 0.74
+    },
+    {
+      "source": "TypeScript",
+      "target": "data-pipeline",
+      "type": "references",
+      "confidence": 0.84
+    },
+    {
+      "source": "DeployBot",
+      "target": "Alpha Release",
+      "type": "implements",
+      "confidence": 0.84
+    },
+    {
+      "source": "analytics-db",
+      "target": "web-dashboard",
+      "type": "inherits_from",
+      "confidence": 0.72
+    },
+    {
+      "source": "Performance Optimization",
+      "target": "analytics-db",
+      "type": "depends_on",
+      "confidence": 0.73
+    },
+    {
+      "source": "nexus-platform",
+      "target": "web-dashboard",
+      "type": "calls",
+      "confidence": 0.62
+    },
+    {
+      "source": "API Rate Limiting",
+      "target": "user-service",
+      "type": "calls",
+      "confidence": 0.84
+    },
+    {
+      "source": "Backend Engineer",
+      "target": "nexus-platform",
+      "type": "references",
+      "confidence": 0.7
+    },
+    {
+      "source": "Event-Driven Architecture",
+      "target": "CI/CD Pipeline",
+      "type": "extends",
+      "confidence": 0.65
+    },
+    {
+      "source": "Backend Engineer",
+      "target": "web-dashboard",
+      "type": "calls",
+      "confidence": 0.87
+    },
+    {
+      "source": "TestOrchestrator",
+      "target": "React",
+      "type": "imports",
+      "confidence": 0.73
+    },
+    {
+      "source": "Apache Kafka",
+      "target": "ARCHITECTURE.md",
+      "type": "contains",
+      "confidence": 0.78
+    },
+    {
+      "source": "pytest.ini",
+      "target": "Scala",
+      "type": "implements",
+      "confidence": 0.85
+    },
+    {
+      "source": "Performance Optimization",
+      "target": "ml-inference-engine",
+      "type": "uses",
+      "confidence": 0.81
+    },
+    {
+      "source": "monitoring-stack",
+      "target": "analytics-db",
+      "type": "imports",
+      "confidence": 0.66
+    },
+    {
+      "source": "API_REFERENCE.md",
+      "target": "user-service",
+      "type": "depends_on",
+      "confidence": 0.84
+    },
+    {
+      "source": "data-pipeline",
+      "target": "Scala",
+      "type": "configures",
+      "confidence": 0.88
+    },
+    {
+      "source": "Microservices Architecture",
+      "target": "requirements.txt",
+      "type": "uses",
+      "confidence": 0.65
+    },
+    {
+      "source": "ARCHITECTURE.md",
+      "target": "TensorFlow Serving",
+      "type": "configures",
+      "confidence": 0.66
+    },
+    {
+      "source": "package.json",
+      "target": "Scala",
+      "type": "extends",
+      "confidence": 0.64
+    },
+    {
+      "source": "Performance Optimization",
+      "target": "CI/CD Pipeline",
+      "type": "contains",
+      "confidence": 0.74
+    },
+    {
+      "source": "web-dashboard",
+      "target": "TypeScript",
+      "type": "depends_on",
+      "confidence": 0.8
+    },
+    {
+      "source": "FastAPI",
+      "target": "ARCHITECTURE.md",
+      "type": "uses",
+      "confidence": 0.67
+    },
+    {
+      "source": "CI/CD Pipeline",
+      "target": "user-service",
+      "type": "depends_on",
+      "confidence": 0.64
+    },
+    {
+      "source": "notification-service",
+      "target": "AI Research Scientist",
+      "type": "contains",
+      "confidence": 0.85
+    },
+    {
+      "source": "Scala",
+      "target": "Event-Driven Architecture",
+      "type": "depends_on",
+      "confidence": 0.81
+    },
+    {
+      "source": "TypeScript",
+      "target": "Scala",
+      "type": "depends_on",
+      "confidence": 0.65
+    },
+    {
+      "source": "React",
+      "target": "requirements.txt",
+      "type": "references",
+      "confidence": 0.64
+    },
+    {
+      "source": "Go",
+      "target": "Event-Driven Architecture",
+      "type": "inherits_from",
+      "confidence": 0.87
+    },
+    {
+      "source": "api-gateway",
+      "target": "API_REFERENCE.md",
+      "type": "configures",
+      "confidence": 0.86
+    },
+    {
+      "source": "AI Research Scientist",
+      "target": "TensorFlow Serving",
+      "type": "depends_on",
+      "confidence": 0.67
+    },
+    {
+      "source": "Alpha Release",
+      "target": "TypeScript",
+      "type": "extends",
+      "confidence": 0.87
+    },
+    {
+      "source": "CI/CD Pipeline",
+      "target": "data-pipeline",
+      "type": "implements",
+      "confidence": 0.9
+    },
+    {
+      "source": "package.json",
+      "target": "monitoring-stack",
+      "type": "uses",
+      "confidence": 0.81
+    },
+    {
+      "source": "load-balancer",
+      "target": "ml-inference-engine",
+      "type": "contains",
+      "confidence": 0.64
+    },
+    {
+      "source": "data-pipeline",
+      "target": "Event-Driven Architecture",
+      "type": "references",
+      "confidence": 0.69
+    },
+    {
+      "source": "monitoring-stack",
+      "target": "ARCHITECTURE.md",
+      "type": "contains",
+      "confidence": 0.86
+    },
+    {
+      "source": "DevOps Architect",
+      "target": "Performance Optimization",
+      "type": "uses",
+      "confidence": 0.73
+    },
+    {
+      "source": "api-gateway",
+      "target": "CI/CD Pipeline",
+      "type": "extends",
+      "confidence": 0.68
+    },
+    {
+      "source": "DevOps Architect",
+      "target": "TypeScript",
+      "type": "uses",
+      "confidence": 0.84
+    },
+    {
+      "source": "package.json",
+      "target": "API_REFERENCE.md",
+      "type": "imports",
+      "confidence": 0.73
+    },
+    {
+      "source": "DeployBot",
+      "target": "DevOps Architect",
+      "type": "inherits_from",
+      "confidence": 0.76
+    },
+    {
+      "source": "API_REFERENCE.md",
+      "target": "Gin",
+      "type": "contains",
+      "confidence": 0.62
+    },
+    {
+      "source": "data-pipeline",
+      "target": "SecurityScanner",
+      "type": "references",
+      "confidence": 0.84
+    },
+    {
+      "source": "web-dashboard",
+      "target": "CI/CD Pipeline",
+      "type": "calls",
+      "confidence": 0.67
+    },
+    {
+      "source": "TestOrchestrator",
+      "target": "FastAPI",
+      "type": "contains",
+      "confidence": 0.83
+    },
+    {
+      "source": "DevOps Architect",
+      "target": "analytics-db",
+      "type": "inherits_from",
+      "confidence": 0.62
+    },
+    {
+      "source": "Go",
+      "target": "Model Versioning",
+      "type": "references",
+      "confidence": 0.71
+    },
+    {
+      "source": "Beta Launch",
+      "target": "Senior ML Engineer",
+      "type": "calls",
+      "confidence": 0.73
+    },
+    {
+      "source": "Senior ML Engineer",
+      "target": "docker-compose.yml",
+      "type": "implements",
+      "confidence": 0.64
+    },
+    {
+      "source": "Production Deployment",
+      "target": "Security Audit",
+      "type": "references",
+      "confidence": 0.81
+    },
+    {
+      "source": "Rust",
+      "target": "Performance Optimization",
+      "type": "extends",
+      "confidence": 0.82
+    },
+    {
+      "source": "Go",
+      "target": "DeployBot",
+      "type": "depends_on",
+      "confidence": 0.81
+    },
+    {
+      "source": "Model Versioning",
+      "target": "notification-service",
+      "type": "references",
+      "confidence": 0.67
+    },
+    {
+      "source": "DocGenerator",
+      "target": "Alpha Release",
+      "type": "implements",
+      "confidence": 0.73
+    },
+    {
+      "source": "requirements.txt",
+      "target": "web-dashboard",
+      "type": "references",
+      "confidence": 0.77
+    },
+    {
+      "source": "user-service",
+      "target": "ARCHITECTURE.md",
+      "type": "contains",
+      "confidence": 0.87
+    },
+    {
+      "source": "DeployBot",
+      "target": "Python",
+      "type": "extends",
+      "confidence": 0.62
+    },
+    {
+      "source": "ml-inference-engine",
+      "target": "Frontend Tech Lead",
+      "type": "implements",
+      "confidence": 0.74
+    },
+    {
+      "source": "React",
+      "target": "pytest.ini",
+      "type": "configures",
+      "confidence": 0.82
+    },
+    {
+      "source": "api-gateway",
+      "target": "CodeAssistant",
+      "type": "configures",
+      "confidence": 0.64
+    },
+    {
+      "source": "Rust",
+      "target": "Gin",
+      "type": "implements",
+      "confidence": 0.62
+    },
+    {
+      "source": "data-pipeline",
+      "target": "FastAPI",
+      "type": "uses",
+      "confidence": 0.72
+    },
+    {
+      "source": "Production Deployment",
+      "target": "requirements.txt",
+      "type": "imports",
+      "confidence": 0.71
+    },
+    {
+      "source": "Beta Launch",
+      "target": "TestOrchestrator",
+      "type": "inherits_from",
+      "confidence": 0.68
+    },
+    {
+      "source": "package.json",
+      "target": "API Rate Limiting",
+      "type": "implements",
+      "confidence": 0.81
+    },
+    {
+      "source": "CodeAssistant",
+      "target": "Backend Engineer",
+      "type": "imports",
+      "confidence": 0.81
+    },
+    {
+      "source": "Model Versioning",
+      "target": "Python",
+      "type": "contains",
+      "confidence": 0.7
+    },
+    {
+      "source": "Microservices Architecture",
+      "target": "FastAPI",
+      "type": "inherits_from",
+      "confidence": 0.8
+    },
+    {
+      "source": "Backend Engineer",
+      "target": "Dockerfile",
+      "type": "configures",
+      "confidence": 0.86
+    },
+    {
+      "source": "TypeScript",
+      "target": "Frontend Tech Lead",
+      "type": "calls",
+      "confidence": 0.75
+    },
+    {
+      "source": "web-dashboard",
+      "target": "Alpha Release",
+      "type": "calls",
+      "confidence": 0.88
+    },
+    {
+      "source": "FastAPI",
+      "target": "Gin",
+      "type": "configures",
+      "confidence": 0.65
+    },
+    {
+      "source": "analytics-db",
+      "target": "API Rate Limiting",
+      "type": "implements",
+      "confidence": 0.84
+    },
+    {
+      "source": "Alpha Release",
+      "target": "Rust",
+      "type": "contains",
+      "confidence": 0.76
+    },
+    {
+      "source": "requirements.txt",
+      "target": "ARCHITECTURE.md",
+      "type": "extends",
+      "confidence": 0.62
+    },
+    {
+      "source": "Performance Optimization",
+      "target": "data-pipeline",
+      "type": "contains",
+      "confidence": 0.64
+    },
+    {
+      "source": "SecurityScanner",
+      "target": "Rust",
+      "type": "extends",
+      "confidence": 0.74
+    },
+    {
+      "source": "Senior ML Engineer",
+      "target": "api-gateway",
+      "type": "depends_on",
+      "confidence": 0.65
+    },
+    {
+      "source": "docker-compose.yml",
+      "target": "Apache Kafka",
+      "type": "extends",
+      "confidence": 0.75
+    },
+    {
+      "source": "Dockerfile",
+      "target": "Apache Kafka",
+      "type": "inherits_from",
+      "confidence": 0.81
+    },
+    {
+      "source": "ml-inference-engine",
+      "target": "Rust",
+      "type": "extends",
+      "confidence": 0.62
+    },
+    {
+      "source": "Scala",
+      "target": "API Rate Limiting",
+      "type": "configures",
+      "confidence": 0.64
+    },
+    {
+      "source": "API_REFERENCE.md",
+      "target": "API Rate Limiting",
+      "type": "depends_on",
+      "confidence": 0.88
+    },
+    {
+      "source": "Microservices Architecture",
+      "target": "Beta Launch",
+      "type": "calls",
+      "confidence": 0.69
+    },
+    {
+      "source": "docker-compose.yml",
+      "target": "DeployBot",
+      "type": "contains",
+      "confidence": 0.65
+    },
+    {
+      "source": "Gin",
+      "target": "ARCHITECTURE.md",
+      "type": "depends_on",
+      "confidence": 0.69
+    },
+    {
+      "source": "FastAPI",
+      "target": "Rust",
+      "type": "uses",
+      "confidence": 0.77
+    },
+    {
+      "source": "Redis",
+      "target": "Python",
+      "type": "uses",
+      "confidence": 0.86
+    },
+    {
+      "source": "monitoring-stack",
+      "target": "TypeScript",
+      "type": "uses",
+      "confidence": 0.82
+    },
+    {
+      "source": "TensorFlow Serving",
+      "target": "Model Versioning",
+      "type": "uses",
+      "confidence": 0.66
+    },
+    {
+      "source": "FastAPI",
+      "target": "analytics-db",
+      "type": "imports",
+      "confidence": 0.68
+    },
+    {
+      "source": "TypeScript",
+      "target": "AI Research Scientist",
+      "type": "configures",
+      "confidence": 0.7
+    },
+    {
+      "source": "Production Deployment",
+      "target": "Python",
+      "type": "uses",
+      "confidence": 0.84
+    },
+    {
+      "source": "Redis",
+      "target": "jest.config.js",
+      "type": "depends_on",
+      "confidence": 0.89
+    },
+    {
+      "source": "Alpha Release",
+      "target": "kubernetes-manifests",
+      "type": "references",
+      "confidence": 0.78
+    },
+    {
+      "source": "DevOps Architect",
+      "target": "Alpha Release",
+      "type": "uses",
+      "confidence": 0.72
+    },
+    {
+      "source": "monitoring-stack",
+      "target": "TestOrchestrator",
+      "type": "configures",
+      "confidence": 0.79
+    },
+    {
+      "source": "TestOrchestrator",
+      "target": "Microservices Architecture",
+      "type": "uses",
+      "confidence": 0.64
+    },
+    {
+      "source": "DeployBot",
+      "target": "Performance Optimization",
+      "type": "references",
+      "confidence": 0.68
+    },
+    {
+      "source": "CodeAssistant",
+      "target": "Redis",
+      "type": "references",
+      "confidence": 0.72
+    },
+    {
+      "source": "package.json",
+      "target": "Frontend Tech Lead",
+      "type": "calls",
+      "confidence": 0.88
+    },
+    {
+      "source": "Redis",
+      "target": "data-pipeline",
+      "type": "contains",
+      "confidence": 0.69
+    },
+    {
+      "source": "DeployBot",
+      "target": "CI/CD Pipeline",
+      "type": "calls",
+      "confidence": 0.71
+    },
+    {
+      "source": "DeployBot",
+      "target": "Production Deployment",
+      "type": "calls",
+      "confidence": 0.82
+    },
+    {
+      "source": "DeployBot",
+      "target": "Redis",
+      "type": "implements",
+      "confidence": 0.72
+    },
+    {
+      "source": "Senior ML Engineer",
+      "target": "Model Versioning",
+      "type": "references",
+      "confidence": 0.66
+    },
+    {
+      "source": "Backend Engineer",
+      "target": "Model Versioning",
+      "type": "calls",
+      "confidence": 0.82
+    },
+    {
+      "source": "ARCHITECTURE.md",
+      "target": "requirements.txt",
+      "type": "uses",
+      "confidence": 0.74
+    },
+    {
+      "source": "CodeAssistant",
+      "target": "notification-service",
+      "type": "uses",
+      "confidence": 0.66
+    },
+    {
+      "source": "ARCHITECTURE.md",
+      "target": "Backend Engineer",
+      "type": "depends_on",
+      "confidence": 0.66
+    },
+    {
+      "source": "user-service",
+      "target": "SecurityScanner",
+      "type": "implements",
+      "confidence": 0.69
+    },
+    {
+      "source": "web-dashboard",
+      "target": "ml-inference-engine",
+      "type": "implements",
+      "confidence": 0.77
+    },
+    {
+      "source": "Gin",
+      "target": "Rust",
+      "type": "contains",
+      "confidence": 0.85
+    },
+    {
+      "source": "Backend Engineer",
+      "target": "DocGenerator",
+      "type": "inherits_from",
+      "confidence": 0.77
+    },
+    {
+      "source": "CodeAssistant",
+      "target": "jest.config.js",
+      "type": "inherits_from",
+      "confidence": 0.72
+    },
+    {
+      "source": "FastAPI",
+      "target": "DocGenerator",
+      "type": "uses",
+      "confidence": 0.79
+    },
+    {
+      "source": "Gin",
+      "target": "Performance Optimization",
+      "type": "calls",
+      "confidence": 0.9
+    },
+    {
+      "source": "DeployBot",
+      "target": "load-balancer",
+      "type": "extends",
+      "confidence": 0.78
+    },
+    {
+      "source": "web-dashboard",
+      "target": "DeployBot",
+      "type": "uses",
+      "confidence": 0.85
+    },
+    {
+      "source": "API_REFERENCE.md",
+      "target": "FastAPI",
+      "type": "inherits_from",
+      "confidence": 0.8
+    },
+    {
+      "source": "API Rate Limiting",
+      "target": "TestOrchestrator",
+      "type": "uses",
+      "confidence": 0.68
+    },
+    {
+      "source": "analytics-db",
+      "target": "ARCHITECTURE.md",
+      "type": "inherits_from",
+      "confidence": 0.76
+    },
+    {
+      "source": "AI Research Scientist",
+      "target": "user-service",
+      "type": "extends",
+      "confidence": 0.79
+    },
+    {
+      "source": "api-gateway",
+      "target": "kubernetes-manifests",
+      "type": "uses",
+      "confidence": 0.72
+    },
+    {
+      "source": "AI Research Scientist",
+      "target": "load-balancer",
+      "type": "contains",
+      "confidence": 0.68
+    },
+    {
+      "source": "AI Research Scientist",
+      "target": "Python",
+      "type": "imports",
+      "confidence": 0.67
+    },
+    {
+      "source": "user-service",
+      "target": "Security Audit",
+      "type": "calls",
+      "confidence": 0.9
+    },
+    {
+      "source": "Apache Kafka",
+      "target": "Scala",
+      "type": "references",
+      "confidence": 0.9
+    },
+    {
+      "source": "requirements.txt",
+      "target": "pytest.ini",
+      "type": "calls",
+      "confidence": 0.63
+    },
+    {
+      "source": "Apache Kafka",
+      "target": "Performance Optimization",
+      "type": "contains",
+      "confidence": 0.71
+    },
+    {
+      "source": "user-service",
+      "target": "notification-service",
+      "type": "references",
+      "confidence": 0.77
+    },
+    {
+      "source": "Apache Kafka",
+      "target": "Python",
+      "type": "contains",
+      "confidence": 0.83
+    },
+    {
+      "source": "notification-service",
+      "target": "nexus-platform",
+      "type": "calls",
+      "confidence": 0.68
+    },
+    {
+      "source": "API_REFERENCE.md",
+      "target": "DevOps Architect",
+      "type": "imports",
+      "confidence": 0.77
+    },
+    {
+      "source": "API_REFERENCE.md",
+      "target": "Apache Kafka",
+      "type": "references",
+      "confidence": 0.85
+    },
+    {
+      "source": "Production Deployment",
+      "target": "API_REFERENCE.md",
+      "type": "contains",
+      "confidence": 0.73
+    },
+    {
+      "source": "kubernetes-manifests",
+      "target": "user-service",
+      "type": "uses",
+      "confidence": 0.8
+    },
+    {
+      "source": "React",
+      "target": "Apache Kafka",
+      "type": "implements",
+      "confidence": 0.7
+    },
+    {
+      "source": "user-service",
+      "target": "nexus-platform",
+      "type": "calls",
+      "confidence": 0.86
+    },
+    {
+      "source": "CI/CD Pipeline",
+      "target": "Frontend Tech Lead",
+      "type": "depends_on",
+      "confidence": 0.71
+    },
+    {
+      "source": "Go",
+      "target": "load-balancer",
+      "type": "extends",
+      "confidence": 0.88
+    },
+    {
+      "source": "Model Versioning",
+      "target": "web-dashboard",
+      "type": "contains",
+      "confidence": 0.87
+    },
+    {
+      "source": "web-dashboard",
+      "target": "Go",
+      "type": "imports",
+      "confidence": 0.73
+    },
+    {
+      "source": "requirements.txt",
+      "target": "kubernetes-manifests",
+      "type": "inherits_from",
+      "confidence": 0.8
+    },
+    {
+      "source": "TensorFlow Serving",
+      "target": "Microservices Architecture",
+      "type": "configures",
+      "confidence": 0.64
+    },
+    {
+      "source": "React",
+      "target": "package.json",
+      "type": "imports",
+      "confidence": 0.76
+    },
+    {
+      "source": "TypeScript",
+      "target": "api-gateway",
+      "type": "implements",
+      "confidence": 0.65
+    },
+    {
+      "source": "API_REFERENCE.md",
+      "target": "Redis",
+      "type": "contains",
+      "confidence": 0.78
+    },
+    {
+      "source": "analytics-db",
+      "target": "SecurityScanner",
+      "type": "references",
+      "confidence": 0.79
+    },
+    {
+      "source": "Redis",
+      "target": "monitoring-stack",
+      "type": "contains",
+      "confidence": 0.82
+    },
+    {
+      "source": "Backend Engineer",
+      "target": "Redis",
+      "type": "calls",
+      "confidence": 0.76
+    },
+    {
+      "source": "Security Audit",
+      "target": "user-service",
+      "type": "inherits_from",
+      "confidence": 0.65
+    },
+    {
+      "source": "Apache Kafka",
+      "target": "Redis",
+      "type": "imports",
+      "confidence": 0.87
+    },
+    {
+      "source": "monitoring-stack",
+      "target": "Dockerfile",
+      "type": "contains",
+      "confidence": 0.89
+    },
+    {
+      "source": "API Rate Limiting",
+      "target": "Apache Kafka",
+      "type": "depends_on",
+      "confidence": 0.72
+    },
+    {
+      "source": "SecurityScanner",
+      "target": "TensorFlow Serving",
+      "type": "contains",
+      "confidence": 0.75
+    },
+    {
+      "source": "package.json",
+      "target": "Model Versioning",
+      "type": "uses",
+      "confidence": 0.68
+    },
+    {
+      "source": "Redis",
+      "target": "ml-inference-engine",
+      "type": "calls",
+      "confidence": 0.76
+    },
+    {
+      "source": "web-dashboard",
+      "target": "notification-service",
+      "type": "uses",
+      "confidence": 0.83
+    },
+    {
+      "source": "ml-inference-engine",
+      "target": "package.json",
+      "type": "extends",
+      "confidence": 0.78
+    }
+  ],
+  "metadata": {
+    "generation_method": "claude_tool_calling",
+    "target_size": 50,
+    "density_level": "sparse",
+    "actual_entities": 50,
+    "actual_relationships": 0,
+    "actual_avg_degree": 0.0,
+    "based_on_real_patterns": true,
+    "generation_timestamp": "2025-08-09 18:39:56.131760"
+  }
+}

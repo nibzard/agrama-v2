@@ -14,8 +14,8 @@ export interface AgentActivity {
   tool: string;
   action: string;
   timestamp: Date;
-  params?: Record<string, any>;
-  result?: any;
+  params?: Record<string, unknown>;
+  result?: unknown;
   duration?: number;
   status: 'pending' | 'success' | 'error';
 }

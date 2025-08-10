@@ -263,20 +263,31 @@ pub const MCPCompliantServer = struct {
 
     /// Handle tools/list request
     fn handleToolsList(self: *MCPCompliantServer, request: MCPRequest) !void {
-        // Create a simple JSON response without complex object management
-        const tools_json =
-            \\{"tools":[
-            \\  {"name":"read_code","title":"Read Code File","description":"Read and analyze code files with optional history","inputSchema":{"type":"object","properties":{"path":{"type":"string","description":"File path to read"},"include_history":{"type":"boolean","description":"Include file history"}},"required":["path"]}},
-            \\  {"name":"write_code","title":"Write Code File","description":"Write or modify code files with provenance tracking","inputSchema":{"type":"object","properties":{"path":{"type":"string"},"content":{"type":"string"}},"required":["path","content"]}},
-            \\  {"name":"get_context","title":"Get Context","description":"Get comprehensive contextual information","inputSchema":{"type":"object","properties":{}}}
-            \\]}
-        ;
+        // Dynamically generate tools list from registered tools (protocol compliant)
+        var tools_array = std.json.Array.init(self.allocator);
+        defer tools_array.deinit();
 
-        // Parse the JSON and send as response
-        var parsed = try std.json.parseFromSlice(std.json.Value, self.allocator, tools_json, .{});
-        defer parsed.deinit();
+        for (self.tools.items) |tool| {
+            var tool_obj = std.json.ObjectMap.init(self.allocator);
+            defer tool_obj.deinit();
 
-        try self.sendResponse(request.id, parsed.value);
+            try tool_obj.put("name", std.json.Value{ .string = try self.allocator.dupe(u8, tool.name) });
+            try tool_obj.put("title", std.json.Value{ .string = try self.allocator.dupe(u8, tool.title) });
+            try tool_obj.put("description", std.json.Value{ .string = try self.allocator.dupe(u8, tool.description) });
+            try tool_obj.put("inputSchema", tool.inputSchema);
+
+            if (tool.outputSchema) |output_schema| {
+                try tool_obj.put("outputSchema", output_schema);
+            }
+
+            try tools_array.append(std.json.Value{ .object = tool_obj });
+        }
+
+        var result = std.json.ObjectMap.init(self.allocator);
+        defer result.deinit();
+        try result.put("tools", std.json.Value{ .array = tools_array });
+
+        try self.sendResponse(request.id, std.json.Value{ .object = result });
     }
 
     /// Handle tools/call request
@@ -292,7 +303,9 @@ pub const MCPCompliantServer = struct {
             return;
         };
 
-        const arguments = params_obj.get("arguments") orelse std.json.Value{ .object = std.json.ObjectMap.init(self.allocator) };
+        var default_args = std.json.ObjectMap.init(self.allocator);
+        defer if (params_obj.get("arguments") == null) default_args.deinit();
+        const arguments = params_obj.get("arguments") orelse std.json.Value{ .object = default_args };
 
         // Call the appropriate tool
         const tool_response = self.callTool(tool_name.string, arguments) catch |err| {
@@ -310,20 +323,23 @@ pub const MCPCompliantServer = struct {
         const first_content = if (tool_response.content.len > 0) tool_response.content[0] else null;
         const text_content = if (first_content) |content| content.text orelse "No content" else "No content";
 
-        // Build JSON response string (escape quotes in text)
-        const escaped_text = try self.escapeJsonString(text_content);
-        defer self.allocator.free(escaped_text);
+        // Build JSON response safely using Zig's JSON handling
+        var content_obj = std.json.ObjectMap.init(self.allocator);
+        defer content_obj.deinit();
+        try content_obj.put("type", std.json.Value{ .string = "text" });
+        try content_obj.put("text", std.json.Value{ .string = text_content });
 
-        const response_json = try std.fmt.allocPrint(self.allocator,
-            \\{{"content":[{{"type":"text","text":"{s}"}}],"isError":{}}}
-        , .{ escaped_text, tool_response.isError });
-        defer self.allocator.free(response_json);
+        var content_array = std.json.Array.init(self.allocator);
+        defer content_array.deinit();
+        try content_array.append(std.json.Value{ .object = content_obj });
 
-        // Parse and send
-        var parsed = try std.json.parseFromSlice(std.json.Value, self.allocator, response_json, .{});
-        defer parsed.deinit();
+        var result_obj = std.json.ObjectMap.init(self.allocator);
+        defer result_obj.deinit();
+        try result_obj.put("content", std.json.Value{ .array = content_array });
+        try result_obj.put("isError", std.json.Value{ .bool = tool_response.isError });
 
-        try self.sendResponse(request.id, parsed.value);
+        const result_value = std.json.Value{ .object = result_obj };
+        try self.sendResponse(request.id, result_value);
     }
 
     /// Call specific tool implementation
@@ -444,24 +460,12 @@ pub const MCPCompliantServer = struct {
         try self.stdout_writer.writeAll(string.items);
     }
 
-    /// Escape JSON string (simple implementation)
-    fn escapeJsonString(self: *MCPCompliantServer, input: []const u8) ![]u8 {
-        var result = std.ArrayList(u8).init(self.allocator);
-        defer result.deinit();
-
-        for (input) |char| {
-            switch (char) {
-                '"' => try result.appendSlice("\\\""),
-                '\\' => try result.appendSlice("\\\\"),
-                '\n' => try result.appendSlice("\\n"),
-                '\r' => try result.appendSlice("\\r"),
-                '\t' => try result.appendSlice("\\t"),
-                else => try result.append(char),
-            }
-        }
-
-        return result.toOwnedSlice();
-    }
+    // REMOVED: escapeJsonString function - replaced with safe Zig JSON handling
+    // The previous manual JSON escaping was vulnerable to:
+    // 1. Incorrect Unicode escape format (decimal instead of hex)
+    // 2. JSON injection through manual string construction
+    // 3. Incomplete handling of edge cases
+    // Now using std.json.Value for type-safe JSON construction
 };
 
 /// Create read_code tool definition
@@ -540,9 +544,23 @@ fn createWriteCodeTool(allocator: Allocator) !MCPToolDefinition {
 /// Create get_context tool definition
 fn createGetContextTool(allocator: Allocator) !MCPToolDefinition {
     var input_schema = std.json.ObjectMap.init(allocator);
-    defer input_schema.deinit();
+    var properties = std.json.ObjectMap.init(allocator);
+
+    // Add optional parameters for context tool
+    var path_schema = std.json.ObjectMap.init(allocator);
+    try path_schema.put("type", std.json.Value{ .string = "string" });
+    try path_schema.put("description", std.json.Value{ .string = "Optional file path for specific context" });
+
+    var type_schema = std.json.ObjectMap.init(allocator);
+    try type_schema.put("type", std.json.Value{ .string = "string" });
+    try type_schema.put("description", std.json.Value{ .string = "Context type: 'full', 'metrics', or 'agents'" });
+    try type_schema.put("default", std.json.Value{ .string = "full" });
+
+    try properties.put("path", std.json.Value{ .object = path_schema });
+    try properties.put("type", std.json.Value{ .object = type_schema });
+
     try input_schema.put("type", std.json.Value{ .string = "object" });
-    try input_schema.put("properties", std.json.Value{ .object = std.json.ObjectMap.init(allocator) });
+    try input_schema.put("properties", std.json.Value{ .object = properties });
 
     return MCPToolDefinition{
         .name = try allocator.dupe(u8, "get_context"),

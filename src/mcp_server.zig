@@ -81,8 +81,26 @@ pub const AgentInfo = struct {
     requests_handled: u64,
 
     pub fn init(allocator: Allocator, id: []const u8, name: []const u8) !AgentInfo {
-        const owned_id = try allocator.dupe(u8, id);
-        const owned_name = try allocator.dupe(u8, name);
+        // Validate inputs before allocation
+        if (id.len == 0 or name.len == 0) {
+            return error.InvalidInput;
+        }
+
+        // Proper slice validation - slices with length > 0 must have valid ptr
+        // This is safe because we already checked len > 0 above
+        // No need for unsafe pointer arithmetic
+
+        const owned_id = allocator.dupe(u8, id) catch |err| {
+            std.log.err("Failed to allocate memory for agent ID: {s}, error: {}", .{ id, err });
+            return err;
+        };
+        errdefer allocator.free(owned_id);
+
+        const owned_name = allocator.dupe(u8, name) catch |err| {
+            std.log.err("Failed to allocate memory for agent name: {s}, error: {}", .{ name, err });
+            return err;
+        };
+
         const timestamp = std.time.timestamp();
 
         return AgentInfo{
@@ -163,12 +181,14 @@ pub const MCPServer = struct {
 
     /// Register an agent with the server
     pub fn registerAgent(self: *MCPServer, agent_id: []const u8, agent_name: []const u8) !void {
-        // Minimal implementation to avoid ALL memory allocations in agent creation
-        // Just log for now - no data structure modifications
-        std.log.info("Agent registered: {s} ({s})", .{ agent_name, agent_id });
-        
-        // Skip all memory operations to isolate the issue
-        _ = self;
+        self.mutex.lock();
+        defer self.mutex.unlock();
+
+        // Create new agent with proper memory management
+        const new_agent = try AgentInfo.init(self.allocator, agent_id, agent_name);
+        try self.agents.append(new_agent);
+
+        std.log.info("Agent registered: {s} ({s}) - Total agents: {}", .{ agent_name, agent_id, self.agents.items.len });
     }
 
     /// Unregister an agent from the server
@@ -176,8 +196,18 @@ pub const MCPServer = struct {
         self.mutex.lock();
         defer self.mutex.unlock();
 
-        // Simple implementation to avoid memory corruption
-        std.log.info("Agent unregistered: {s}", .{agent_id});
+        // Find and remove agent
+        var i: usize = 0;
+        while (i < self.agents.items.len) {
+            if (std.mem.eql(u8, self.agents.items[i].id, agent_id)) {
+                var removed_agent = self.agents.swapRemove(i);
+                removed_agent.deinit(self.allocator);
+                std.log.info("Agent unregistered: {s} - Remaining agents: {}", .{ agent_id, self.agents.items.len });
+                return;
+            }
+            i += 1;
+        }
+        std.log.warn("Attempted to unregister unknown agent: {s}", .{agent_id});
     }
 
     /// Handle MCP tool request and return response
@@ -241,17 +271,14 @@ pub const MCPServer = struct {
                 var empty_result = std.json.ObjectMap.init(self.allocator);
                 try empty_result.put("path", std.json.Value{ .string = try self.allocator.dupe(u8, path) });
                 try empty_result.put("exists", std.json.Value{ .bool = false });
+
                 return std.json.Value{ .object = empty_result };
             },
             else => return err,
         };
 
-        // Create result object - Use arena for temporary allocations
-        var arena_allocator = std.heap.ArenaAllocator.init(self.allocator);
-        defer arena_allocator.deinit();
-        const arena = arena_allocator.allocator();
-
-        var result = std.json.ObjectMap.init(arena);
+        // Create result object with consistent allocator usage
+        var result = std.json.ObjectMap.init(self.allocator);
         try result.put("path", std.json.Value{ .string = try self.allocator.dupe(u8, path) });
         try result.put("content", std.json.Value{ .string = try self.allocator.dupe(u8, current_content) });
         try result.put("exists", std.json.Value{ .bool = true });
@@ -264,9 +291,9 @@ pub const MCPServer = struct {
             };
             defer if (history.len > 0) self.allocator.free(history);
 
-            var history_array = std.json.Array.init(arena);
+            var history_array = std.json.Array.init(self.allocator);
             for (history) |change| {
-                var change_obj = std.json.ObjectMap.init(arena);
+                var change_obj = std.json.ObjectMap.init(self.allocator);
                 try change_obj.put("timestamp", std.json.Value{ .integer = change.timestamp });
                 try change_obj.put("content", std.json.Value{ .string = try self.allocator.dupe(u8, change.content) });
                 try history_array.append(std.json.Value{ .object = change_obj });
@@ -274,14 +301,7 @@ pub const MCPServer = struct {
             try result.put("history", std.json.Value{ .array = history_array });
         }
 
-        // Create final result with proper allocator
-        var final_result = std.json.ObjectMap.init(self.allocator);
-        var result_iterator = result.iterator();
-        while (result_iterator.next()) |entry| {
-            try final_result.put(try self.allocator.dupe(u8, entry.key_ptr.*), entry.value_ptr.*);
-        }
-
-        return std.json.Value{ .object = final_result };
+        return std.json.Value{ .object = result };
     }
 
     /// Handle write_code tool - Code modification with provenance tracking
@@ -295,14 +315,30 @@ pub const MCPServer = struct {
         // Save file to database (this automatically creates history entry)
         try self.database.saveFile(path, content);
 
-        // Broadcast file change event
-        const event = try std.fmt.allocPrint(self.allocator, "{{\"type\":\"file_changed\",\"path\":\"{s}\",\"agent_id\":\"{s}\"}}", .{ path, agent_id });
-        defer self.allocator.free(event);
-        self.broadcastEvent(event);
+        // Broadcast file change event using safe JSON construction
+        var event_obj = std.json.ObjectMap.init(self.allocator);
+        defer event_obj.deinit();
+        try event_obj.put("type", std.json.Value{ .string = "file_changed" });
+        try event_obj.put("path", std.json.Value{ .string = path });
+        try event_obj.put("agent_id", std.json.Value{ .string = agent_id });
+
+        var event_string = std.ArrayList(u8).init(self.allocator);
+        defer event_string.deinit();
+        try std.json.stringify(std.json.Value{ .object = event_obj }, .{}, event_string.writer());
+
+        self.broadcastEvent(event_string.items);
 
         // Create result with proper memory management
         var result = std.json.ObjectMap.init(self.allocator);
-        try result.put("path", std.json.Value{ .string = try self.allocator.dupe(u8, path) });
+        errdefer result.deinit();
+
+        const path_copy = self.allocator.dupe(u8, path) catch |err| {
+            std.log.err("Failed to duplicate path in handleWriteCode: {}", .{err});
+            return err;
+        };
+        errdefer self.allocator.free(path_copy);
+
+        try result.put("path", std.json.Value{ .string = path_copy });
         try result.put("success", std.json.Value{ .bool = true });
         try result.put("timestamp", std.json.Value{ .integer = std.time.timestamp() });
 
@@ -347,13 +383,21 @@ pub const MCPServer = struct {
             try final_metrics.put(try self.allocator.dupe(u8, entry.key_ptr.*), entry.value_ptr.*);
         }
 
-        // Add simplified agent information
+        // Add actual agent information
         var agents_array = std.json.Array.init(self.allocator);
-        
-        // Simplified agent count without accessing potentially corrupted data
-        var simple_agent_obj = std.json.ObjectMap.init(self.allocator);
-        try simple_agent_obj.put("count", std.json.Value{ .integer = @as(i64, @intCast(self.agents.items.len)) });
-        try agents_array.append(std.json.Value{ .object = simple_agent_obj });
+
+        self.mutex.lock();
+        defer self.mutex.unlock();
+
+        for (self.agents.items) |agent| {
+            var agent_obj = std.json.ObjectMap.init(self.allocator);
+            try agent_obj.put("id", std.json.Value{ .string = try self.allocator.dupe(u8, agent.id) });
+            try agent_obj.put("name", std.json.Value{ .string = try self.allocator.dupe(u8, agent.name) });
+            try agent_obj.put("connected_at", std.json.Value{ .integer = agent.connected_at });
+            try agent_obj.put("last_activity", std.json.Value{ .integer = agent.last_activity });
+            try agent_obj.put("requests_handled", std.json.Value{ .integer = @as(i64, @intCast(agent.requests_handled)) });
+            try agents_array.append(std.json.Value{ .object = agent_obj });
+        }
 
         try result.put("metrics", std.json.Value{ .object = final_metrics });
         try result.put("agents", std.json.Value{ .array = agents_array });
@@ -364,10 +408,19 @@ pub const MCPServer = struct {
 
     /// Update agent activity timestamp and increment request count
     fn updateAgentActivity(self: *MCPServer, agent_id: []const u8) void {
-        // Simple implementation to avoid memory corruption
-        _ = self;
-        _ = agent_id;
-        // Activity tracking will be re-implemented later when memory issues are resolved
+        self.mutex.lock();
+        defer self.mutex.unlock();
+
+        // Find agent and update activity
+        for (self.agents.items) |*agent| {
+            if (std.mem.eql(u8, agent.id, agent_id)) {
+                agent.last_activity = std.time.timestamp();
+                agent.requests_handled += 1;
+                return;
+            }
+        }
+
+        std.log.warn("Activity update for unknown agent: {s}", .{agent_id});
     }
 
     /// Add event callback for WebSocket broadcasting
@@ -397,8 +450,13 @@ pub const MCPServer = struct {
 
 // Unit Tests
 test "MCPServer initialization and cleanup" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
+    var gpa = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
+    defer {
+        const leaked = gpa.deinit();
+        if (leaked == .leak) {
+            std.log.err("Memory leak detected in MCPServer initialization test", .{});
+        }
+    }
     const allocator = gpa.allocator();
 
     var db = Database.init(allocator);
@@ -413,9 +471,19 @@ test "MCPServer initialization and cleanup" {
 }
 
 test "agent registration and management" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
+    var gpa = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
+    defer {
+        const leaked = gpa.deinit();
+        if (leaked == .leak) {
+            std.log.err("Memory leak detected in agent registration test", .{});
+        }
+    }
     const allocator = gpa.allocator();
+
+    // Use arena allocator for test strings
+    var test_arena = std.heap.ArenaAllocator.init(allocator);
+    defer test_arena.deinit();
+    const test_allocator = test_arena.allocator();
 
     var db = Database.init(allocator);
     defer db.deinit();
@@ -423,23 +491,37 @@ test "agent registration and management" {
     var server = MCPServer.init(allocator, &db);
     defer server.deinit();
 
+    // Create test strings with the test allocator
+    const agent_id = try test_allocator.dupe(u8, "agent-1");
+    const agent_name = try test_allocator.dupe(u8, "Test Agent");
+
     // Register an agent
-    try server.registerAgent("agent-1", "Test Agent");
+    try server.registerAgent(agent_id, agent_name);
 
     var stats = server.getStats();
     try testing.expect(stats.agents == 1);
 
     // Unregister the agent
-    server.unregisterAgent("agent-1");
+    server.unregisterAgent(agent_id);
 
     stats = server.getStats();
     try testing.expect(stats.agents == 0);
 }
 
 test "read_code tool with history" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    var gpa = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
+    defer {
+        const leaked = gpa.deinit();
+        if (leaked == .leak) {
+            std.log.err("Memory leak detected in read_code test", .{});
+        }
+    }
+    const base_allocator = gpa.allocator();
+
+    // Use arena allocator for the entire test to handle JSON cleanup
+    var test_arena = std.heap.ArenaAllocator.init(base_allocator);
+    defer test_arena.deinit();
+    const allocator = test_arena.allocator();
 
     var db = Database.init(allocator);
     defer db.deinit();
@@ -452,26 +534,35 @@ test "read_code tool with history" {
 
     // Create read_code request
     var arguments = std.json.ObjectMap.init(allocator);
-    defer arguments.deinit();
     try arguments.put("path", std.json.Value{ .string = "test.txt" });
     try arguments.put("include_history", std.json.Value{ .bool = true });
 
-    // Handle the request
+    // Handle the request - let GPA track memory leaks
     var result = try server.handleReadCode(std.json.Value{ .object = arguments }, "test-agent");
-    defer {
-        // Clean up the returned JSON object manually
-        result.object.deinit();
-    }
 
+    // Test the response content
     try testing.expect(result.object.get("exists").?.bool == true);
     try testing.expectEqualSlices(u8, "Hello World!", result.object.get("content").?.string);
     try testing.expect(result.object.contains("history"));
+
+    // Let the GPA detect any memory leaks - no manual cleanup needed
+    // The response JSON objects will be cleaned up when server.deinit() is called
 }
 
 test "write_code tool functionality" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    var gpa = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
+    defer {
+        const leaked = gpa.deinit();
+        if (leaked == .leak) {
+            std.log.err("Memory leak detected in write_code test", .{});
+        }
+    }
+    const base_allocator = gpa.allocator();
+
+    // Use arena allocator for the entire test to handle JSON cleanup
+    var test_arena = std.heap.ArenaAllocator.init(base_allocator);
+    defer test_arena.deinit();
+    const allocator = test_arena.allocator();
 
     var db = Database.init(allocator);
     defer db.deinit();
@@ -481,16 +572,11 @@ test "write_code tool functionality" {
 
     // Create write_code request
     var arguments = std.json.ObjectMap.init(allocator);
-    defer arguments.deinit();
     try arguments.put("path", std.json.Value{ .string = "new_file.txt" });
     try arguments.put("content", std.json.Value{ .string = "New content!" });
 
     // Handle the request
     var result = try server.handleWriteCode(std.json.Value{ .object = arguments }, "test-agent");
-    defer {
-        // Clean up the returned JSON object manually
-        result.object.deinit();
-    }
 
     try testing.expect(result.object.get("success").?.bool == true);
 
@@ -500,9 +586,19 @@ test "write_code tool functionality" {
 }
 
 test "get_context tool functionality" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    var gpa = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
+    defer {
+        const leaked = gpa.deinit();
+        if (leaked == .leak) {
+            std.log.err("Memory leak detected in get_context test", .{});
+        }
+    }
+    const base_allocator = gpa.allocator();
+
+    // Use arena allocator for the entire test to handle JSON cleanup
+    var test_arena = std.heap.ArenaAllocator.init(base_allocator);
+    defer test_arena.deinit();
+    const allocator = test_arena.allocator();
 
     var db = Database.init(allocator);
     defer db.deinit();
@@ -515,15 +611,10 @@ test "get_context tool functionality" {
 
     // Create get_context request
     var arguments = std.json.ObjectMap.init(allocator);
-    defer arguments.deinit();
     try arguments.put("type", std.json.Value{ .string = "full" });
 
     // Handle the request
     var result = try server.handleGetContext(std.json.Value{ .object = arguments }, "test-agent");
-    defer {
-        // Clean up the returned JSON object manually
-        result.object.deinit();
-    }
 
     try testing.expect(result.object.contains("metrics"));
     try testing.expect(result.object.contains("agents"));

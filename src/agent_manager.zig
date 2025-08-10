@@ -224,15 +224,17 @@ pub const AgentManager = struct {
 
         try self.sessions.put(session.id, session);
 
-        // Register with MCP server
-        try self.mcp_server.registerAgent(agent_id, agent_name);
+        // Register with MCP server using the owned strings from the session
+        try self.mcp_server.registerAgent(session.id, session.name);
 
         // Broadcast agent registration
-        const event = try std.fmt.allocPrint(self.allocator, "{{\"type\":\"agent_registered\",\"agent_id\":\"{s}\",\"agent_name\":\"{s}\",\"capabilities\":{s}}}", .{ agent_id, agent_name, try self.formatCapabilities(capabilities) });
+        const capabilities_json = try self.formatCapabilities(capabilities);
+        defer self.allocator.free(capabilities_json);
+        const event = try std.fmt.allocPrint(self.allocator, "{{\"type\":\"agent_registered\",\"agent_id\":\"{s}\",\"agent_name\":\"{s}\",\"capabilities\":{s}}}", .{ session.id, session.name, capabilities_json });
         defer self.allocator.free(event);
         self.websocket_server.broadcast(event);
 
-        std.log.info("Agent registered: {s} ({s}) with {} capabilities", .{ agent_name, agent_id, capabilities.len });
+        std.log.info("Agent registered: {s} ({s}) with {} capabilities", .{ session.name, session.id, capabilities.len });
     }
 
     /// Unregister an agent session
@@ -445,21 +447,31 @@ pub const AgentManager = struct {
         // Note: mutex should already be locked when this is called
         const inactive_threshold = 3600; // 1 hour in seconds
 
-        var agents_to_remove = ArrayList([]const u8).init(self.allocator);
-        defer agents_to_remove.deinit();
+        // Store owned copies of agent IDs to avoid use-after-free
+        var agents_to_remove = ArrayList([]u8).init(self.allocator);
+        defer {
+            for (agents_to_remove.items) |agent_id| {
+                self.allocator.free(agent_id);
+            }
+            agents_to_remove.deinit();
+        }
 
         var session_iterator = self.sessions.iterator();
         while (session_iterator.next()) |entry| {
             const session = entry.value_ptr;
             if (current_time - session.last_activity > inactive_threshold) {
-                agents_to_remove.append(session.id) catch continue;
+                // Create owned copy to avoid use-after-free when session is removed
+                const owned_agent_id = self.allocator.dupe(u8, session.id) catch continue;
+                agents_to_remove.append(owned_agent_id) catch {
+                    self.allocator.free(owned_agent_id);
+                    continue;
+                };
             }
         }
 
-        // Remove inactive agents
+        // Remove inactive agents - now safe from use-after-free
         for (agents_to_remove.items) |agent_id| {
             std.log.info("Cleaning up inactive agent: {s}", .{agent_id});
-            // Note: This calls unregisterAgent without lock, but the lock is already held
             if (self.sessions.fetchRemove(agent_id)) |kv| {
                 var session = kv.value;
                 self.releaseAgentLocks(agent_id);

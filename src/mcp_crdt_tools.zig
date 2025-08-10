@@ -335,18 +335,66 @@ pub const GetCollaborativeContextTool = struct {
 
 /// Tool registry for CRDT-enhanced MCP tools
 pub const CRDTToolRegistry = struct {
-    pub fn registerTools(mcp_server: *MCPServer, crdt_manager: *CRDTManager) !void {
-        // Note: This is a conceptual implementation
-        // The actual MCP server would need to be modified to support CRDT tools
-        _ = mcp_server;
-        _ = crdt_manager;
+    tools: std.ArrayList(CRDTTool),
+    allocator: std.mem.Allocator,
 
-        std.log.info("CRDT tools would be registered: {s}, {s}, {s}, {s}", .{
-            ReadCodeCRDTTool.name,
-            WriteCodeCRDTTool.name,
-            UpdateCursorTool.name,
-            GetCollaborativeContextTool.name,
+    const CRDTTool = struct {
+        name: []const u8,
+        description: []const u8,
+        execute_fn: *const fn (arguments: std.json.Value, context: MCPCRDTContext) anyerror!std.json.Value,
+    };
+
+    pub fn init(allocator: std.mem.Allocator) CRDTToolRegistry {
+        return .{
+            .tools = std.ArrayList(CRDTTool).init(allocator),
+            .allocator = allocator,
+        };
+    }
+
+    pub fn deinit(self: *CRDTToolRegistry) void {
+        for (self.tools.items) |tool| {
+            self.allocator.free(tool.name);
+            self.allocator.free(tool.description);
+        }
+        self.tools.deinit();
+    }
+
+    pub fn registerTools(self: *CRDTToolRegistry) !void {
+        // Register all CRDT-enhanced tools
+        try self.tools.append(CRDTTool{
+            .name = try self.allocator.dupe(u8, ReadCodeCRDTTool.name),
+            .description = try self.allocator.dupe(u8, ReadCodeCRDTTool.description),
+            .execute_fn = ReadCodeCRDTTool.execute,
         });
+
+        try self.tools.append(CRDTTool{
+            .name = try self.allocator.dupe(u8, WriteCodeCRDTTool.name),
+            .description = try self.allocator.dupe(u8, WriteCodeCRDTTool.description),
+            .execute_fn = WriteCodeCRDTTool.execute,
+        });
+
+        try self.tools.append(CRDTTool{
+            .name = try self.allocator.dupe(u8, UpdateCursorTool.name),
+            .description = try self.allocator.dupe(u8, UpdateCursorTool.description),
+            .execute_fn = UpdateCursorTool.execute,
+        });
+
+        try self.tools.append(CRDTTool{
+            .name = try self.allocator.dupe(u8, GetCollaborativeContextTool.name),
+            .description = try self.allocator.dupe(u8, GetCollaborativeContextTool.description),
+            .execute_fn = GetCollaborativeContextTool.execute,
+        });
+
+        std.log.info("Successfully registered {} CRDT-enhanced MCP tools", .{self.tools.items.len});
+    }
+
+    pub fn getTool(self: *CRDTToolRegistry, tool_name: []const u8) ?CRDTTool {
+        for (self.tools.items) |tool| {
+            if (std.mem.eql(u8, tool.name, tool_name)) {
+                return tool;
+            }
+        }
+        return null;
     }
 };
 

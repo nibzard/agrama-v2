@@ -1,0 +1,151 @@
+{
+  "entities": [
+    {
+      "id": "test_session_test_message_0",
+      "name": "src/fre_true.zig",
+      "entity_type": "FILE",
+      "confidence": 1.0,
+      "content": "Source file to contain FRE algorithm implementation",
+      "context": "Implementing graph algorithms for Agrama project",
+      "attributes": {}
+    },
+    {
+      "id": "test_session_test_message_1",
+      "name": "FRE algorithm",
+      "entity_type": "CONCEPT",
+      "confidence": 1.0,
+      "content": "Frontier Reduction Engine algorithm being implemented",
+      "context": "Implementing graph algorithms for Agrama project",
+      "attributes": {}
+    },
+    {
+      "id": "test_session_test_message_2",
+      "name": "Bounded Multi-Source Shortest Path",
+      "entity_type": "CONCEPT",
+      "confidence": 0.9,
+      "content": "Approach used by FRE algorithm with specific complexity",
+      "context": "Implementing graph algorithms for Agrama project",
+      "attributes": {}
+    },
+    {
+      "id": "test_session_test_message_3",
+      "name": "TrueFrontierReductionEngine",
+      "entity_type": "FUNCTION",
+      "confidence": 0.9,
+      "content": "Main struct to be created for FRE implementation",
+      "context": "Implementing graph algorithms for Agrama project",
+      "attributes": {}
+    },
+    {
+      "id": "test_session_test_message_4",
+      "name": "BMSSP function",
+      "entity_type": "FUNCTION",
+      "confidence": 0.9,
+      "content": "Recursive function implementing Bounded Multi-Source Shortest Path",
+      "context": "Implementing graph algorithms for Agrama project",
+      "attributes": {}
+    },
+    {
+      "id": "test_session_test_message_5",
+      "name": "O(m log^(2/3) n) complexity",
+      "entity_type": "CONCEPT",
+      "confidence": 0.8,
+      "content": "Time complexity of the FRE algorithm implementation",
+      "context": "Implementing graph algorithms for Agrama project",
+      "attributes": {}
+    },
+    {
+      "id": "test_session_test_message_6",
+      "name": "Agrama project",
+      "entity_type": "CONCEPT",
+      "confidence": 1.0,
+      "content": "Project context for implementing graph algorithms",
+      "context": "Implementing graph algorithms for Agrama project",
+      "attributes": {}
+    },
+    {
+      "id": "test_session_test_message_7",
+      "name": "research paper",
+      "entity_type": "CONCEPT",
+      "confidence": 0.7,
+      "content": "Source documentation describing the algorithm implementation",
+      "context": "Implementing graph algorithms for Agrama project",
+      "attributes": {}
+    }
+  ],
+  "relationships": [
+    {
+      "from_entity": "src/fre_true.zig",
+      "to_entity": "FRE algorithm",
+      "relationship_type": "IMPLEMENTS",
+      "confidence": 1.0,
+      "evidence": "File will contain the FRE algorithm implementation",
+      "attributes": {}
+    },
+    {
+      "from_entity": "FRE algorithm",
+      "to_entity": "Bounded Multi-Source Shortest Path",
+      "relationship_type": "DEPENDS_ON",
+      "confidence": 0.9,
+      "evidence": "FRE algorithm uses BMSSP approach",
+      "attributes": {}
+    },
+    {
+      "from_entity": "src/fre_true.zig",
+      "to_entity": "TrueFrontierReductionEngine",
+      "relationship_type": "CONTAINS",
+      "confidence": 0.9,
+      "evidence": "File will create and contain the struct",
+      "attributes": {}
+    },
+    {
+      "from_entity": "src/fre_true.zig",
+      "to_entity": "BMSSP function",
+      "relationship_type": "CONTAINS",
+      "confidence": 0.9,
+      "evidence": "File will implement the recursive BMSSP function",
+      "attributes": {}
+    },
+    {
+      "from_entity": "TrueFrontierReductionEngine",
+      "to_entity": "BMSSP function",
+      "relationship_type": "CONTAINS",
+      "confidence": 0.8,
+      "evidence": "Struct likely contains the BMSSP function implementation",
+      "attributes": {}
+    },
+    {
+      "from_entity": "FRE algorithm",
+      "to_entity": "O(m log^(2/3) n) complexity",
+      "relationship_type": "SIMILAR_TO",
+      "confidence": 0.8,
+      "evidence": "Algorithm achieves this specific complexity",
+      "attributes": {}
+    },
+    {
+      "from_entity": "FRE algorithm",
+      "to_entity": "Agrama project",
+      "relationship_type": "DEPENDS_ON",
+      "confidence": 1.0,
+      "evidence": "Algorithm is being implemented for this project",
+      "attributes": {}
+    },
+    {
+      "from_entity": "BMSSP function",
+      "to_entity": "research paper",
+      "relationship_type": "IMPLEMENTS",
+      "confidence": 0.7,
+      "evidence": "Function implementation follows research paper description",
+      "attributes": {}
+    }
+  ],
+  "concepts": [
+    "FRE algorithm",
+    "Bounded Multi-Source Shortest Path",
+    "graph algorithms",
+    "algorithmic complexity",
+    "recursive implementation"
+  ],
+  "analysis_timestamp": "1754760464.3456566",
+  "model_version": "claude-sonnet-4-20250514"
+}

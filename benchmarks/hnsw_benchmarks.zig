@@ -36,89 +36,99 @@ const HNSWConfig = struct {
     dimension: u32 = 1536, // Vector dimension (OpenAI embedding size)
 };
 
-/// Mock HNSW implementation for benchmarking (to be replaced with real implementation)
-const MockHNSW = struct {
-    vectors: [][]f32,
+// Import real HNSW implementation from agrama library
+const agrama_lib = @import("agrama_lib");
+const HNSWIndex = agrama_lib.HNSWIndex;
+const Vector = agrama_lib.Vector;
+const MatryoshkaEmbedding = agrama_lib.MatryoshkaEmbedding;
+const SearchResult = agrama_lib.SearchResult;
+const HNSWSearchParams = agrama_lib.HNSWSearchParams;
+const NodeID = agrama_lib.NodeID;
+
+/// Real HNSW implementation for benchmarking
+const RealHNSW = struct {
+    index: HNSWIndex,
+    vectors: ArrayList(Vector),
     dimension: u32,
     config: HNSWConfig,
     allocator: Allocator,
     build_time_ms: f64 = 0,
     memory_used_mb: f64 = 0,
 
-    pub fn init(allocator: Allocator, config: HNSWConfig) MockHNSW {
+    pub fn init(allocator: Allocator, config: HNSWConfig) !RealHNSW {
+        const index = try HNSWIndex.init(allocator, config.dimension, config.max_connections, config.ef_construction, 12345 // Fixed seed for reproducible benchmarks
+        );
+
         return .{
-            .vectors = &[_][]f32{},
+            .index = index,
+            .vectors = ArrayList(Vector).init(allocator),
             .dimension = config.dimension,
             .config = config,
             .allocator = allocator,
         };
     }
 
-    pub fn deinit(self: *MockHNSW) void {
-        for (self.vectors) |vector| {
-            self.allocator.free(vector);
+    pub fn deinit(self: *RealHNSW) void {
+        for (self.vectors.items) |*vector| {
+            vector.deinit(self.allocator);
         }
-        self.allocator.free(self.vectors);
+        self.vectors.deinit();
+        self.index.deinit();
     }
 
-    pub fn build(self: *MockHNSW, vectors: [][]f32) !void {
+    pub fn build(self: *RealHNSW, vectors: [][]f32) !void {
         var timer = try Timer.start();
 
-        // Simulate HNSW construction
-        self.vectors = try self.allocator.dupe([]f32, vectors);
-        for (self.vectors, 0..) |*vector, i| {
-            vector.* = try self.allocator.dupe(f32, vectors[i]);
-        }
+        // Convert f32 arrays to Vector structs and insert into HNSW index
+        for (vectors, 0..) |vector_data, i| {
+            if (vector_data.len != self.config.dimension) {
+                return error.DimensionMismatch;
+            }
 
-        // Simulate build complexity: O(n log n) for HNSW vs O(n) for linear
-        const n = @as(f64, @floatFromInt(vectors.len));
-        const build_complexity = n * std.math.log2(n) / 1_000_000.0; // Simulated microseconds
-        std.time.sleep(@as(u64, @intFromFloat(build_complexity * 1000))); // Convert to nanoseconds
+            const vector = try Vector.init(self.allocator, self.config.dimension);
+            @memcpy(vector.data, vector_data);
+
+            const node_id = @as(NodeID, @intCast(i + 1)); // 1-based IDs
+            try self.index.insert(node_id, vector);
+            try self.vectors.append(vector);
+        }
 
         self.build_time_ms = @as(f64, @floatFromInt(timer.read())) / 1_000_000.0;
-        self.memory_used_mb = @as(f64, @floatFromInt(vectors.len * self.dimension * @sizeOf(f32))) / (1024 * 1024);
 
-        // Add HNSW graph overhead (estimated 2× memory for connections)
-        self.memory_used_mb *= 2.0;
+        // Calculate memory usage based on actual structures
+        const stats = self.index.getStats();
+        const vector_memory = self.vectors.items.len * self.config.dimension * @sizeOf(f32);
+        const estimated_graph_memory = stats.node_count * @as(usize, @intFromFloat(stats.avg_connections)) * @sizeOf(NodeID);
+        self.memory_used_mb = @as(f64, @floatFromInt(vector_memory + estimated_graph_memory)) / (1024 * 1024);
     }
 
-    pub fn search(self: *MockHNSW, query: []f32, k: u32, ef: u32) ![]u32 {
-        _ = ef; // Search exploration factor (not used in mock)
-
-        const results = try self.allocator.alloc(u32, @min(k, @as(u32, @intCast(self.vectors.len))));
-
-        // Simulate HNSW search complexity: O(log n)
-        const n = @as(f64, @floatFromInt(self.vectors.len));
-        const search_complexity = std.math.log2(n) / 10_000.0; // Simulated microseconds
-        std.time.sleep(@as(u64, @intFromFloat(search_complexity * 1000))); // Convert to nanoseconds
-
-        // Return mock results (in real implementation, would be nearest neighbors)
-        for (results, 0..) |*result, i| {
-            result.* = @as(u32, @intCast(i));
+    pub fn search(self: *RealHNSW, query: []f32, k: u32, ef: u32) ![]u32 {
+        if (query.len != self.config.dimension) {
+            return error.DimensionMismatch;
         }
 
-        // Simulate distance calculation for query
-        _ = query;
+        // Convert query to Vector struct
+        var query_vector = try Vector.init(self.allocator, self.config.dimension);
+        defer query_vector.deinit(self.allocator);
+        @memcpy(query_vector.data, query);
 
-        return results;
-    }
+        // Perform real HNSW search
+        const params = HNSWSearchParams{
+            .k = k,
+            .ef = ef,
+            .precision_target = 0.9,
+        };
 
-    /// Calculate cosine similarity between two vectors
-    fn cosineSimilarity(self: *MockHNSW, a: []f32, b: []f32) f32 {
-        _ = self;
+        const results = try self.index.search(query_vector, params);
+        defer self.allocator.free(results);
 
-        var dot_product: f32 = 0;
-        var norm_a: f32 = 0;
-        var norm_b: f32 = 0;
-
-        for (a, 0..) |val_a, i| {
-            const val_b = b[i];
-            dot_product += val_a * val_b;
-            norm_a += val_a * val_a;
-            norm_b += val_b * val_b;
+        // Convert NodeID results to u32 indices
+        const indices = try self.allocator.alloc(u32, results.len);
+        for (results, 0..) |result, i| {
+            indices[i] = @as(u32, @intCast(result.node_id - 1)); // Convert back to 0-based
         }
 
-        return dot_product / (@sqrt(norm_a) * @sqrt(norm_b));
+        return indices;
     }
 };
 
@@ -274,12 +284,12 @@ fn benchmarkHNSWBuild(allocator: Allocator, config: BenchmarkConfig) !BenchmarkR
     const vectors = try generateVectorDataset(allocator, dataset_size, hnsw_config.dimension, .gaussian);
     defer freeVectorDataset(allocator, vectors);
 
-    var hnsw = MockHNSW.init(allocator, hnsw_config);
-    defer hnsw.deinit();
+    var hnsw_index = try RealHNSW.init(allocator, hnsw_config);
+    defer hnsw_index.deinit();
 
     // Measure build time
     var timer = try Timer.start();
-    try hnsw.build(vectors);
+    try hnsw_index.build(vectors);
     const build_time_ms = @as(f64, @floatFromInt(timer.read())) / 1_000_000.0;
 
     // Calculate theoretical complexity metrics
@@ -297,14 +307,14 @@ fn benchmarkHNSWBuild(allocator: Allocator, config: BenchmarkConfig) !BenchmarkR
         .mean_latency = build_time_ms,
         .throughput_qps = 1000.0 / build_time_ms,
         .operations_per_second = 1.0 / (build_time_ms / 1000.0),
-        .memory_used_mb = hnsw.memory_used_mb,
+        .memory_used_mb = hnsw_index.memory_used_mb,
         .cpu_utilization = 95.0, // Estimated during build
         .speedup_factor = speedup,
         .accuracy_score = 1.0, // Build operation doesn't have accuracy metric
         .dataset_size = dataset_size,
         .iterations = 1,
         .duration_seconds = build_time_ms / 1000.0,
-        .passed_targets = build_time_ms < 60000.0 and hnsw.memory_used_mb < PERFORMANCE_TARGETS.HNSW_MEMORY_GB * 1024,
+        .passed_targets = build_time_ms < 60000.0 and hnsw_index.memory_used_mb < PERFORMANCE_TARGETS.HNSW_MEMORY_GB * 1024,
     };
 }
 
@@ -324,9 +334,9 @@ fn benchmarkHNSWQuery(allocator: Allocator, config: BenchmarkConfig) !BenchmarkR
     defer freeVectorDataset(allocator, queries);
 
     // Build HNSW index
-    var hnsw = MockHNSW.init(allocator, hnsw_config);
-    defer hnsw.deinit();
-    try hnsw.build(vectors);
+    var hnsw_index = try RealHNSW.init(allocator, hnsw_config);
+    defer hnsw_index.deinit();
+    try hnsw_index.build(vectors);
 
     // Build linear scan baseline
     var linear = LinearScan.init(allocator);
@@ -342,7 +352,7 @@ fn benchmarkHNSWQuery(allocator: Allocator, config: BenchmarkConfig) !BenchmarkR
     // Warmup
     for (0..config.warmup_iterations) |i| {
         const query_idx = i % queries.len;
-        const results = try hnsw.search(queries[query_idx], 10, 50);
+        const results = try hnsw_index.search(queries[query_idx], 10, 50);
         allocator.free(results);
     }
 
@@ -350,7 +360,7 @@ fn benchmarkHNSWQuery(allocator: Allocator, config: BenchmarkConfig) !BenchmarkR
     var timer = try Timer.start();
     for (queries[0..query_count]) |query| {
         timer.reset();
-        const results = try hnsw.search(query, 10, 50);
+        const results = try hnsw_index.search(query, 10, 50);
         const latency_ms = @as(f64, @floatFromInt(timer.read())) / 1_000_000.0;
         try hnsw_latencies.append(latency_ms);
         allocator.free(results);
@@ -396,7 +406,7 @@ fn benchmarkHNSWQuery(allocator: Allocator, config: BenchmarkConfig) !BenchmarkR
         .mean_latency = hnsw_mean,
         .throughput_qps = throughput,
         .operations_per_second = throughput,
-        .memory_used_mb = hnsw.memory_used_mb,
+        .memory_used_mb = hnsw_index.memory_used_mb,
         .cpu_utilization = 75.0, // Estimated during queries
         .speedup_factor = speedup,
         .accuracy_score = estimated_recall,
@@ -434,24 +444,24 @@ fn benchmarkHNSWMemory(allocator: Allocator, config: BenchmarkConfig) !Benchmark
         const vectors = try generateVectorDataset(allocator, size, hnsw_config.dimension, .gaussian);
         defer freeVectorDataset(allocator, vectors);
 
-        var hnsw = MockHNSW.init(allocator, hnsw_config);
-        defer hnsw.deinit();
+        var hnsw_index = try RealHNSW.init(allocator, hnsw_config);
+        defer hnsw_index.deinit();
 
         var timer = try Timer.start();
-        try hnsw.build(vectors);
+        try hnsw_index.build(vectors);
         const build_time = @as(f64, @floatFromInt(timer.read())) / 1_000_000.0;
 
-        try memory_results.append(hnsw.memory_used_mb);
+        try memory_results.append(hnsw_index.memory_used_mb);
         try latencies.append(build_time);
 
         // Calculate theoretical linear memory usage for comparison
         const theoretical_linear_mb = @as(f64, @floatFromInt(size * hnsw_config.dimension * @sizeOf(f32))) / (1024 * 1024);
-        const memory_overhead = hnsw.memory_used_mb / theoretical_linear_mb;
+        const memory_overhead = hnsw_index.memory_used_mb / theoretical_linear_mb;
 
         total_speedup += 100.0; // Assume 100× speedup for memory test
         measurements += 1;
 
-        print("      Memory: {:.1}MB ({}× overhead)\n", .{ hnsw.memory_used_mb, memory_overhead });
+        print("      Memory: {:.1}MB ({}× overhead)\n", .{ hnsw_index.memory_used_mb, memory_overhead });
     }
 
     const avg_speedup = if (measurements > 0) total_speedup / @as(f64, @floatFromInt(measurements)) else 1.0;
@@ -507,9 +517,9 @@ fn benchmarkHNSWScaling(allocator: Allocator, config: BenchmarkConfig) !Benchmar
         const queries = try generateVectorDataset(allocator, 100, hnsw_config.dimension, .gaussian);
         defer freeVectorDataset(allocator, queries);
 
-        var hnsw = MockHNSW.init(allocator, hnsw_config);
-        defer hnsw.deinit();
-        try hnsw.build(vectors);
+        var hnsw_index = try RealHNSW.init(allocator, hnsw_config);
+        defer hnsw_index.deinit();
+        try hnsw_index.build(vectors);
 
         // Measure average query time for this size
         var query_times = ArrayList(f64).init(allocator);
@@ -518,7 +528,7 @@ fn benchmarkHNSWScaling(allocator: Allocator, config: BenchmarkConfig) !Benchmar
         var timer = try Timer.start();
         for (queries[0..50]) |query| { // 50 queries per size
             timer.reset();
-            const results = try hnsw.search(query, 10, 50);
+            const results = try hnsw_index.search(query, 10, 50);
             const latency_ms = @as(f64, @floatFromInt(timer.read())) / 1_000_000.0;
             try query_times.append(latency_ms);
             try all_latencies.append(latency_ms);
@@ -626,13 +636,13 @@ test "hnsw_benchmark_components" {
     try std.testing.expect(vectors.len == 100);
     try std.testing.expect(vectors[0].len == 128);
 
-    // Test HNSW mock
-    var hnsw = MockHNSW.init(allocator, HNSWConfig{});
-    defer hnsw.deinit();
+    // Test HNSW real implementation
+    var hnsw_index = try RealHNSW.init(allocator, HNSWConfig{});
+    defer hnsw_index.deinit();
 
-    try hnsw.build(vectors[0..10]);
+    try hnsw_index.build(vectors[0..10]);
 
-    const results = try hnsw.search(vectors[0], 5, 50);
+    const results = try hnsw_index.search(vectors[0], 5, 50);
     defer allocator.free(results);
 
     try std.testing.expect(results.len <= 5);

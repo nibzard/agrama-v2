@@ -176,8 +176,8 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({ fileChanges, agents 
       fileNode.changeCount++;
       
       // Propagate change count up the tree
-      let parent = current;
-      let parentPath = currentPath.split('/').slice(0, -1).join('/') || '/';
+      const parent = current;
+      const parentPath = currentPath.split('/').slice(0, -1).join('/') || '/';
       while (parent && parent !== root) {
         parent.changeCount++;
         const parentName = parentPath.split('/').pop();

@@ -187,6 +187,10 @@ agrama monitor --metrics "search,traversal,collaboration"
 - **[CRDT_INTEGRATION_PLAN.md](CRDT_INTEGRATION_PLAN.md)** - Multi-agent collaboration architecture
 - **[MCP_INTEGRATION_GUIDE.md](MCP_INTEGRATION_GUIDE.md)** - AI agent setup guide
 
+## 📖 Research References
+
+- **[FRE Algorithm Paper](references/fre_algorithm_2025.md)** - "Breaking the Sorting Barrier for Directed Single-Source Shortest Paths" (Duan et al., 2025) - The foundational research enabling our O(m log^(2/3) n) graph traversal breakthrough
+
 ## 🧪 Testing & Benchmarks
 
 ```bash
