@@ -1,0 +1,46 @@
+# Agrama Docker ignore file
+# Exclude unnecessary files from container builds
+
+# Build artifacts (keep pre-built binaries for deployment)
+zig-cache/
+.zig-cache/
+
+# Version control
+.git/
+.gitignore
+
+# Development files
+*.md
+TODO.md
+SPECS.md
+MVP.md
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Docker files (avoid recursion)
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Documentation
+docs/
+*.txt
+
+# Test data
+test_data/
+benchmarks/baseline.json

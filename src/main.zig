@@ -201,7 +201,8 @@ fn mcpCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
         i += 1;
     }
 
-    std.log.info("Starting MCP Compliant Server (stdio transport)...", .{});
+    // MCP stdio transport: stdout is reserved for JSON-RPC protocol only
+    // Suppressing all non-error startup messages for MCP compliance
 
     // Initialize database
     var db = lib.Database.init(allocator);
@@ -220,7 +221,7 @@ fn mcpCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
         std.process.exit(1);
     };
 
-    std.log.info("MCP Compliant Server shutdown complete", .{});
+    // MCP stdio transport: no shutdown logging to maintain protocol compliance
 }
 
 fn checkShutdownSignal() bool {

@@ -1,0 +1,91 @@
+# Agrama Enterprise Docker Compose Configuration
+# For production deployment and development environments
+
+version: '3.8'
+
+services:
+  agrama-mcp:
+    build: .
+    container_name: agrama-mcp-server
+    restart: unless-stopped
+    
+    # Environment configuration
+    environment:
+      - AGRAMA_LOG_LEVEL=info
+      - AGRAMA_DATA_DIR=/app/data
+      - AGRAMA_MAX_AGENTS=100
+      - AGRAMA_MEMORY_LIMIT=10GB
+    
+    # Data persistence
+    volumes:
+      - agrama_data:/app/data
+      - agrama_logs:/app/logs
+      - ./config:/app/config:ro
+    
+    # Port mapping for WebSocket mode (optional)
+    ports:
+      - "8080:8080"
+    
+    # Resource limits for enterprise deployment
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5' 
+          memory: 1G
+    
+    # Health monitoring
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/agrama", "version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: Observatory Web Interface (future)
+  agrama-observatory:
+    image: node:18-alpine
+    container_name: agrama-observatory
+    restart: unless-stopped
+    working_dir: /app
+    command: sh -c "echo 'Observatory web interface - coming soon' && sleep infinity"
+    
+    ports:
+      - "3000:3000"
+    
+    environment:
+      - NODE_ENV=production
+      - AGRAMA_MCP_URL=ws://agrama-mcp:8080
+    
+    depends_on:
+      - agrama-mcp
+
+  # Monitoring and logging (enterprise features)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: agrama-monitoring
+    restart: unless-stopped
+    
+    ports:
+      - "9090:9090"
+    
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+volumes:
+  agrama_data:
+    driver: local
+  agrama_logs:
+    driver: local  
+  prometheus_data:
+    driver: local
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

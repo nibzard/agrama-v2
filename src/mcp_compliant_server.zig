@@ -48,12 +48,13 @@ pub const MCPToolDefinition = struct {
     description: []const u8,
     inputSchema: std.json.Value,
     outputSchema: ?std.json.Value = null,
+    arena: std.heap.ArenaAllocator,
 
     pub fn deinit(self: *MCPToolDefinition, allocator: Allocator) void {
         allocator.free(self.name);
         allocator.free(self.title);
         allocator.free(self.description);
-        // Note: inputSchema and outputSchema are handled by JSON arena
+        self.arena.deinit(); // Clean up all JSON structures at once
     }
 };
 
@@ -159,18 +160,67 @@ pub const MCPCompliantServer = struct {
 
     /// Main server loop - processes stdin messages
     pub fn run(self: *MCPCompliantServer) !void {
-        std.log.info("MCP Compliant Server starting on stdio transport", .{});
+        // MCP stdio transport: stdout is reserved for JSON-RPC protocol only
+        // All logging must go to stderr to avoid interfering with JSON-RPC protocol
+        
+        // Claude Code treats any stderr output as an error during health checks
+        // Only output to stderr in debug mode or when errors occur
+        const stderr = std.io.getStdErr().writer();
+        
+        // Check for debug mode environment variable
+        const debug_mode = std.posix.getenv("AGRAMA_DEBUG") != null;
+        if (debug_mode) {
+            try stderr.print("[MCP Server] Starting Agrama MCP server process (PID: {})\n", .{std.os.linux.getpid()});
+        }
 
-        var line_buf: [4096]u8 = undefined;
+        var line_buf: [8192]u8 = undefined; // Increased buffer size for stability
+        var message_count: u32 = 0;
 
         while (true) {
             // Read line from stdin (MCP stdio transport requirement)
-            if (try self.stdin_reader.reader().readUntilDelimiterOrEof(line_buf[0..], '\n')) |line| {
-                try self.processMessage(line);
-            } else {
-                // EOF - client disconnected
-                break;
+            if (self.stdin_reader.reader().readUntilDelimiterOrEof(line_buf[0..], '\n')) |line_result| {
+                if (line_result) |line| {
+                    // Skip empty lines but continue running
+                    if (line.len == 0) {
+                        continue;
+                    }
+                    
+                    message_count += 1;
+                    
+                    // Process message with error recovery
+                    self.processMessage(line) catch |err| {
+                        if (debug_mode) {
+                            try stderr.print("[MCP Server] Error processing message #{}: {} - {s}\n", .{ message_count, err, line[0..@min(line.len, 100)] });
+                        }
+                        // Continue processing despite errors
+                    };
+                    
+                    // Periodic health logging (debug mode only)
+                    if (debug_mode and message_count % 100 == 0) {
+                        try stderr.print("[MCP Server] Processed {} messages successfully\n", .{message_count});
+                    }
+                } else {
+                    // EOF - client disconnected gracefully (only log in debug mode)
+                    if (debug_mode) {
+                        try stderr.print("[MCP Server] Client disconnected gracefully (EOF) after {} messages\n", .{message_count});
+                    }
+                    break;
+                }
+            } else |err| {
+                // Only treat EndOfStream as graceful shutdown, other errors are critical
+                if (err == error.EndOfStream) {
+                    if (debug_mode) {
+                        try stderr.print("[MCP Server] Input stream closed after {} messages\n", .{message_count});
+                    }
+                    break;
+                }
+                try stderr.print("[MCP Server] Critical stdin read error: {} after {} messages\n", .{ err, message_count });
+                return err;
             }
+        }
+        
+        if (debug_mode) {
+            try stderr.print("[MCP Server] Server shutting down cleanly\n", .{});
         }
     }
 
@@ -229,24 +279,24 @@ pub const MCPCompliantServer = struct {
 
     /// Handle initialize request (MCP lifecycle)
     fn handleInitialize(self: *MCPCompliantServer, request: MCPRequest) !void {
-        // Build capabilities response
-        var capabilities = std.json.ObjectMap.init(self.allocator);
-        defer capabilities.deinit();
+        // Use arena allocator for temporary JSON structures to avoid leaks
+        var arena = std.heap.ArenaAllocator.init(self.allocator);
+        defer arena.deinit();
+        const json_allocator = arena.allocator();
 
-        var tools_capability = std.json.ObjectMap.init(self.allocator);
-        defer tools_capability.deinit();
+        // Build capabilities response
+        var capabilities = std.json.ObjectMap.init(json_allocator);
+        var tools_capability = std.json.ObjectMap.init(json_allocator);
         try tools_capability.put("listChanged", std.json.Value{ .bool = false });
         try capabilities.put("tools", std.json.Value{ .object = tools_capability });
 
         // Build server info
-        var server_info = std.json.ObjectMap.init(self.allocator);
-        defer server_info.deinit();
+        var server_info = std.json.ObjectMap.init(json_allocator);
         try server_info.put("name", std.json.Value{ .string = "agrama-codegraph" });
         try server_info.put("version", std.json.Value{ .string = "1.0.0" });
 
         // Build result
-        var result = std.json.ObjectMap.init(self.allocator);
-        defer result.deinit();
+        var result = std.json.ObjectMap.init(json_allocator);
         try result.put("protocolVersion", std.json.Value{ .string = self.protocol_version });
         try result.put("capabilities", std.json.Value{ .object = capabilities });
         try result.put("serverInfo", std.json.Value{ .object = server_info });
@@ -258,22 +308,25 @@ pub const MCPCompliantServer = struct {
     fn handleInitialized(self: *MCPCompliantServer, request: MCPRequest) !void {
         _ = request;
         self.initialized = true;
-        std.log.info("MCP Server initialized successfully", .{});
+        // MCP stdio transport: no logging during protocol operation
     }
 
     /// Handle tools/list request
     fn handleToolsList(self: *MCPCompliantServer, request: MCPRequest) !void {
+        // Use arena allocator for temporary JSON structures to avoid leaks
+        var arena = std.heap.ArenaAllocator.init(self.allocator);
+        defer arena.deinit();
+        const json_allocator = arena.allocator();
+
         // Dynamically generate tools list from registered tools (protocol compliant)
-        var tools_array = std.json.Array.init(self.allocator);
-        defer tools_array.deinit();
+        var tools_array = std.json.Array.init(json_allocator);
 
         for (self.tools.items) |tool| {
-            var tool_obj = std.json.ObjectMap.init(self.allocator);
-            defer tool_obj.deinit();
+            var tool_obj = std.json.ObjectMap.init(json_allocator);
 
-            try tool_obj.put("name", std.json.Value{ .string = try self.allocator.dupe(u8, tool.name) });
-            try tool_obj.put("title", std.json.Value{ .string = try self.allocator.dupe(u8, tool.title) });
-            try tool_obj.put("description", std.json.Value{ .string = try self.allocator.dupe(u8, tool.description) });
+            try tool_obj.put("name", std.json.Value{ .string = try json_allocator.dupe(u8, tool.name) });
+            try tool_obj.put("title", std.json.Value{ .string = try json_allocator.dupe(u8, tool.title) });
+            try tool_obj.put("description", std.json.Value{ .string = try json_allocator.dupe(u8, tool.description) });
             try tool_obj.put("inputSchema", tool.inputSchema);
 
             if (tool.outputSchema) |output_schema| {
@@ -283,8 +336,7 @@ pub const MCPCompliantServer = struct {
             try tools_array.append(std.json.Value{ .object = tool_obj });
         }
 
-        var result = std.json.ObjectMap.init(self.allocator);
-        defer result.deinit();
+        var result = std.json.ObjectMap.init(json_allocator);
         try result.put("tools", std.json.Value{ .array = tools_array });
 
         try self.sendResponse(request.id, std.json.Value{ .object = result });
@@ -323,18 +375,20 @@ pub const MCPCompliantServer = struct {
         const first_content = if (tool_response.content.len > 0) tool_response.content[0] else null;
         const text_content = if (first_content) |content| content.text orelse "No content" else "No content";
 
+        // Use arena allocator for temporary JSON structures to avoid leaks
+        var arena = std.heap.ArenaAllocator.init(self.allocator);
+        defer arena.deinit();
+        const json_allocator = arena.allocator();
+
         // Build JSON response safely using Zig's JSON handling
-        var content_obj = std.json.ObjectMap.init(self.allocator);
-        defer content_obj.deinit();
+        var content_obj = std.json.ObjectMap.init(json_allocator);
         try content_obj.put("type", std.json.Value{ .string = "text" });
         try content_obj.put("text", std.json.Value{ .string = text_content });
 
-        var content_array = std.json.Array.init(self.allocator);
-        defer content_array.deinit();
+        var content_array = std.json.Array.init(json_allocator);
         try content_array.append(std.json.Value{ .object = content_obj });
 
-        var result_obj = std.json.ObjectMap.init(self.allocator);
-        defer result_obj.deinit();
+        var result_obj = std.json.ObjectMap.init(json_allocator);
         try result_obj.put("content", std.json.Value{ .array = content_array });
         try result_obj.put("isError", std.json.Value{ .bool = tool_response.isError });
 
@@ -451,11 +505,40 @@ pub const MCPCompliantServer = struct {
 
     /// Send message to stdout (stdio transport)
     fn sendMessage(self: *MCPCompliantServer, response: MCPResponse) !void {
-        var string = std.ArrayList(u8).init(self.allocator);
-        defer string.deinit();
+        // Use arena allocator for temporary JSON serialization to avoid leaks
+        var arena = std.heap.ArenaAllocator.init(self.allocator);
+        defer arena.deinit();
+        const json_allocator = arena.allocator();
 
-        try std.json.stringify(response, .{}, string.writer());
-        try string.append('\n'); // MCP requires newline delimiter
+        var string = std.ArrayList(u8).init(json_allocator);
+        
+        // Manually construct JSON-RPC response to ensure spec compliance
+        // JSON-RPC 2.0 requires EITHER result OR error, never both
+        try string.appendSlice("{\"jsonrpc\":\"2.0\"");
+        
+        // Add id if present
+        if (response.id) |id| {
+            try string.appendSlice(",\"id\":");
+            try std.json.stringify(id, .{}, string.writer());
+        }
+        
+        // Add EITHER result OR error (not both)
+        if (response.@"error") |err| {
+            try string.appendSlice(",\"error\":{\"code\":");
+            try std.json.stringify(err.code, .{}, string.writer());
+            try string.appendSlice(",\"message\":");
+            try std.json.stringify(err.message, .{}, string.writer());
+            if (err.data) |data| {
+                try string.appendSlice(",\"data\":");
+                try std.json.stringify(data, .{}, string.writer());
+            }
+            try string.appendSlice("}");
+        } else if (response.result) |result| {
+            try string.appendSlice(",\"result\":");
+            try std.json.stringify(result, .{}, string.writer());
+        }
+        
+        try string.appendSlice("}\n"); // Close object and add newline delimiter
 
         try self.stdout_writer.writeAll(string.items);
     }
@@ -470,27 +553,25 @@ pub const MCPCompliantServer = struct {
 
 /// Create read_code tool definition
 fn createReadCodeTool(allocator: Allocator) !MCPToolDefinition {
-    var input_schema = std.json.ObjectMap.init(allocator);
-    defer input_schema.deinit();
+    // Use an arena allocator for JSON structures to avoid complex cleanup
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    const json_allocator = arena.allocator();
+    
+    var input_schema = std.json.ObjectMap.init(json_allocator);
+    var properties = std.json.ObjectMap.init(json_allocator);
 
-    var properties = std.json.ObjectMap.init(allocator);
-    defer properties.deinit();
-
-    var path_schema = std.json.ObjectMap.init(allocator);
-    defer path_schema.deinit();
+    var path_schema = std.json.ObjectMap.init(json_allocator);
     try path_schema.put("type", std.json.Value{ .string = "string" });
     try path_schema.put("description", std.json.Value{ .string = "File path to read" });
 
-    var history_schema = std.json.ObjectMap.init(allocator);
-    defer history_schema.deinit();
+    var history_schema = std.json.ObjectMap.init(json_allocator);
     try history_schema.put("type", std.json.Value{ .string = "boolean" });
     try history_schema.put("description", std.json.Value{ .string = "Include file history" });
 
     try properties.put("path", std.json.Value{ .object = path_schema });
     try properties.put("include_history", std.json.Value{ .object = history_schema });
 
-    var required = std.json.Array.init(allocator);
-    defer required.deinit();
+    var required = std.json.Array.init(json_allocator);
     try required.append(std.json.Value{ .string = "path" });
 
     try input_schema.put("type", std.json.Value{ .string = "object" });
@@ -502,30 +583,29 @@ fn createReadCodeTool(allocator: Allocator) !MCPToolDefinition {
         .title = try allocator.dupe(u8, "Read Code File"),
         .description = try allocator.dupe(u8, "Read and analyze code files with optional history"),
         .inputSchema = std.json.Value{ .object = input_schema },
+        .arena = arena,
     };
 }
 
 /// Create write_code tool definition
 fn createWriteCodeTool(allocator: Allocator) !MCPToolDefinition {
-    var input_schema = std.json.ObjectMap.init(allocator);
-    defer input_schema.deinit();
+    // Use an arena allocator for JSON structures to avoid complex cleanup
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    const json_allocator = arena.allocator();
+    
+    var input_schema = std.json.ObjectMap.init(json_allocator);
+    var properties = std.json.ObjectMap.init(json_allocator);
 
-    var properties = std.json.ObjectMap.init(allocator);
-    defer properties.deinit();
-
-    var path_schema = std.json.ObjectMap.init(allocator);
-    defer path_schema.deinit();
+    var path_schema = std.json.ObjectMap.init(json_allocator);
     try path_schema.put("type", std.json.Value{ .string = "string" });
 
-    var content_schema = std.json.ObjectMap.init(allocator);
-    defer content_schema.deinit();
+    var content_schema = std.json.ObjectMap.init(json_allocator);
     try content_schema.put("type", std.json.Value{ .string = "string" });
 
     try properties.put("path", std.json.Value{ .object = path_schema });
     try properties.put("content", std.json.Value{ .object = content_schema });
 
-    var required = std.json.Array.init(allocator);
-    defer required.deinit();
+    var required = std.json.Array.init(json_allocator);
     try required.append(std.json.Value{ .string = "path" });
     try required.append(std.json.Value{ .string = "content" });
 
@@ -538,20 +618,25 @@ fn createWriteCodeTool(allocator: Allocator) !MCPToolDefinition {
         .title = try allocator.dupe(u8, "Write Code File"),
         .description = try allocator.dupe(u8, "Write or modify code files with provenance tracking"),
         .inputSchema = std.json.Value{ .object = input_schema },
+        .arena = arena,
     };
 }
 
 /// Create get_context tool definition
 fn createGetContextTool(allocator: Allocator) !MCPToolDefinition {
-    var input_schema = std.json.ObjectMap.init(allocator);
-    var properties = std.json.ObjectMap.init(allocator);
+    // Use an arena allocator for JSON structures to avoid complex cleanup
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    const json_allocator = arena.allocator();
+    
+    var input_schema = std.json.ObjectMap.init(json_allocator);
+    var properties = std.json.ObjectMap.init(json_allocator);
 
     // Add optional parameters for context tool
-    var path_schema = std.json.ObjectMap.init(allocator);
+    var path_schema = std.json.ObjectMap.init(json_allocator);
     try path_schema.put("type", std.json.Value{ .string = "string" });
     try path_schema.put("description", std.json.Value{ .string = "Optional file path for specific context" });
 
-    var type_schema = std.json.ObjectMap.init(allocator);
+    var type_schema = std.json.ObjectMap.init(json_allocator);
     try type_schema.put("type", std.json.Value{ .string = "string" });
     try type_schema.put("description", std.json.Value{ .string = "Context type: 'full', 'metrics', or 'agents'" });
     try type_schema.put("default", std.json.Value{ .string = "full" });
@@ -567,6 +652,7 @@ fn createGetContextTool(allocator: Allocator) !MCPToolDefinition {
         .title = try allocator.dupe(u8, "Get Context"),
         .description = try allocator.dupe(u8, "Get comprehensive contextual information"),
         .inputSchema = std.json.Value{ .object = input_schema },
+        .arena = arena,
     };
 }
 

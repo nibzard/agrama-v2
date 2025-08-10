@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "agrama-codegraph": {
+      "command": "./zig-out/bin/agrama_v2",
+      "args": ["mcp"],
+      "env": {}
+    }
+  }
+}
