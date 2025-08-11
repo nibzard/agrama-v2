@@ -378,6 +378,8 @@ pub const TripleHybridSearchEngine = struct {
 
         // Calculate combined scores and convert to array
         var combined_results = ArrayList(TripleHybridResult).init(self.allocator);
+        defer combined_results.deinit(); // Fix memory leak
+        
         var document_iterator = all_documents.iterator();
         while (document_iterator.next()) |entry| {
             var result = entry.value_ptr.*;
