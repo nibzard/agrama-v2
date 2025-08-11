@@ -246,3 +246,4 @@ Always prioritize:
 2. **Performance**: Meet the ambitious algorithmic targets through careful implementation
 3. **Collaboration**: Enable seamless AI-human teamwork through comprehensive observability
 4. **Quality**: Maintain high code standards through comprehensive testing and validation
+- Mever do wrappers and mocks, we need to strive to excellence.

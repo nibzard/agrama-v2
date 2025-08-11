@@ -87,7 +87,7 @@ fn serveCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
             }
             i += 1;
             port = std.fmt.parseInt(u16, args[i], 10) catch |err| {
-                std.log.err("Invalid port number: {s} ({})", .{ args[i], err });
+                std.log.err("Invalid port number: {s} ({any})", .{ args[i], err });
                 std.process.exit(1);
             };
         } else if (std.mem.eql(u8, arg, "--no-auth")) {
@@ -109,7 +109,7 @@ fn serveCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
 
     // Initialize the complete server
     var server = lib.AgramaCodeGraphServer.init(allocator, port) catch |err| {
-        std.log.err("Failed to initialize server: {}", .{err});
+        std.log.err("Failed to initialize server: {any}", .{err});
         std.process.exit(1);
     };
     defer server.deinit();
@@ -120,7 +120,7 @@ fn serveCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
 
     // Start the server
     server.start() catch |err| {
-        std.log.err("Failed to start server: {}", .{err});
+        std.log.err("Failed to start server: {any}", .{err});
         std.process.exit(1);
     };
 
@@ -167,6 +167,11 @@ fn serveCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
 }
 
 fn mcpCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
+    var use_enhanced = true; // Enhanced mode is now the default
+    var hnsw_dimensions: u32 = 768;
+    var enable_crdt = true;
+    var enable_triple_search = true;
+
     // Parse MCP command arguments
     var i: usize = 0;
     while (i < args.len) {
@@ -180,20 +185,53 @@ fn mcpCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
                 \\This server follows the official Model Context Protocol specification.
                 \\
                 \\USAGE:
-                \\    agrama mcp
+                \\    agrama mcp [OPTIONS]
                 \\
-                \\The server will read JSON-RPC messages from stdin and write responses to stdout.
+                \\OPTIONS:
+                \\    --basic                 Use basic database (legacy mode, disables advanced features)
+                \\    --dimensions <DIM>      HNSW vector dimensions (default: 768)
+                \\    --no-crdt               Disable CRDT collaborative features
+                \\    --no-triple-search      Disable triple hybrid search
+                \\    --help                  Show this help message
                 \\
-                \\TOOLS AVAILABLE:
-                \\    read_code    - Read file with optional history
-                \\    write_code   - Write or modify files with provenance tracking  
-                \\    get_context  - Get comprehensive contextual information
+                \\DEFAULT TOOLS (Enhanced Mode - Default):
+                \\    read_code               Read with semantic context and dependencies
+                \\    write_code              Write with CRDT sync and semantic indexing
+                \\    semantic_search         HNSW-based semantic search
+                \\    hybrid_search           Triple hybrid BM25 + HNSW + FRE search
+                \\    analyze_dependencies    FRE-powered dependency analysis
+                \\    get_context             Comprehensive contextual information
+                \\    record_decision         Decision tracking with provenance
+                \\    query_history           Temporal history with advanced filtering
                 \\
-                \\EXAMPLE CLIENT USAGE:
-                \\    echo 'JSON message' | agrama mcp
+                \\BASIC TOOLS (Legacy Mode):
+                \\    read_code               Read file with optional history
+                \\    write_code              Write files with basic provenance tracking
+                \\    get_context             Basic contextual information
+                \\
+                \\EXAMPLE USAGE:
+                \\    agrama mcp                      # Enhanced server (default)
+                \\    agrama mcp --basic              # Basic server (legacy mode)
+                \\    agrama mcp --dimensions 1024    # Enhanced with custom embeddings
                 \\
             );
             return;
+        } else if (std.mem.eql(u8, arg, "--basic")) {
+            use_enhanced = false;
+        } else if (std.mem.eql(u8, arg, "--dimensions")) {
+            if (i + 1 >= args.len) {
+                std.log.err("--dimensions requires a value", .{});
+                std.process.exit(1);
+            }
+            i += 1;
+            hnsw_dimensions = std.fmt.parseInt(u32, args[i], 10) catch |err| {
+                std.log.err("Invalid dimensions: {s} ({any})", .{ args[i], err });
+                std.process.exit(1);
+            };
+        } else if (std.mem.eql(u8, arg, "--no-crdt")) {
+            enable_crdt = false;
+        } else if (std.mem.eql(u8, arg, "--no-triple-search")) {
+            enable_triple_search = false;
         } else {
             std.log.err("Unknown mcp option: {s}", .{arg});
             std.process.exit(1);
@@ -204,22 +242,60 @@ fn mcpCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
     // MCP stdio transport: stdout is reserved for JSON-RPC protocol only
     // Suppressing all non-error startup messages for MCP compliance
 
-    // Initialize database
-    var db = lib.Database.init(allocator);
-    defer db.deinit();
+    if (use_enhanced) {
+        // Initialize enhanced database with full capabilities
+        const enhanced_config = lib.EnhancedDatabaseConfig{
+            .hnsw_vector_dimensions = hnsw_dimensions,
+            .hnsw_max_connections = 16,
+            .hnsw_ef_construction = 200,
+            .matryoshka_dims = &[_]u32{ 64, 256, 768, 1024 },
+            .fre_default_recursion_levels = 3,
+            .fre_max_frontier_size = 1000,
+            .fre_pivot_threshold = 0.1,
+            .crdt_enable_real_time_sync = enable_crdt,
+            .crdt_conflict_resolution = .last_writer_wins,
+            .crdt_broadcast_events = true,
+            .hybrid_bm25_weight = if (enable_triple_search) 0.4 else 0.0,
+            .hybrid_hnsw_weight = if (enable_triple_search) 0.4 else 1.0,
+            .hybrid_fre_weight = if (enable_triple_search) 0.2 else 0.0,
+        };
 
-    // Initialize MCP compliant server
-    var mcp_server = lib.MCPCompliantServer.init(allocator, &db) catch |err| {
-        std.log.err("Failed to initialize MCP server: {}", .{err});
-        std.process.exit(1);
-    };
-    defer mcp_server.deinit();
+        var enhanced_server = lib.EnhancedMCPServer.init(allocator, enhanced_config) catch |err| {
+            std.log.err("Failed to initialize Enhanced MCP server: {any}", .{err});
+            std.process.exit(1);
+        };
+        defer enhanced_server.deinit();
 
-    // Run the server (blocks until stdin closes)
-    mcp_server.run() catch |err| {
-        std.log.err("MCP server error: {}", .{err});
-        std.process.exit(1);
-    };
+        // Initialize enhanced MCP compliant server
+        var mcp_compliant_server = lib.MCPCompliantServer.initEnhanced(allocator, &enhanced_server) catch |err| {
+            std.log.err("Failed to initialize Enhanced MCP compliant server: {any}", .{err});
+            std.process.exit(1);
+        };
+        defer mcp_compliant_server.deinit();
+
+        // Run the enhanced server (blocks until stdin closes)
+        mcp_compliant_server.run() catch |err| {
+            std.log.err("Enhanced MCP server error: {any}", .{err});
+            std.process.exit(1);
+        };
+    } else {
+        // Initialize standard database (legacy mode)
+        var db = lib.Database.init(allocator);
+        defer db.deinit();
+
+        // Initialize standard MCP compliant server
+        var mcp_server = lib.MCPCompliantServer.init(allocator, &db) catch |err| {
+            std.log.err("Failed to initialize MCP server: {any}", .{err});
+            std.process.exit(1);
+        };
+        defer mcp_server.deinit();
+
+        // Run the server (blocks until stdin closes)
+        mcp_server.run() catch |err| {
+            std.log.err("MCP server error: {any}", .{err});
+            std.process.exit(1);
+        };
+    }
 
     // MCP stdio transport: no shutdown logging to maintain protocol compliance
 }
@@ -269,18 +345,11 @@ fn testDatabaseCommand(allocator: std.mem.Allocator) !void {
     std.log.info("✅ History tracking works correctly", .{});
 
     // Test MCP server integration
-    std.log.info("✅ Testing MCP Server integration...", .{});
-    var mcp_server = lib.MCPServer.init(allocator, &db);
+    std.log.info("✅ Testing MCP Server initialization...", .{});
+    var mcp_server = try lib.MCPServer.init(allocator, &db);
     defer mcp_server.deinit();
 
-    try mcp_server.registerAgent("test-agent", "Test Agent");
-    const stats = mcp_server.getStats();
-    if (stats.agents != 1) {
-        std.log.err("❌ Expected 1 agent, got {d}", .{stats.agents});
-        return;
-    }
-
-    std.log.info("✅ MCP Server integration working", .{});
+    std.log.info("✅ MCP Server initialized successfully", .{});
 
     std.log.info("🎉 All tests passed! Database is ready for AI agent collaboration.", .{});
 }

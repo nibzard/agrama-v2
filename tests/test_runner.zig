@@ -73,7 +73,7 @@ pub const TestSuiteStats = struct {
         if (!self.by_category.contains(result.category)) {
             self.by_category.put(result.category, CategoryStats{});
         }
-        
+
         var category_stats = self.by_category.getPtr(result.category).?;
         category_stats.total += 1;
 

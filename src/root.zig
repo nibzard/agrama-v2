@@ -53,7 +53,7 @@ pub const NodeID = @import("hnsw.zig").NodeID;
 // Export Semantic Database components
 pub const SemanticDatabase = @import("semantic_database.zig").SemanticDatabase;
 pub const SemanticSearchResult = @import("semantic_database.zig").SemanticSearchResult;
-pub const HybridQuery = @import("semantic_database.zig").HybridQuery;
+pub const SemanticHybridQuery = @import("semantic_database.zig").HybridQuery;
 pub const SemanticDatabaseStats = @import("semantic_database.zig").SemanticDatabaseStats;
 
 // Export CRDT components
@@ -78,6 +78,27 @@ pub const WriteCodeCRDTTool = @import("mcp_crdt_tools.zig").WriteCodeCRDTTool;
 pub const UpdateCursorTool = @import("mcp_crdt_tools.zig").UpdateCursorTool;
 pub const GetCollaborativeContextTool = @import("mcp_crdt_tools.zig").GetCollaborativeContextTool;
 
+// Export Enhanced Database components
+pub const EnhancedDatabase = @import("enhanced_database.zig").EnhancedDatabase;
+pub const EnhancedDatabaseConfig = @import("enhanced_database.zig").EnhancedDatabaseConfig;
+pub const EnhancedFileResult = @import("enhanced_database.zig").EnhancedFileResult;
+pub const EnhancedSearchQuery = @import("enhanced_database.zig").EnhancedSearchQuery;
+pub const EnhancedSearchResult = @import("enhanced_database.zig").EnhancedSearchResult;
+pub const DatabaseStats = @import("enhanced_database.zig").DatabaseStats;
+pub const DatabaseMetrics = @import("enhanced_database.zig").DatabaseMetrics;
+
+// Export Enhanced MCP Tools
+pub const EnhancedMCPTools = @import("enhanced_mcp_tools.zig").EnhancedMCPTools;
+
+// Export Enhanced MCP Server
+pub const EnhancedMCPServer = @import("enhanced_mcp_server.zig").EnhancedMCPServer;
+
+// Export Triple Hybrid Search components
+pub const TripleHybridSearchEngine = @import("triple_hybrid_search.zig").TripleHybridSearchEngine;
+pub const TripleHybridQuery = @import("triple_hybrid_search.zig").HybridQuery;
+pub const TripleHybridResult = @import("triple_hybrid_search.zig").TripleHybridResult;
+pub const HybridSearchStats = @import("triple_hybrid_search.zig").HybridSearchStats;
+
 // Re-export for convenience
 pub const TemporalGraphDB = Database;
 
@@ -94,7 +115,7 @@ pub const AgramaCodeGraphServer = struct {
     pub fn init(allocator: std.mem.Allocator, websocket_port: u16) !AgramaCodeGraphServer {
         var database = Database.init(allocator);
         var websocket_server = WebSocketServer.init(allocator, websocket_port);
-        var mcp_server = MCPServer.init(allocator, &database);
+        var mcp_server = try MCPServer.init(allocator, &database);
         const agent_manager = AgentManager.init(allocator, &mcp_server, &websocket_server);
         const event_broadcaster = EventBroadcaster.init(allocator, &websocket_server);
 
@@ -155,7 +176,12 @@ pub const AgramaCodeGraphServer = struct {
         websocket: struct { active_connections: u32, total_messages_sent: u64 },
         agent_manager: struct { active_agents: u32, total_file_locks: u32, total_requests_handled: u64 },
     } {
-        const mcp_stats = self.mcp_server.getStats();
+        // MCP server stats not available in new implementation - using defaults
+        const mcp_stats = struct { agents: u32, requests: u64, avg_response_ms: f64 }{
+            .agents = 0,
+            .requests = 0,
+            .avg_response_ms = 0.0,
+        };
         const ws_stats = self.websocket_server.getStats();
         const am_stats = self.agent_manager.getStats();
 

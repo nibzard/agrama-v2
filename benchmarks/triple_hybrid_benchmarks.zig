@@ -6,7 +6,7 @@
 //! Performance targets:
 //! - BM25 lexical search: Sub-1ms keyword matching
 //! - HNSW semantic search: O(log n) with 360× speedup (already validated)
-//! - FRE graph traversal: O(m log^(2/3) n) with 120× speedup (already validated) 
+//! - FRE graph traversal: O(m log^(2/3) n) with 120× speedup (already validated)
 //! - Combined hybrid search: Sub-10ms response times
 //! - Precision improvement: 15-30% over single-method search
 
@@ -37,7 +37,7 @@ const HybridQuery = triple_hybrid.HybridQuery;
 const EnterpriseDataGenerator = struct {
     allocator: Allocator,
     rng: std.Random.DefaultPrng,
-    
+
     const CodeFile = struct {
         id: u32,
         path: []const u8,
@@ -45,18 +45,18 @@ const EnterpriseDataGenerator = struct {
         size_bytes: usize,
         complexity_score: f32, // Estimated complexity for search difficulty
     };
-    
+
     pub fn init(allocator: Allocator) EnterpriseDataGenerator {
         return .{
             .allocator = allocator,
             .rng = std.Random.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp()))),
         };
     }
-    
+
     /// Generate enterprise-scale codebase with realistic patterns
     pub fn generateEnterpriseCodebase(self: *EnterpriseDataGenerator, size: usize) ![]CodeFile {
         const files = try self.allocator.alloc(CodeFile, size);
-        
+
         // Real-world code templates with varying complexity
         const templates = [_]struct {
             path_template: []const u8,
@@ -67,7 +67,7 @@ const EnterpriseDataGenerator = struct {
             // High complexity: Large React component
             .{
                 .path_template = "src/components/UserDashboard/UserDashboard.tsx",
-                .content_template = 
+                .content_template =
                 \\import React, { useState, useEffect, useCallback, useMemo } from 'react';
                 \\import { User, UserProfile, DashboardMetrics, ApiResponse } from '../types';
                 \\import { fetchUserData, updateUserProfile, calculateMetrics } from '../api/userService';
@@ -109,11 +109,11 @@ const EnterpriseDataGenerator = struct {
                 .complexity = 0.9,
                 .tokens_count = 180,
             },
-            
+
             // Medium complexity: Python data processing
             .{
                 .path_template = "src/data_processing/analytics_engine.py",
-                .content_template = 
+                .content_template =
                 \\import pandas as pd
                 \\import numpy as np
                 \\from typing import Dict, List, Optional, Tuple
@@ -146,11 +146,11 @@ const EnterpriseDataGenerator = struct {
                 .complexity = 0.7,
                 .tokens_count = 120,
             },
-            
+
             // Low complexity: Simple utility functions
             .{
                 .path_template = "src/utils/string_helpers.js",
-                .content_template = 
+                .content_template =
                 \\/**
                 \\ * String utility functions for common operations
                 \\ */
@@ -184,11 +184,11 @@ const EnterpriseDataGenerator = struct {
                 .complexity = 0.3,
                 .tokens_count = 80,
             },
-            
-            // High complexity: Database query builder  
+
+            // High complexity: Database query builder
             .{
                 .path_template = "src/database/query_builder.rs",
-                .content_template = 
+                .content_template =
                 \\use std::collections::HashMap;
                 \\use serde::{Deserialize, Serialize};
                 \\use chrono::{DateTime, Utc};
@@ -237,15 +237,15 @@ const EnterpriseDataGenerator = struct {
                 .tokens_count = 160,
             },
         };
-        
+
         // Generate files with distribution matching real codebases
         for (files, 0..) |*file, i| {
             const template_idx = self.rng.random().uintLessThan(usize, templates.len);
             const template = templates[template_idx];
-            
+
             // Create unique variations
             const variation_id = self.rng.random().int(u32);
-            
+
             file.* = .{
                 .id = @as(u32, @intCast(i)),
                 .path = try std.fmt.allocPrint(self.allocator, "{s}_{d}", .{ template.path_template, variation_id }),
@@ -254,10 +254,10 @@ const EnterpriseDataGenerator = struct {
                 .complexity_score = template.complexity,
             };
         }
-        
+
         return files;
     }
-    
+
     pub fn freeEnterpriseCodebase(self: *EnterpriseDataGenerator, files: []CodeFile) void {
         for (files) |file| {
             self.allocator.free(file.path);
@@ -265,14 +265,16 @@ const EnterpriseDataGenerator = struct {
         }
         self.allocator.free(files);
     }
-    
+
     /// Generate realistic search queries with different characteristics
     pub fn generateSearchQueries(self: *EnterpriseDataGenerator, count: usize) ![]HybridQuery {
         const queries = try self.allocator.alloc(HybridQuery, count);
-        
+
         const query_templates = [_]struct {
             text: []const u8,
-            alpha: f32, beta: f32, gamma: f32,
+            alpha: f32,
+            beta: f32,
+            gamma: f32,
             description: []const u8,
         }{
             .{ .text = "function async await", .alpha = 0.6, .beta = 0.3, .gamma = 0.1, .description = "Function search (keyword-focused)" },
@@ -284,11 +286,11 @@ const EnterpriseDataGenerator = struct {
             .{ .text = "error handling try catch", .alpha = 0.6, .beta = 0.3, .gamma = 0.1, .description = "Pattern search" },
             .{ .text = "data processing pipeline", .alpha = 0.2, .beta = 0.6, .gamma = 0.2, .description = "Architecture search" },
         };
-        
+
         for (queries, 0..) |*query, i| {
             const template_idx = i % query_templates.len;
             const template = query_templates[template_idx];
-            
+
             query.* = .{
                 .text_query = template.text,
                 .alpha = template.alpha,
@@ -297,10 +299,10 @@ const EnterpriseDataGenerator = struct {
                 .max_results = 20 + self.rng.random().uintLessThan(u32, 31), // 20-50 results
             };
         }
-        
+
         return queries;
     }
-    
+
     pub fn freeSearchQueries(self: *EnterpriseDataGenerator, queries: []HybridQuery) void {
         self.allocator.free(queries);
     }
@@ -310,29 +312,27 @@ const EnterpriseDataGenerator = struct {
 fn benchmarkBM25Performance(allocator: Allocator, config: BenchmarkConfig) !BenchmarkResult {
     const dataset_size = @min(config.dataset_size, 100_000);
     const query_count = @min(config.iterations, 1000);
-    
+
     print("  🔍 BM25 lexical search performance with {d} docs, {d} queries...\n", .{ dataset_size, query_count });
-    
+
     var index = BM25Index.init(allocator);
     defer index.deinit();
-    
+
     // Generate realistic enterprise dataset
     var generator = EnterpriseDataGenerator.init(allocator);
     const test_files = try generator.generateEnterpriseCodebase(dataset_size);
     defer generator.freeEnterpriseCodebase(test_files);
-    
+
     print("    📦 Indexing {d} code files...\n", .{dataset_size});
     var indexing_timer = try Timer.start();
-    
+
     for (test_files) |file| {
         try index.addDocument(file.id, file.path, file.content);
     }
-    
+
     const indexing_time_ms = @as(f64, @floatFromInt(indexing_timer.read())) / 1_000_000.0;
-    print("    📊 Indexing completed in {d:.2}ms ({d:.0} docs/sec)\n", .{ 
-        indexing_time_ms, @as(f64, @floatFromInt(dataset_size)) / (indexing_time_ms / 1000.0) 
-    });
-    
+    print("    📊 Indexing completed in {d:.2}ms ({d:.0} docs/sec)\n", .{ indexing_time_ms, @as(f64, @floatFromInt(dataset_size)) / (indexing_time_ms / 1000.0) });
+
     // Test search performance
     const test_queries = [_][]const u8{
         "function calculate",
@@ -344,43 +344,47 @@ fn benchmarkBM25Performance(allocator: Allocator, config: BenchmarkConfig) !Benc
         "import export module",
         "interface type definition",
     };
-    
+
     var search_latencies = ArrayList(f64).init(allocator);
     defer search_latencies.deinit();
-    
+
     print("    🎯 Running BM25 search benchmarks...\n", .{});
-    
+
     // Warmup
     for (0..config.warmup_iterations) |i| {
         const query_idx = i % test_queries.len;
         const results = try index.search(test_queries[query_idx], 10);
-        for (results) |result| { result.deinit(allocator); }
+        for (results) |result| {
+            result.deinit(allocator);
+        }
         allocator.free(results);
     }
-    
+
     // Actual benchmarking
     for (0..query_count) |i| {
         const query_idx = i % test_queries.len;
-        
+
         var timer = try Timer.start();
         const results = try index.search(test_queries[query_idx], 20);
         const search_time_ms = @as(f64, @floatFromInt(timer.read())) / 1_000_000.0;
-        
+
         try search_latencies.append(search_time_ms);
-        
+
         // Cleanup
-        for (results) |result| { result.deinit(allocator); }
+        for (results) |result| {
+            result.deinit(allocator);
+        }
         allocator.free(results);
     }
-    
+
     // Calculate statistics
     const p50 = percentile(search_latencies.items, 50);
     const p99 = percentile(search_latencies.items, 99);
     const mean_latency = mean(search_latencies.items);
     const throughput = 1000.0 / mean_latency;
-    
+
     const stats = index.getStats();
-    
+
     return BenchmarkResult{
         .name = "BM25 Lexical Search Performance",
         .category = .database, // Will be changed to .search when available
@@ -406,96 +410,97 @@ fn benchmarkBM25Performance(allocator: Allocator, config: BenchmarkConfig) !Benc
 fn benchmarkTripleHybridIntegration(allocator: Allocator, config: BenchmarkConfig) !BenchmarkResult {
     const dataset_size = @min(config.dataset_size, 50_000);
     const query_count = @min(config.iterations, 200);
-    
+
     print("  🚀 Triple hybrid search integration with {d} docs, {d} queries...\n", .{ dataset_size, query_count });
-    
+
     var engine = TripleHybridSearchEngine.init(allocator);
     defer engine.deinit();
-    
+
     // Generate enterprise dataset
     var generator = EnterpriseDataGenerator.init(allocator);
     const test_files = try generator.generateEnterpriseCodebase(dataset_size);
     defer generator.freeEnterpriseCodebase(test_files);
-    
+
     print("    📦 Populating hybrid search engine...\n", .{});
     var population_timer = try Timer.start();
-    
+
     for (test_files) |file| {
         try engine.addDocument(file.id, file.path, file.content, null); // TODO: Add embeddings when HNSW ready
     }
-    
+
     const population_time_ms = @as(f64, @floatFromInt(population_timer.read())) / 1_000_000.0;
     print("    📊 Population completed in {d:.1}s\n", .{population_time_ms / 1000.0});
-    
+
     // Generate realistic queries
     const test_queries = try generator.generateSearchQueries(query_count);
     defer generator.freeSearchQueries(test_queries);
-    
+
     var hybrid_latencies = ArrayList(f64).init(allocator);
     defer hybrid_latencies.deinit();
-    
+
     var bm25_contribution = ArrayList(f64).init(allocator);
     var hnsw_contribution = ArrayList(f64).init(allocator);
     var fre_contribution = ArrayList(f64).init(allocator);
     defer bm25_contribution.deinit();
     defer hnsw_contribution.deinit();
     defer fre_contribution.deinit();
-    
+
     print("    🎯 Running hybrid search benchmarks...\n", .{});
-    
+
     // Warmup
     for (0..@min(config.warmup_iterations, test_queries.len)) |i| {
         const results = try engine.search(test_queries[i]);
-        for (results) |result| { result.deinit(allocator); }
+        for (results) |result| {
+            result.deinit(allocator);
+        }
         allocator.free(results);
     }
-    
+
     // Benchmark hybrid searches
     for (test_queries) |query| {
         var timer = try Timer.start();
         const results = try engine.search(query);
         const search_time_ms = @as(f64, @floatFromInt(timer.read())) / 1_000_000.0;
-        
+
         try hybrid_latencies.append(search_time_ms);
-        
+
         // Analyze component contributions
         if (results.len > 0) {
             try bm25_contribution.append(results[0].bm25_score);
             try hnsw_contribution.append(results[0].hnsw_score);
             try fre_contribution.append(results[0].fre_score);
         }
-        
+
         const stats = engine.getStats();
-        
+
         // Log detailed performance for first few queries
         if (hybrid_latencies.items.len <= 5) {
-            print("      Query {d}: {d:.2}ms (BM25: {d:.2}ms, HNSW: {d:.2}ms, FRE: {d:.2}ms)\n", .{
-                hybrid_latencies.items.len, search_time_ms, 
-                stats.bm25_time_ms, stats.hnsw_time_ms, stats.fre_time_ms
-            });
+            print("      Query {d}: {d:.2}ms (BM25: {d:.2}ms, HNSW: {d:.2}ms, FRE: {d:.2}ms)\n", .{ hybrid_latencies.items.len, search_time_ms, stats.bm25_time_ms, stats.hnsw_time_ms, stats.fre_time_ms });
         }
-        
+
         // Cleanup
-        for (results) |result| { result.deinit(allocator); }
+        for (results) |result| {
+            result.deinit(allocator);
+        }
         allocator.free(results);
     }
-    
+
     // Calculate performance metrics
     const p50 = percentile(hybrid_latencies.items, 50);
     const p99 = percentile(hybrid_latencies.items, 99);
     const mean_latency = mean(hybrid_latencies.items);
     const throughput = 1000.0 / mean_latency;
-    
+
     // Calculate component analysis
     const avg_bm25_contrib = if (bm25_contribution.items.len > 0) mean(bm25_contribution.items) else 0.0;
     const avg_hnsw_contrib = if (hnsw_contribution.items.len > 0) mean(hnsw_contribution.items) else 0.0;
     const avg_fre_contrib = if (fre_contribution.items.len > 0) mean(fre_contribution.items) else 0.0;
-    
+
     print("    📈 Component contribution analysis:\n", .{});
     print("      Average BM25 score: {d:.3}\n", .{avg_bm25_contrib});
     print("      Average HNSW score: {d:.3}\n", .{avg_hnsw_contrib});
     print("      Average FRE score: {d:.3}\n", .{avg_fre_contrib});
-    
+
     return BenchmarkResult{
         .name = "Triple Hybrid Search Integration",
         .category = .database, // Will be changed to .search when available
@@ -522,39 +527,39 @@ fn benchmarkEnterpriseScaleValidation(allocator: Allocator, config: BenchmarkCon
     // Enterprise scale: 1M+ documents, 1000+ concurrent queries
     const large_dataset = @min(config.dataset_size * 10, 1_000_000);
     const stress_queries = @min(config.iterations * 5, 5_000);
-    
+
     print("  🏭 Enterprise-scale validation: {d} docs, {d} queries...\n", .{ large_dataset, stress_queries });
-    
+
     // Use simulated results for now due to memory constraints in testing
     var simulated_latencies = ArrayList(f64).init(allocator);
     defer simulated_latencies.deinit();
-    
+
     var rng = std.Random.DefaultPrng.init(@as(u64, @intCast(std.time.timestamp())));
-    
+
     // Generate realistic enterprise performance distribution
     // Based on production systems: most queries fast, some outliers
     for (0..stress_queries) |_| {
         const base_latency = 2.0 + rng.random().float(f64) * 6.0; // 2-8ms normal range
         const outlier_probability = rng.random().float(f64);
-        
-        const latency = if (outlier_probability < 0.05) 
+
+        const latency = if (outlier_probability < 0.05)
             base_latency * (2.0 + rng.random().float(f64) * 3.0) // 5% outliers (10-40ms)
-        else 
+        else
             base_latency;
-            
+
         try simulated_latencies.append(latency);
     }
-    
+
     const p50 = percentile(simulated_latencies.items, 50);
     const p99 = percentile(simulated_latencies.items, 99);
     const mean_latency = mean(simulated_latencies.items);
     const throughput = 1000.0 / mean_latency;
-    
+
     print("    📊 Enterprise simulation results:\n", .{});
     print("      P50 latency: {d:.2}ms\n", .{p50});
     print("      P99 latency: {d:.2}ms\n", .{p99});
     print("      Throughput: {d:.0} QPS\n", .{throughput});
-    
+
     return BenchmarkResult{
         .name = "Enterprise Scale Validation",
         .category = .database,
@@ -584,14 +589,14 @@ pub fn registerTripleHybridBenchmarks(registry: *benchmark_runner.BenchmarkRegis
         .description = "Validates BM25 keyword search with code-aware tokenization",
         .runFn = benchmarkBM25Performance,
     });
-    
+
     try registry.register(BenchmarkInterface{
         .name = "Triple Hybrid Search Integration",
         .category = .database,
         .description = "End-to-end validation of BM25+HNSW+FRE combined search",
         .runFn = benchmarkTripleHybridIntegration,
     });
-    
+
     try registry.register(BenchmarkInterface{
         .name = "Enterprise Scale Validation",
         .category = .database,
@@ -605,23 +610,23 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
-    
+
     print("\n🚀 TRIPLE HYBRID SEARCH BENCHMARKS\n", .{});
     print("=" ** 60 ++ "\n", .{});
-    
+
     const config = BenchmarkConfig{
         .dataset_size = 25_000,
         .iterations = 500,
         .warmup_iterations = 50,
         .verbose_output = true,
     };
-    
+
     var runner = benchmark_runner.BenchmarkRunner.init(allocator, config);
     defer runner.deinit();
-    
+
     try registerTripleHybridBenchmarks(&runner.registry);
     try runner.runAll();
-    
+
     print("\n🏆 TRIPLE HYBRID SEARCH VALIDATION COMPLETE\n", .{});
 }
 
@@ -630,19 +635,19 @@ test "triple_hybrid_benchmark_components" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
-    
+
     // Test data generator
     var generator = EnterpriseDataGenerator.init(allocator);
     const test_files = try generator.generateEnterpriseCodebase(10);
     defer generator.freeEnterpriseCodebase(test_files);
-    
+
     try std.testing.expect(test_files.len == 10);
     try std.testing.expect(test_files[0].content.len > 0);
-    
+
     // Test query generation
     const queries = try generator.generateSearchQueries(5);
     defer generator.freeSearchQueries(queries);
-    
+
     try std.testing.expect(queries.len == 5);
     try std.testing.expect(queries[0].validateWeights());
 }

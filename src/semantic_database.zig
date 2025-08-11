@@ -44,7 +44,7 @@ pub const SemanticDatabase = struct {
         }
     };
 
-    const HNSWConfig = struct {
+    pub const HNSWConfig = struct {
         vector_dimensions: u32 = 768, // Standard embedding dimension
         max_connections: u32 = 16, // M parameter
         ef_construction: usize = 200, // Construction parameter

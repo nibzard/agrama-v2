@@ -362,7 +362,7 @@ pub const AuthenticatedMCPServer = struct {
         }
 
         if (auth_stats.locked_accounts > 0) {
-            try recommendations.append(try std.fmt.allocPrint(allocator, "MEDIUM: {} accounts currently locked", .{auth_stats.locked_accounts}));
+            try recommendations.append(try std.fmt.allocPrint(allocator, "MEDIUM: {any} accounts currently locked", .{auth_stats.locked_accounts}));
         }
 
         if (stats.rate_limited_requests > stats.authenticated_requests / 20) {

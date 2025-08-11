@@ -331,7 +331,7 @@ pub const CRDTManager = struct {
 
     /// Broadcast CRDT operation to all connected agents
     fn broadcastOperation(self: *CRDTManager, operation: CRDTOperation) !void {
-        const event = try std.fmt.allocPrint(self.allocator, "{{\"type\":\"crdt_operation\",\"operation_id\":\"{}\",\"agent_id\":\"{s}\",\"document_path\":\"{s}\",\"operation_type\":\"{s}\",\"position\":{{\"line\":{d},\"column\":{d},\"offset\":{d}}},\"content_length\":{d},\"timestamp\":{d}}}", .{ operation.operation_id, operation.agent_id, operation.document_path, @tagName(operation.operation_type), operation.position.line, operation.position.column, operation.position.offset, operation.content.len, std.time.timestamp() });
+        const event = try std.fmt.allocPrint(self.allocator, "{{\"type\":\"crdt_operation\",\"operation_id\":\"{any}\",\"agent_id\":\"{s}\",\"document_path\":\"{s}\",\"operation_type\":\"{s}\",\"position\":{{\"line\":{d},\"column\":{d},\"offset\":{d}}},\"content_length\":{d},\"timestamp\":{d}}}", .{ operation.operation_id, operation.agent_id, operation.document_path, @tagName(operation.operation_type), operation.position.line, operation.position.column, operation.position.offset, operation.content.len, std.time.timestamp() });
         defer self.allocator.free(event);
         self.websocket_server.broadcast(event);
     }
@@ -339,7 +339,7 @@ pub const CRDTManager = struct {
     /// Broadcast conflict events
     fn broadcastConflicts(self: *CRDTManager, conflicts: []ConflictEvent) !void {
         for (conflicts) |conflict| {
-            const event = try std.fmt.allocPrint(self.allocator, "{{\"type\":\"conflict_detected\",\"conflict_id\":\"{}\",\"document_path\":\"{s}\",\"operations_count\":{d},\"detected_at\":{d}}}", .{ conflict.conflict_id, conflict.document_path, conflict.conflicting_operations.items.len, conflict.detected_at });
+            const event = try std.fmt.allocPrint(self.allocator, "{{\"type\":\"conflict_detected\",\"conflict_id\":\"{any}\",\"document_path\":\"{s}\",\"operations_count\":{d},\"detected_at\":{d}}}", .{ conflict.conflict_id, conflict.document_path, conflict.conflicting_operations.items.len, conflict.detected_at });
             defer self.allocator.free(event);
             self.websocket_server.broadcast(event);
         }

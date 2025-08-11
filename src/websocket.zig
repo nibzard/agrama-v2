@@ -57,7 +57,7 @@ pub const WebSocketConnection = struct {
     pub fn sendMessage(self: *WebSocketConnection, message: []const u8) !void {
         // SECURITY: Enforce maximum frame size to prevent memory exhaustion
         if (message.len > MAX_FRAME_SIZE) {
-            std.log.warn("WebSocket frame too large: {} bytes (max: {})", .{ message.len, MAX_FRAME_SIZE });
+            std.log.warn("WebSocket frame too large: {d} bytes (max: {d})", .{ message.len, MAX_FRAME_SIZE });
             return SecurityError.FrameTooLarge;
         }
 
@@ -263,7 +263,7 @@ pub const WebSocketServer = struct {
 
         try self.connections.append(ws_connection);
 
-        std.log.info("WebSocket client connected: {s} (IP: {}, Total: {})", .{ connection_id, client_ip, self.connections.items.len });
+        std.log.info("WebSocket client connected: {s} (IP: {any}, Total: {d})", .{ connection_id, client_ip, self.connections.items.len });
 
         // Send welcome message
         const welcome_msg = try std.fmt.allocPrint(self.allocator, "{{\"type\":\"welcome\",\"connection_id\":\"{s}\"}}", .{connection_id});
@@ -420,7 +420,7 @@ pub const WebSocketServer = struct {
         }
 
         if (removed_count > 0) {
-            std.log.info("Cleaned up {} dead connections, {} active connections remaining", .{ removed_count, self.connections.items.len });
+            std.log.info("Cleaned up {d} dead connections, {d} active connections remaining", .{ removed_count, self.connections.items.len });
         }
 
         // SECURITY: Also cleanup old rate limit entries (prevent memory growth)
@@ -450,7 +450,7 @@ pub const WebSocketServer = struct {
         }
 
         if (keys_to_remove.items.len > 0) {
-            std.log.debug("Cleaned up {} old rate limit entries", .{keys_to_remove.items.len});
+            std.log.debug("Cleaned up {d} old rate limit entries", .{keys_to_remove.items.len});
         }
     }
 
@@ -459,7 +459,7 @@ pub const WebSocketServer = struct {
         self.mutex.lock();
         defer self.mutex.unlock();
 
-        std.log.warn("Force closing all {} WebSocket connections", .{self.connections.items.len});
+        std.log.warn("Force closing all {d} WebSocket connections", .{self.connections.items.len});
 
         for (self.connections.items) |*connection| {
             connection.deinit(self.allocator);

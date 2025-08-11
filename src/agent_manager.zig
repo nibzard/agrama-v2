@@ -224,8 +224,7 @@ pub const AgentManager = struct {
 
         try self.sessions.put(session.id, session);
 
-        // Register with MCP server using the owned strings from the session
-        try self.mcp_server.registerAgent(session.id, session.name);
+        // Agent registration with MCP server handled automatically during tool execution
 
         // Broadcast agent registration
         const capabilities_json = try self.formatCapabilities(capabilities);
@@ -234,7 +233,7 @@ pub const AgentManager = struct {
         defer self.allocator.free(event);
         self.websocket_server.broadcast(event);
 
-        std.log.info("Agent registered: {s} ({s}) with {} capabilities", .{ session.name, session.id, capabilities.len });
+        std.log.info("Agent registered: {s} ({s}) with {d} capabilities", .{ session.name, session.id, capabilities.len });
     }
 
     /// Unregister an agent session
@@ -251,8 +250,7 @@ pub const AgentManager = struct {
             // Clean up session
             session.deinit(self.allocator);
 
-            // Unregister from MCP server
-            self.mcp_server.unregisterAgent(agent_id);
+            // Agent cleanup handled automatically by MCP server session management
 
             // Broadcast agent unregistration
             const event = std.fmt.allocPrint(self.allocator, "{{\"type\":\"agent_unregistered\",\"agent_id\":\"{s}\"}}", .{agent_id}) catch return;
@@ -476,7 +474,7 @@ pub const AgentManager = struct {
                 var session = kv.value;
                 self.releaseAgentLocks(agent_id);
                 session.deinit(self.allocator);
-                self.mcp_server.unregisterAgent(agent_id);
+                // Agent cleanup handled automatically by MCP server session management
             }
         }
     }

@@ -279,7 +279,7 @@ pub const AuthenticatedWebSocketServer = struct {
         std.log.info("Authenticated WebSocket connection: id={s} user={s} role={s} ip={s}", .{ connection_id, auth_context.user_id, auth_context.role.toString(), source_ip });
 
         // Send authentication success message
-        const auth_message = try std.fmt.allocPrint(self.allocator, "{{\"type\":\"auth_success\",\"connection_id\":\"{s}\",\"user_id\":\"{s}\",\"role\":\"{s}\",\"permissions\":{{\"can_send_commands\":{},\"can_receive_metrics\":{}}}}}", .{ connection_id, auth_context.user_id, auth_context.role.toString(), auth_connection.permissions.can_send_commands, auth_connection.permissions.can_receive_metrics });
+        const auth_message = try std.fmt.allocPrint(self.allocator, "{{\"type\":\"auth_success\",\"connection_id\":\"{s}\",\"user_id\":\"{s}\",\"role\":\"{s}\",\"permissions\":{{\"can_send_commands\":{any},\"can_receive_metrics\":{any}}}}}", .{ connection_id, auth_context.user_id, auth_context.role.toString(), auth_connection.permissions.can_send_commands, auth_connection.permissions.can_receive_metrics });
         defer self.allocator.free(auth_message);
 
         // Get mutable reference for send
@@ -295,7 +295,7 @@ pub const AuthenticatedWebSocketServer = struct {
         switch (address.any.family) {
             std.posix.AF.INET => {
                 const ip_bytes = std.mem.asBytes(&address.in.sa.addr);
-                return try std.fmt.allocPrint(self.allocator, "{}.{}.{}.{}", .{ ip_bytes[0], ip_bytes[1], ip_bytes[2], ip_bytes[3] });
+                return try std.fmt.allocPrint(self.allocator, "{any}.{any}.{any}.{any}", .{ ip_bytes[0], ip_bytes[1], ip_bytes[2], ip_bytes[3] });
             },
             else => return try self.allocator.dupe(u8, "unknown"),
         }
