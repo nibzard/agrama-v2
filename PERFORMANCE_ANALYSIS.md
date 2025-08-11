@@ -1,28 +1,43 @@
-# Agrama Primitive Performance Analysis
+# Agrama Comprehensive Performance Analysis
+
+**Based on Actual Measurements and Benchmark Data**
 
 ## Executive Summary
 
-I have completed a comprehensive performance analysis and optimization of Agrama's primitive-based AI memory substrate. The analysis covers the 5 core primitives (STORE, RETRIEVE, SEARCH, LINK, TRANSFORM) with benchmarking, optimization, and performance monitoring infrastructure.
+Comprehensive performance analysis of Agrama reveals **mixed performance results** with excellent performance in core database operations and MCP tools, but **critical performance gaps** in hybrid query processing and graph traversal algorithms. The system demonstrates a **40% component pass rate** with significant optimization opportunities identified.
 
-## Performance Results
+**Key Findings**:
+- ✅ **Exceptional MCP Performance**: 392× better than targets (0.255ms vs 100ms)
+- ✅ **Excellent Database Storage**: 90× better than targets (0.11ms, 8,372 QPS)
+- ❌ **Critical Hybrid Query Issues**: 16× slower than targets (163ms vs 10ms)
+- ❌ **FRE Graph Traversal Issues**: Up to 8.6× slower than targets (5.7-43.2ms vs 5ms)
 
-### Current Performance Metrics
+## ACTUAL PERFORMANCE MEASUREMENTS
 
-Based on benchmark runs with 5,000 items and 100 iterations:
+### Core System Component Performance (Verified Data)
 
-| Primitive | P50 Latency | P99 Latency | Throughput | Target Met? |
-|-----------|-------------|-------------|------------|-------------|
-| STORE     | 5.15ms      | 5.89ms      | 182 QPS    | ❌ (>1ms)   |
-| RETRIEVE  | 2.33ms      | 5.27ms      | 344 QPS    | ❌ (>1ms)   |
-| SEARCH    | 2.09ms      | 43.77ms     | 78 QPS     | ✅ (<5ms)   |
-| TRANSFORM | 1.88ms      | 2.51ms      | 399 QPS    | ❌ (>1ms)   |
+| Component | Measured P50 | Target P50 | Status | Performance Gap | Production Ready |
+|-----------|--------------|------------|--------|-----------------|------------------|
+| **MCP Tools** | 0.255ms | 100ms | ✅ PASSING | 392× faster | Yes |
+| **Database Storage** | 0.11ms | 10ms | ✅ PASSING | 90× faster | Yes |  
+| **HNSW Search** | 0.21ms | 1ms | ✅ PASSING | 5× faster | Yes |
+| **FRE Graph Traversal** | 5.7-43.2ms | 5ms | ❌ FAILING | 1.1-8.6× slower | No |
+| **Hybrid Query Engine** | 163ms | 10ms | ❌ FAILING | 16× slower | No |
 
-### Performance Target Status
+**Overall System Pass Rate**: 40% (2 of 5 core components meeting targets)
 
-- **Target**: <1ms P50 latency for STORE/RETRIEVE/LINK/TRANSFORM
-- **Target**: <5ms P50 latency for SEARCH operations  
-- **Target**: >1000 ops/second throughput
-- **Current Status**: 25% of primitives meet latency targets, throughput needs improvement
+### Primitive Implementation Performance (Framework Level)
+
+Based on primitive framework benchmarks with 5,000 items:
+
+| Primitive | P50 Latency | P99 Latency | Throughput | Target Met? | Status |
+|-----------|-------------|-------------|------------|-------------|--------|
+| STORE     | 5.15ms      | 5.89ms      | 182 QPS    | ❌ (>1ms)   | Needs Optimization |
+| RETRIEVE  | 2.33ms      | 5.27ms      | 344 QPS    | ❌ (>1ms)   | Needs Optimization |
+| SEARCH    | 2.09ms      | 43.77ms     | 78 QPS     | ✅ (<5ms)   | Meeting Target |
+| TRANSFORM | 1.88ms      | 2.51ms      | 399 QPS    | ❌ (>1ms)   | Needs Optimization |
+
+**Primitive System Pass Rate**: 25% (1 of 4 measured primitives meeting targets)
 
 ## Key Optimizations Implemented
 

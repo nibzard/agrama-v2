@@ -102,7 +102,7 @@ pub const Database = struct {
 
     /// Validate a file path for security
     /// Prevents path traversal attacks and restricts access to allowed directories
-    fn validatePath(path: []const u8) !void {
+    pub fn validatePath(path: []const u8) !void {
         // Basic validation - empty path
         if (path.len == 0) {
             return error.InvalidPath;

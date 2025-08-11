@@ -42,6 +42,18 @@ const PerformanceConfig = struct {
     large_dataset: u32 = 10000,
 };
 
+/// Complexity analysis result
+const ComplexityResult = struct {
+    complexity: []const u8,
+    latency: f64,
+};
+
+/// Scalability analysis result
+const ScalabilityResult = struct {
+    size: u32,
+    latency: f64,
+};
+
 /// Performance test result with detailed metrics
 const PerformanceResult = struct {
     test_name: []const u8,
@@ -611,7 +623,6 @@ pub const EnhancedMCPPerformanceTestSuite = struct {
         print("  📊 Testing Semantic Search Scalability (O(log n) validation)...\n", .{});
 
         const dataset_sizes = [_]u32{ 100, 500, 1000 };
-        const ScalabilityResult = struct { size: u32, latency: f64 };
         var scalability_results = ArrayList(ScalabilityResult).init(self.allocator);
         defer scalability_results.deinit();
 
@@ -633,7 +644,7 @@ pub const EnhancedMCPPerformanceTestSuite = struct {
         }
 
         // Analyze scalability (should be O(log n))
-        const scalability_factor = self.analyzeScalability(@ptrCast(scalability_results.items));
+        const scalability_factor = self.analyzeScalability(scalability_results.items);
 
         var violations = ArrayList([]const u8).init(self.allocator);
         defer {
@@ -679,7 +690,7 @@ pub const EnhancedMCPPerformanceTestSuite = struct {
         print("  🔗 Testing Dependency Analysis Scalability (O(m log^(2/3) n) validation)...\n", .{});
 
         const complexity_levels = [_][]const u8{ "simple", "medium", "complex" };
-        var scalability_results = ArrayList(struct { complexity: []const u8, latency: f64 }).init(self.allocator);
+        var scalability_results = ArrayList(ComplexityResult).init(self.allocator);
         defer scalability_results.deinit();
 
         for (complexity_levels) |complexity| {
@@ -805,9 +816,9 @@ pub const EnhancedMCPPerformanceTestSuite = struct {
                 try server.registerAgent(agent_id, "Concurrent Performance Agent", &[_][]const u8{"get_database_stats"});
             }
 
-            var success_count = std.atomic.Atomic(u32).init(0);
-            var total_latency_ns = std.atomic.Atomic(u64).init(0);
-            var error_count = std.atomic.Atomic(u32).init(0);
+            var success_count = std.atomic.Value(u32).init(0);
+            var total_latency_ns = std.atomic.Value(u64).init(0);
+            var error_count = std.atomic.Value(u32).init(0);
 
             // Start concurrent load test
             var threads = ArrayList(Thread).init(self.allocator);
@@ -817,9 +828,9 @@ pub const EnhancedMCPPerformanceTestSuite = struct {
                 server: *EnhancedMCPServer,
                 agent_id: []const u8,
                 requests: u32,
-                success_counter: *std.atomic.Atomic(u32),
-                latency_counter: *std.atomic.Atomic(u64),
-                error_counter: *std.atomic.Atomic(u32),
+                success_counter: *std.atomic.Value(u32),
+                latency_counter: *std.atomic.Value(u64),
+                error_counter: *std.atomic.Value(u32),
                 allocator: Allocator,
             };
 
@@ -830,22 +841,22 @@ pub const EnhancedMCPPerformanceTestSuite = struct {
                         defer arguments_map.deinit();
 
                         arguments_map.put("include_performance_metrics", std.json.Value{ .bool = true }) catch {
-                            _ = ctx.error_counter.fetchAdd(1, .SeqCst);
+                            _ = ctx.error_counter.fetchAdd(1, .seq_cst);
                             continue;
                         };
 
                         const concurrent_request = EnhancedMCPServer.MCPRequest{
                             .id = std.fmt.allocPrint(ctx.allocator, "concurrent-{}-{}", .{ ctx.agent_id, std.time.nanoTimestamp() }) catch {
-                                _ = ctx.error_counter.fetchAdd(1, .SeqCst);
+                                _ = ctx.error_counter.fetchAdd(1, .seq_cst);
                                 continue;
                             },
                             .method = ctx.allocator.dupe(u8, "tools/call") catch {
-                                _ = ctx.error_counter.fetchAdd(1, .SeqCst);
+                                _ = ctx.error_counter.fetchAdd(1, .seq_cst);
                                 continue;
                             },
                             .params = .{
                                 .name = ctx.allocator.dupe(u8, "get_database_stats") catch {
-                                    _ = ctx.error_counter.fetchAdd(1, .SeqCst);
+                                    _ = ctx.error_counter.fetchAdd(1, .seq_cst);
                                     continue;
                                 },
                                 .arguments = std.json.Value{ .object = arguments_map },
@@ -859,7 +870,7 @@ pub const EnhancedMCPPerformanceTestSuite = struct {
 
                         const request_start = std.time.nanoTimestamp();
                         const response = ctx.server.handleRequest(concurrent_request, ctx.agent_id) catch {
-                            _ = ctx.error_counter.fetchAdd(1, .SeqCst);
+                            _ = ctx.error_counter.fetchAdd(1, .seq_cst);
                             continue;
                         };
                         const request_duration_ns = std.time.nanoTimestamp() - request_start;
@@ -867,8 +878,8 @@ pub const EnhancedMCPPerformanceTestSuite = struct {
                         var mutable_response = response;
                         mutable_response.deinit(ctx.allocator);
 
-                        _ = ctx.success_counter.fetchAdd(1, .SeqCst);
-                        _ = ctx.latency_counter.fetchAdd(@intCast(request_duration_ns), .SeqCst);
+                        _ = ctx.success_counter.fetchAdd(1, .seq_cst);
+                        _ = ctx.latency_counter.fetchAdd(@intCast(request_duration_ns), .seq_cst);
                     }
                 }
             }.run;
@@ -899,9 +910,9 @@ pub const EnhancedMCPPerformanceTestSuite = struct {
             const total_test_duration_ns = std.time.nanoTimestamp() - test_start;
 
             const total_requests = concurrent_agents * requests_per_agent;
-            const successful_requests = success_count.load(.SeqCst);
-            const total_request_latency_ns = total_latency_ns.load(.SeqCst);
-            _ = error_count.load(.SeqCst);
+            const successful_requests = success_count.load(.seq_cst);
+            const total_request_latency_ns = total_latency_ns.load(.seq_cst);
+            _ = error_count.load(.seq_cst);
 
             const success_rate = @as(f64, @floatFromInt(successful_requests)) / @as(f64, @floatFromInt(total_requests));
             const avg_latency_ms = if (successful_requests > 0)
@@ -1380,7 +1391,7 @@ pub const EnhancedMCPPerformanceTestSuite = struct {
     }
 
     /// Analyze scalability characteristics
-    fn analyzeScalability(self: *EnhancedMCPPerformanceTestSuite, results: []const struct { size: u32, latency: f64 }) f64 {
+    fn analyzeScalability(self: *EnhancedMCPPerformanceTestSuite, results: []const ScalabilityResult) f64 {
         _ = self;
         if (results.len < 2) return 1.0;
 
@@ -1396,7 +1407,7 @@ pub const EnhancedMCPPerformanceTestSuite = struct {
     }
 
     /// Analyze complexity growth
-    fn analyzeComplexityGrowth(self: *EnhancedMCPPerformanceTestSuite, results: []const struct { complexity: []const u8, latency: f64 }) f64 {
+    fn analyzeComplexityGrowth(self: *EnhancedMCPPerformanceTestSuite, results: []const ComplexityResult) f64 {
         _ = self;
         if (results.len < 2) return 1.0;
 
@@ -1411,9 +1422,9 @@ pub const EnhancedMCPPerformanceTestSuite = struct {
 
     /// Generate comprehensive performance report
     fn generatePerformanceReport(self: *EnhancedMCPPerformanceTestSuite) void {
-        print("\n" ++ "=" ** 80 ++ "\n");
+        print("\n" ++ "=" ** 80 ++ "\n", .{});
         print("ENHANCED MCP PERFORMANCE TEST REPORT\n", .{});
-        print("=" ** 80 ++ "\n");
+        print("=" ** 80 ++ "\n", .{});
 
         // Overall summary
         var total_tests: u32 = 0;
@@ -1503,7 +1514,7 @@ pub const EnhancedMCPPerformanceTestSuite = struct {
             print("   Critical algorithmic performance failures detected\n", .{});
         }
 
-        print("=" ** 80 ++ "\n");
+        print("=" ** 80 ++ "\n", .{});
     }
 };
 

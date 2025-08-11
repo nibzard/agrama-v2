@@ -140,10 +140,7 @@ pub fn main() !void {
 
     const transform_result = try engine.executePrimitive("transform", std.json.Value{ .object = transform_params }, "demo_agent");
     print("🔧 Parsed functions from code sample\n", .{});
-    print("📊 Input size: {} chars → Output size: {} chars\n", .{ 
-        transform_result.object.get("input_size").?.integer,
-        transform_result.object.get("output_size").?.integer 
-    });
+    print("📊 Input size: {} chars → Output size: {} chars\n", .{ transform_result.object.get("input_size").?.integer, transform_result.object.get("output_size").?.integer });
     print("⚡ Execution time: {d:.2}ms\n\n", .{transform_result.object.get("execution_time_ms").?.float});
 
     // Show overall performance statistics

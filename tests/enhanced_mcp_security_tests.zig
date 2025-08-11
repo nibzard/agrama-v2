@@ -1192,14 +1192,14 @@ pub const EnhancedMCPSecurityTestSuite = struct {
                 server: *EnhancedMCPServer,
                 is_writer: bool,
                 thread_id: u32,
-                operations_counter: *std.atomic.Atomic(u32),
-                corruption_flag: *std.atomic.Atomic(bool),
+                operations_counter: *std.atomic.Value(u32),
+                corruption_flag: *std.atomic.Value(bool),
                 allocator: Allocator,
             };
 
             const data_race_worker = struct {
                 fn run(ctx: DataRaceContext) void {
-                    const operations = if (ctx.is_writer) 5 else 10;
+                    const operations: u32 = if (ctx.is_writer) 5 else 10;
 
                     for (0..operations) |i| {
                         var arguments_map = std.json.ObjectMap.init(ctx.allocator);
@@ -1258,11 +1258,11 @@ pub const EnhancedMCPSecurityTestSuite = struct {
 
                             // Check for data consistency
                             if (response.result == null and response.@"error" == null) {
-                                ctx.corruption_flag.store(true, .SeqCst);
+                                ctx.corruption_flag.store(true, .seq_cst);
                             }
                         }
 
-                        _ = ctx.operations_counter.fetchAdd(1, .SeqCst);
+                        _ = ctx.operations_counter.fetchAdd(1, .seq_cst);
                     }
                 }
             }.run;
@@ -1306,8 +1306,8 @@ pub const EnhancedMCPSecurityTestSuite = struct {
             }
 
             // Check results
-            const completed = operations_completed.load(.SeqCst);
-            const corruption = data_corruption_detected.load(.SeqCst);
+            const completed = operations_completed.load(.seq_cst);
+            const corruption = data_corruption_detected.load(.seq_cst);
 
             if (corruption) {
                 vulnerabilities += 1;
@@ -1658,7 +1658,7 @@ pub const EnhancedMCPSecurityTestSuite = struct {
                     std.mem.indexOf(u8, err_name, "passwd") != null)
                 {
                     vulnerabilities += 1;
-                    error_message = try std.allocator.dupe(u8, "Error message contains sensitive path information");
+                    error_message = try self.allocator.dupe(u8, "Error message contains sensitive path information");
                 }
                 const duration = @as(u64, @intCast(std.time.milliTimestamp() - test_start));
                 try self.recordSecurityResult("Error Information Leakage", .error_handling, vulnerabilities == 0, duration, if (vulnerabilities > 0) .medium else .low, vulnerabilities, error_message);

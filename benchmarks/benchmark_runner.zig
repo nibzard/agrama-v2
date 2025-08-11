@@ -491,7 +491,7 @@ pub const BenchmarkRunner = struct {
     pub fn validatePrimitiveClaims(self: *BenchmarkRunner) bool {
         var primitive_results: usize = 0;
         var primitive_passed: usize = 0;
-        
+
         for (self.results.items) |result| {
             if (std.mem.indexOf(u8, result.name, "primitive_") != null) {
                 primitive_results += 1;
@@ -500,7 +500,7 @@ pub const BenchmarkRunner = struct {
                 }
             }
         }
-        
+
         // At least 80% of primitive benchmarks should pass
         return primitive_results > 0 and primitive_passed >= (primitive_results * 4) / 5;
     }

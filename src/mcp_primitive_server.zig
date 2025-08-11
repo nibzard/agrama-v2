@@ -1,12 +1,12 @@
 //! Primitive MCP Server - Revolutionary primitive-based AI memory interface
 //!
-//! This server exposes 5 core primitives instead of complex tools, enabling LLMs to 
-//! compose their own memory architectures and analysis pipelines on Agrama's 
+//! This server exposes 5 core primitives instead of complex tools, enabling LLMs to
+//! compose their own memory architectures and analysis pipelines on Agrama's
 //! temporal knowledge graph database.
 //!
 //! Core Primitives:
 //! 1. STORE: Universal storage with rich metadata and provenance tracking
-//! 2. RETRIEVE: Data access with history and context 
+//! 2. RETRIEVE: Data access with history and context
 //! 3. SEARCH: Unified search across semantic/lexical/graph/temporal/hybrid modes
 //! 4. LINK: Knowledge graph relationships with metadata
 //! 5. TRANSFORM: Extensible operation registry for data transformation
@@ -178,10 +178,10 @@ const AgentSession = struct {
 /// Revolutionary Primitive MCP Server
 pub const PrimitiveMCPServer = struct {
     allocator: Allocator,
-    
+
     // Core primitive engine
     primitive_engine: PrimitiveEngine,
-    
+
     // MCP protocol
     primitives: ArrayList(MCPPrimitiveDefinition),
     capabilities: ServerCapabilities,
@@ -189,14 +189,14 @@ pub const PrimitiveMCPServer = struct {
     protocol_version: []const u8,
     stdin_reader: std.io.BufferedReader(4096, std.fs.File.Reader),
     stdout_writer: std.fs.File.Writer,
-    
+
     // Agent session management
     agent_sessions: HashMap([]const u8, AgentSession, HashContext, std.hash_map.default_max_load_percentage),
-    
+
     // Performance monitoring
     total_primitive_calls: u64 = 0,
     total_response_time_ns: u64 = 0,
-    
+
     const HashContext = struct {
         pub fn hash(self: @This(), s: []const u8) u64 {
             _ = self;
@@ -265,7 +265,7 @@ pub const PrimitiveMCPServer = struct {
     pub fn run(self: *PrimitiveMCPServer) !void {
         const stderr = std.io.getStdErr().writer();
         const debug_mode = std.posix.getenv("AGRAMA_DEBUG") != null;
-        
+
         if (debug_mode) {
             try stderr.print("[Primitive MCP Server] Starting primitive-based server (PID: {d})\n", .{std.os.linux.getpid()});
         }
@@ -277,26 +277,23 @@ pub const PrimitiveMCPServer = struct {
             if (self.stdin_reader.reader().readUntilDelimiterOrEof(line_buf[0..], '\n')) |line_result| {
                 if (line_result) |line| {
                     if (line.len == 0) continue;
-                    
+
                     message_count += 1;
-                    
+
                     // High-performance message processing with error recovery
                     self.processMessage(line) catch |err| {
                         if (debug_mode) {
                             try stderr.print("[Primitive MCP Server] Error processing message #{d}: {any} - {s}\n", .{ message_count, err, line[0..@min(line.len, 100)] });
                         }
                     };
-                    
+
                     if (debug_mode and message_count % 100 == 0) {
-                        const avg_response_ns = if (self.total_primitive_calls > 0) 
-                            self.total_response_time_ns / self.total_primitive_calls 
-                        else 
+                        const avg_response_ns = if (self.total_primitive_calls > 0)
+                            self.total_response_time_ns / self.total_primitive_calls
+                        else
                             0;
-                        
-                        try stderr.print("[Primitive MCP Server] Processed {d} messages, avg response: {d:.2}ms\n", .{ 
-                            message_count, 
-                            @as(f64, @floatFromInt(avg_response_ns)) / 1_000_000.0 
-                        });
+
+                        try stderr.print("[Primitive MCP Server] Processed {d} messages, avg response: {d:.2}ms\n", .{ message_count, @as(f64, @floatFromInt(avg_response_ns)) / 1_000_000.0 });
                     }
                 } else {
                     if (debug_mode) {
@@ -324,7 +321,7 @@ pub const PrimitiveMCPServer = struct {
     /// Process incoming JSON-RPC message with <1ms target latency
     fn processMessage(self: *PrimitiveMCPServer, message: []const u8) !void {
         var parse_timer = std.time.Timer.start() catch return error.TimerUnavailable;
-        
+
         var parsed = std.json.parseFromSlice(std.json.Value, self.allocator, message, .{}) catch {
             try self.sendError(null, -32700, "Parse error", null);
             return;
@@ -337,7 +334,7 @@ pub const PrimitiveMCPServer = struct {
         };
 
         const parse_time_ns = parse_timer.read();
-        
+
         try self.handleRequest(request, parse_time_ns);
     }
 
@@ -438,7 +435,7 @@ pub const PrimitiveMCPServer = struct {
 
             // Add primitive-specific metadata
             try tool_obj.put("performance", std.json.Value{ .string = try json_allocator.dupe(u8, primitive.performanceCharacteristics) });
-            
+
             var examples_array = std.json.Array.init(json_allocator);
             for (primitive.compositionExamples) |example| {
                 try examples_array.append(std.json.Value{ .string = try json_allocator.dupe(u8, example) });
@@ -457,7 +454,7 @@ pub const PrimitiveMCPServer = struct {
     /// Handle primitive call with <1ms target execution time
     fn handlePrimitiveCall(self: *PrimitiveMCPServer, request: MCPRequest, overhead_time_ns: u64) !void {
         var execution_timer = std.time.Timer.start() catch return error.TimerUnavailable;
-        
+
         const params = request.params orelse {
             try self.sendError(request.id, -32602, "Invalid params", null);
             return;
@@ -475,7 +472,7 @@ pub const PrimitiveMCPServer = struct {
 
         // Extract agent context if provided
         const agent_id = if (arguments.object.get("agent_id")) |val| val.string else "unknown-agent";
-        
+
         // Execute primitive with performance tracking
         const primitive_result = self.primitive_engine.executePrimitive(tool_name.string, arguments, agent_id) catch |err| {
             const error_msg = try std.fmt.allocPrint(self.allocator, "Primitive execution failed: {s}", .{@errorName(err)});
@@ -486,21 +483,18 @@ pub const PrimitiveMCPServer = struct {
 
         const execution_time_ns = execution_timer.read();
         const total_time_ns = overhead_time_ns + execution_time_ns;
-        
+
         // Update performance metrics
         self.total_primitive_calls += 1;
         self.total_response_time_ns += total_time_ns;
-        
+
         // Update agent session
         try self.updateAgentSession(agent_id, tool_name.string);
 
         // Log slow operations (>1ms)
         if (total_time_ns > 1_000_000) {
             const stderr = std.io.getStdErr().writer();
-            stderr.print("[Primitive MCP Server] Slow primitive: {s} took {d:.2}ms\n", .{ 
-                tool_name.string, 
-                @as(f64, @floatFromInt(total_time_ns)) / 1_000_000.0 
-            }) catch {};
+            stderr.print("[Primitive MCP Server] Slow primitive: {s} took {d:.2}ms\n", .{ tool_name.string, @as(f64, @floatFromInt(total_time_ns)) / 1_000_000.0 }) catch {};
         }
 
         // Convert primitive result to MCP tool response
@@ -532,13 +526,13 @@ pub const PrimitiveMCPServer = struct {
     }
 
     /// Update agent session tracking
-    fn updateAgentSession(self: *PrimitiveMCPServer, agent_id: []const u8, primitive_name: []const u8) !void {
+    pub fn updateAgentSession(self: *PrimitiveMCPServer, agent_id: []const u8, primitive_name: []const u8) !void {
         const now = std.time.timestamp();
 
         if (self.agent_sessions.getPtr(agent_id)) |session| {
             session.last_activity = now;
             session.operations_count += 1;
-            
+
             // Update primitive usage count
             if (session.primitives_used.getPtr(primitive_name)) |count_ptr| {
                 count_ptr.* += 1;
@@ -552,7 +546,7 @@ pub const PrimitiveMCPServer = struct {
             try new_session.primitives_used.put(owned_primitive_name, 1);
             new_session.operations_count = 1;
             new_session.last_activity = now;
-            
+
             const owned_id = try self.allocator.dupe(u8, agent_id);
             try self.agent_sessions.put(owned_id, new_session);
         }
@@ -667,7 +661,7 @@ pub const PrimitiveMCPServer = struct {
 
         // Overall performance
         try stats.put("total_primitive_calls", std.json.Value{ .integer = @as(i64, @intCast(self.total_primitive_calls)) });
-        
+
         const avg_response_time_ms = if (self.total_primitive_calls > 0)
             @as(f64, @floatFromInt(self.total_response_time_ns)) / @as(f64, @floatFromInt(self.total_primitive_calls)) / 1_000_000.0
         else
@@ -681,7 +675,7 @@ pub const PrimitiveMCPServer = struct {
         // Agent session stats
         var agent_stats = std.json.ObjectMap.init(json_allocator);
         try agent_stats.put("total_sessions", std.json.Value{ .integer = @as(i64, @intCast(self.agent_sessions.count())) });
-        
+
         var active_sessions: i32 = 0;
         const now = std.time.timestamp();
         var session_iter = self.agent_sessions.iterator();

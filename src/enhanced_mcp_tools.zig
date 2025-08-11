@@ -411,7 +411,7 @@ pub const EnhancedMCPTools = struct {
             // Add analysis results
             try result.put("functions", std.json.Value{ .array = analysis.functions });
             try result.put("variables", std.json.Value{ .array = analysis.variables });
-            
+
             if (params.include_metrics orelse true) {
                 var metrics = std.json.ObjectMap.init(enhanced_db.allocator);
                 try metrics.put("lines_of_code", std.json.Value{ .integer = @as(i64, @intCast(analysis.metrics.lines_of_code)) });
@@ -483,8 +483,9 @@ fn analyzeCode(allocator: Allocator, content: []const u8, language: []const u8) 
     var line_iterator = std.mem.split(u8, content, "\n");
     while (line_iterator.next()) |line| {
         const trimmed_line = std.mem.trim(u8, line, " \t\r");
-        if (trimmed_line.len == 0 or trimmed_line[0] == '#' or 
-            std.mem.startsWith(u8, trimmed_line, "//")) {
+        if (trimmed_line.len == 0 or trimmed_line[0] == '#' or
+            std.mem.startsWith(u8, trimmed_line, "//"))
+        {
             continue; // Skip empty lines and comments
         }
         lines_of_code += 1;
@@ -518,25 +519,27 @@ fn analyzeCode(allocator: Allocator, content: []const u8, language: []const u8) 
 
 fn analyzeJavaScript(allocator: Allocator, line: []const u8, functions: *std.json.Array, variables: *std.json.Array, imports: *std.json.Array, function_count: *u32, variable_count: *u32, complexity_score: *f32) !void {
     // Function detection
-    if (std.mem.indexOf(u8, line, "function ") != null or 
+    if (std.mem.indexOf(u8, line, "function ") != null or
         std.mem.indexOf(u8, line, "const ") != null and std.mem.indexOf(u8, line, " => ") != null or
-        std.mem.indexOf(u8, line, "async function") != null) {
+        std.mem.indexOf(u8, line, "async function") != null)
+    {
         function_count.* += 1;
-        
+
         var func_obj = std.json.ObjectMap.init(allocator);
         try func_obj.put("type", std.json.Value{ .string = "function" });
         try func_obj.put("line", std.json.Value{ .string = try allocator.dupe(u8, line) });
         try functions.append(std.json.Value{ .object = func_obj });
-        
+
         complexity_score.* += 0.5;
     }
 
     // Variable detection
-    if (std.mem.startsWith(u8, line, "var ") or 
-        std.mem.startsWith(u8, line, "let ") or 
-        std.mem.startsWith(u8, line, "const ")) {
+    if (std.mem.startsWith(u8, line, "var ") or
+        std.mem.startsWith(u8, line, "let ") or
+        std.mem.startsWith(u8, line, "const "))
+    {
         variable_count.* += 1;
-        
+
         var var_obj = std.json.ObjectMap.init(allocator);
         try var_obj.put("type", std.json.Value{ .string = "variable" });
         try var_obj.put("line", std.json.Value{ .string = try allocator.dupe(u8, line) });
@@ -544,9 +547,10 @@ fn analyzeJavaScript(allocator: Allocator, line: []const u8, functions: *std.jso
     }
 
     // Import detection
-    if (std.mem.startsWith(u8, line, "import ") or 
+    if (std.mem.startsWith(u8, line, "import ") or
         std.mem.startsWith(u8, line, "require(") or
-        std.mem.startsWith(u8, line, "const ") and std.mem.indexOf(u8, line, "require(") != null) {
+        std.mem.startsWith(u8, line, "const ") and std.mem.indexOf(u8, line, "require(") != null)
+    {
         var import_obj = std.json.ObjectMap.init(allocator);
         try import_obj.put("type", std.json.Value{ .string = "import" });
         try import_obj.put("line", std.json.Value{ .string = try allocator.dupe(u8, line) });
@@ -554,10 +558,11 @@ fn analyzeJavaScript(allocator: Allocator, line: []const u8, functions: *std.jso
     }
 
     // Complexity indicators
-    if (std.mem.indexOf(u8, line, "if ") != null or 
-        std.mem.indexOf(u8, line, "for ") != null or 
+    if (std.mem.indexOf(u8, line, "if ") != null or
+        std.mem.indexOf(u8, line, "for ") != null or
         std.mem.indexOf(u8, line, "while ") != null or
-        std.mem.indexOf(u8, line, "switch ") != null) {
+        std.mem.indexOf(u8, line, "switch ") != null)
+    {
         complexity_score.* += 0.3;
     }
 }
@@ -566,30 +571,31 @@ fn analyzePython(allocator: Allocator, line: []const u8, functions: *std.json.Ar
     // Function detection
     if (std.mem.startsWith(u8, line, "def ") or std.mem.startsWith(u8, line, "async def ")) {
         function_count.* += 1;
-        
+
         var func_obj = std.json.ObjectMap.init(allocator);
         try func_obj.put("type", std.json.Value{ .string = "function" });
         try func_obj.put("line", std.json.Value{ .string = try allocator.dupe(u8, line) });
         try functions.append(std.json.Value{ .object = func_obj });
-        
+
         complexity_score.* += 0.5;
     }
 
     // Class detection
     if (std.mem.startsWith(u8, line, "class ")) {
         function_count.* += 1;
-        
+
         var class_obj = std.json.ObjectMap.init(allocator);
         try class_obj.put("type", std.json.Value{ .string = "class" });
         try class_obj.put("line", std.json.Value{ .string = try allocator.dupe(u8, line) });
         try functions.append(std.json.Value{ .object = class_obj });
-        
+
         complexity_score.* += 0.7;
     }
 
     // Import detection
-    if (std.mem.startsWith(u8, line, "import ") or 
-        std.mem.startsWith(u8, line, "from ") and std.mem.indexOf(u8, line, " import ") != null) {
+    if (std.mem.startsWith(u8, line, "import ") or
+        std.mem.startsWith(u8, line, "from ") and std.mem.indexOf(u8, line, " import ") != null)
+    {
         var import_obj = std.json.ObjectMap.init(allocator);
         try import_obj.put("type", std.json.Value{ .string = "import" });
         try import_obj.put("line", std.json.Value{ .string = try allocator.dupe(u8, line) });
@@ -599,7 +605,7 @@ fn analyzePython(allocator: Allocator, line: []const u8, functions: *std.json.Ar
     // Variable detection (simple heuristic)
     if (std.mem.indexOf(u8, line, " = ") != null and !std.mem.startsWith(u8, line, "if ") and !std.mem.startsWith(u8, line, "for ")) {
         variable_count.* += 1;
-        
+
         var var_obj = std.json.ObjectMap.init(allocator);
         try var_obj.put("type", std.json.Value{ .string = "assignment" });
         try var_obj.put("line", std.json.Value{ .string = try allocator.dupe(u8, line) });
@@ -607,39 +613,42 @@ fn analyzePython(allocator: Allocator, line: []const u8, functions: *std.json.Ar
     }
 
     // Complexity indicators
-    if (std.mem.startsWith(u8, line, "if ") or 
-        std.mem.startsWith(u8, line, "for ") or 
+    if (std.mem.startsWith(u8, line, "if ") or
+        std.mem.startsWith(u8, line, "for ") or
         std.mem.startsWith(u8, line, "while ") or
         std.mem.startsWith(u8, line, "try:") or
-        std.mem.startsWith(u8, line, "except")) {
+        std.mem.startsWith(u8, line, "except"))
+    {
         complexity_score.* += 0.3;
     }
 }
 
 fn analyzeZig(allocator: Allocator, line: []const u8, functions: *std.json.Array, variables: *std.json.Array, imports: *std.json.Array, function_count: *u32, variable_count: *u32, complexity_score: *f32) !void {
     // Function detection
-    if (std.mem.indexOf(u8, line, "pub fn ") != null or 
-        std.mem.indexOf(u8, line, "fn ") != null) {
+    if (std.mem.indexOf(u8, line, "pub fn ") != null or
+        std.mem.indexOf(u8, line, "fn ") != null)
+    {
         function_count.* += 1;
-        
+
         var func_obj = std.json.ObjectMap.init(allocator);
         try func_obj.put("type", std.json.Value{ .string = "function" });
         try func_obj.put("line", std.json.Value{ .string = try allocator.dupe(u8, line) });
         try functions.append(std.json.Value{ .object = func_obj });
-        
+
         complexity_score.* += 0.5;
     }
 
     // Struct/enum detection
     if (std.mem.indexOf(u8, line, "pub const ") != null and std.mem.indexOf(u8, line, "struct") != null or
-        std.mem.indexOf(u8, line, "pub const ") != null and std.mem.indexOf(u8, line, "enum") != null) {
+        std.mem.indexOf(u8, line, "pub const ") != null and std.mem.indexOf(u8, line, "enum") != null)
+    {
         function_count.* += 1;
-        
+
         var type_obj = std.json.ObjectMap.init(allocator);
         try type_obj.put("type", std.json.Value{ .string = "type_definition" });
         try type_obj.put("line", std.json.Value{ .string = try allocator.dupe(u8, line) });
         try functions.append(std.json.Value{ .object = type_obj });
-        
+
         complexity_score.* += 0.4;
     }
 
@@ -652,11 +661,12 @@ fn analyzeZig(allocator: Allocator, line: []const u8, functions: *std.json.Array
     }
 
     // Variable detection
-    if ((std.mem.startsWith(u8, line, "var ") or 
-         std.mem.startsWith(u8, line, "const ")) and 
-         std.mem.indexOf(u8, line, "@import") == null) {
+    if ((std.mem.startsWith(u8, line, "var ") or
+        std.mem.startsWith(u8, line, "const ")) and
+        std.mem.indexOf(u8, line, "@import") == null)
+    {
         variable_count.* += 1;
-        
+
         var var_obj = std.json.ObjectMap.init(allocator);
         try var_obj.put("type", std.json.Value{ .string = "variable" });
         try var_obj.put("line", std.json.Value{ .string = try allocator.dupe(u8, line) });
@@ -664,10 +674,11 @@ fn analyzeZig(allocator: Allocator, line: []const u8, functions: *std.json.Array
     }
 
     // Complexity indicators
-    if (std.mem.indexOf(u8, line, "if ") != null or 
-        std.mem.indexOf(u8, line, "for ") != null or 
+    if (std.mem.indexOf(u8, line, "if ") != null or
+        std.mem.indexOf(u8, line, "for ") != null or
         std.mem.indexOf(u8, line, "while ") != null or
-        std.mem.indexOf(u8, line, "switch ") != null) {
+        std.mem.indexOf(u8, line, "switch ") != null)
+    {
         complexity_score.* += 0.3;
     }
 }
@@ -675,21 +686,22 @@ fn analyzeZig(allocator: Allocator, line: []const u8, functions: *std.json.Array
 fn analyzeGeneric(allocator: Allocator, line: []const u8, functions: *std.json.Array, variables: *std.json.Array, function_count: *u32, variable_count: *u32, complexity_score: *f32) !void {
     // Generic function pattern detection
     if (std.mem.indexOf(u8, line, "(") != null and std.mem.indexOf(u8, line, ")") != null and
-        (std.mem.indexOf(u8, line, "{") != null or std.mem.endsWith(u8, std.mem.trim(u8, line, " "), ":"))) {
+        (std.mem.indexOf(u8, line, "{") != null or std.mem.endsWith(u8, std.mem.trim(u8, line, " "), ":")))
+    {
         function_count.* += 1;
-        
+
         var func_obj = std.json.ObjectMap.init(allocator);
         try func_obj.put("type", std.json.Value{ .string = "potential_function" });
         try func_obj.put("line", std.json.Value{ .string = try allocator.dupe(u8, line) });
         try functions.append(std.json.Value{ .object = func_obj });
-        
+
         complexity_score.* += 0.3;
     }
 
     // Generic assignment detection
     if (std.mem.indexOf(u8, line, "=") != null) {
         variable_count.* += 1;
-        
+
         var var_obj = std.json.ObjectMap.init(allocator);
         try var_obj.put("type", std.json.Value{ .string = "potential_assignment" });
         try var_obj.put("line", std.json.Value{ .string = try allocator.dupe(u8, line) });

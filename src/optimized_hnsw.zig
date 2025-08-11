@@ -72,7 +72,7 @@ const VectorSIMD = struct {
 
         const simd_width = 8; // AVX2 processes 8 f32 values
         const simd_iterations = self.dimensions / simd_width;
-        const remainder = self.dimensions % simd_width;
+        _ = self.dimensions % simd_width; // remainder for potential scalar cleanup
 
         // SIMD processing for main chunks
         var i: u32 = 0;
@@ -158,7 +158,7 @@ const OptimizedHNSWNode = struct {
     last_accessed: u64 = 0, // Timestamp
 
     pub fn init(allocator: Allocator, id: NodeID, vector_data: []const f32, layer: u32) !OptimizedHNSWNode {
-        var vector = try VectorSIMD.init(allocator, @as(u32, @intCast(vector_data.len)));
+        const vector = try VectorSIMD.init(allocator, @as(u32, @intCast(vector_data.len)));
         @memcpy(vector.data, vector_data);
 
         return OptimizedHNSWNode{
@@ -374,7 +374,7 @@ pub const OptimizedHNSWIndex = struct {
         if (vectors.len != node_ids.len) return error.MismatchedArrays;
         if (vectors.len == 0) return;
 
-        print("🚀 Optimized batch insertion of {} vectors with SIMD acceleration...\n", .{vectors.len});
+        std.debug.print("🚀 Optimized batch insertion of {} vectors with SIMD acceleration...\n", .{vectors.len});
 
         var timer = try std.time.Timer.start();
 
@@ -424,8 +424,8 @@ pub const OptimizedHNSWIndex = struct {
         const construction_time_ms = @as(f64, @floatFromInt(timer.read())) / 1_000_000.0;
         const throughput = @as(f64, @floatFromInt(vectors.len)) / (construction_time_ms / 1000.0);
 
-        print("✅ Batch insertion completed: {:.2}ms ({:.0} vectors/sec)\n", .{ construction_time_ms, throughput });
-        print("   SIMD enabled: {}, Width: {}\n", .{ self.has_simd, self.simd_width });
+        std.debug.print("✅ Batch insertion completed: {d:.2}ms ({d:.0} vectors/sec)\n", .{ construction_time_ms, throughput });
+        std.debug.print("   SIMD enabled: {}, Width: {}\n", .{ self.has_simd, self.simd_width });
     }
 
     /// Ultra-fast search with SIMD optimization and prefetching
@@ -513,10 +513,10 @@ pub const OptimizedHNSWIndex = struct {
 
         // Batch similarity calculation buffer
         const batch_size = 32;
-        var similarity_batch = try self.allocator.alloc(f32, batch_size);
+        const similarity_batch = try self.allocator.alloc(f32, batch_size);
         defer self.allocator.free(similarity_batch);
 
-        var neighbor_batch = try self.allocator.alloc(VectorSIMD, batch_size);
+        const neighbor_batch = try self.allocator.alloc(VectorSIMD, batch_size);
         defer {
             for (neighbor_batch) |*vec| {
                 vec.deinit(self.allocator);
@@ -582,7 +582,7 @@ pub const OptimizedHNSWIndex = struct {
 
         // Load neighbor vectors and mark as visited
         var valid_count: usize = 0;
-        for (neighbor_ids, 0..) |neighbor_id, i| {
+        for (neighbor_ids) |neighbor_id| {
             if (self.layers.items[layer].get(neighbor_id)) |neighbor_node| {
                 try visited.put(neighbor_id, {});
                 neighbor_node.recordAccess();
@@ -622,7 +622,7 @@ pub const OptimizedHNSWIndex = struct {
 
     /// Optimized connection building using search-based approach
     fn buildConnectionsOptimized(self: *OptimizedHNSWIndex) !void {
-        print("🔧 Building optimized connections...\n", .{});
+        std.debug.print("🔧 Building optimized connections...\n", .{});
 
         var timer = try std.time.Timer.start();
 
@@ -650,7 +650,7 @@ pub const OptimizedHNSWIndex = struct {
         }
 
         const build_time_ms = @as(f64, @floatFromInt(timer.read())) / 1_000_000.0;
-        print("✅ Connection building completed in {:.2}ms\n", .{build_time_ms});
+        std.debug.print("✅ Connection building completed in {d:.2}ms\n", .{build_time_ms});
     }
 
     fn connectNodeOptimized(self: *OptimizedHNSWIndex, node_id: NodeID, level: u32) !void {
@@ -827,7 +827,7 @@ test "SIMD vector operations" {
     const similarity = vec1.cosineSimilarity(&vec2);
     try testing.expect(similarity >= 0.0 and similarity <= 1.0);
 
-    print("✅ SIMD vector operations validated (similarity: {:.3})\n", .{similarity});
+    std.debug.print("✅ SIMD vector operations validated (similarity: {d:.3})\n", .{similarity});
 }
 
 test "Optimized HNSW performance" {
@@ -882,12 +882,12 @@ test "Optimized HNSW performance" {
 
     const stats = index.getOptimizedStats();
 
-    print("✅ Optimized HNSW Performance:\n", .{});
-    print("   Insertion: {:.2}ms for {} vectors ({:.0} vectors/sec)\n", .{ insertion_time_ms, num_vectors, @as(f64, @floatFromInt(num_vectors)) / (insertion_time_ms / 1000.0) });
-    print("   Search: {:.3}ms (target: <1ms)\n", .{search_time_ms});
-    print("   Results found: {}\n", .{results.len});
-    print("   SIMD enabled: {}\n", .{stats.simd_enabled});
-    print("   Memory usage: {:.1}MB\n", .{stats.memory_efficiency_mb});
+    std.debug.print("✅ Optimized HNSW Performance:\n", .{});
+    std.debug.print("   Insertion: {d:.2}ms for {} vectors ({d:.0} vectors/sec)\n", .{ insertion_time_ms, num_vectors, @as(f64, @floatFromInt(num_vectors)) / (insertion_time_ms / 1000.0) });
+    std.debug.print("   Search: {d:.3}ms (target: <1ms)\n", .{search_time_ms});
+    std.debug.print("   Results found: {}\n", .{results.len});
+    std.debug.print("   SIMD enabled: {}\n", .{stats.simd_enabled});
+    std.debug.print("   Memory usage: {d:.1}MB\n", .{stats.memory_efficiency_mb});
 
     try testing.expect(results.len > 0);
     try testing.expect(search_time_ms < 10.0); // Should be much faster with optimizations

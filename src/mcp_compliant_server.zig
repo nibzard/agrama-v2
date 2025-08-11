@@ -23,11 +23,16 @@ pub const MCPRequest = struct {
     id: ?std.json.Value = null,
     method: []const u8,
     params: ?std.json.Value = null,
+    // Track whether we own the method string
+    owns_method: bool = false,
 
     pub fn deinit(self: *MCPRequest, allocator: Allocator) void {
-        allocator.free(self.method);
-        // Note: id and params are owned by the parsed JSON,
-        // so we don't manually deinit them
+        // Only free method if we own it
+        if (self.owns_method) {
+            allocator.free(self.method);
+        }
+        // Note: id and params are owned by the parsed JSON arena,
+        // so they are cleaned up when the JSON is deinit'd
     }
 };
 
@@ -362,16 +367,35 @@ pub const MCPCompliantServer = struct {
         }
     }
 
-    /// Process incoming JSON-RPC message
+    /// Process incoming JSON-RPC message with comprehensive error recovery
     fn processMessage(self: *MCPCompliantServer, message: []const u8) !void {
-        var parsed = std.json.parseFromSlice(std.json.Value, self.allocator, message, .{}) catch {
-            try self.sendError(null, -32700, "Parse error", null);
+        // Validate message size to prevent DoS attacks
+        const MAX_MESSAGE_SIZE = 10 * 1024 * 1024; // 10MB limit
+        if (message.len > MAX_MESSAGE_SIZE) {
+            try self.sendError(null, -32700, "Message too large", null);
+            return;
+        }
+
+        var parsed = std.json.parseFromSlice(std.json.Value, self.allocator, message, .{}) catch |err| {
+            const error_msg = switch (err) {
+                error.InvalidCharacter => "Invalid JSON character",
+                error.InvalidNumber => "Invalid JSON number",
+                error.UnexpectedEndOfInput => "Unexpected end of JSON input",
+                error.ValueTooLong => "JSON value too long",
+                else => "JSON parse error",
+            };
+            try self.sendError(null, -32700, error_msg, null);
             return;
         };
         defer parsed.deinit();
 
-        const request = self.parseRequest(parsed.value) catch {
-            try self.sendError(null, -32600, "Invalid Request", null);
+        const request = self.parseRequest(parsed.value) catch |err| {
+            const error_msg = switch (err) {
+                error.MissingJsonRpc => "Missing 'jsonrpc' field",
+                error.InvalidJsonRpc => "Invalid JSON-RPC version",
+                error.MissingMethod => "Missing 'method' field",
+            };
+            try self.sendError(null, -32600, error_msg, null);
             return;
         };
 
@@ -379,7 +403,7 @@ pub const MCPCompliantServer = struct {
     }
 
     /// Parse JSON-RPC request
-    fn parseRequest(self: *MCPCompliantServer, value: std.json.Value) !MCPRequest {
+    fn parseRequest(_: *MCPCompliantServer, value: std.json.Value) !MCPRequest {
         const obj = value.object;
 
         const jsonrpc = obj.get("jsonrpc") orelse return error.MissingJsonRpc;
@@ -387,11 +411,14 @@ pub const MCPCompliantServer = struct {
 
         const method = obj.get("method") orelse return error.MissingMethod;
 
+        // Use string directly from JSON without duplication to avoid memory leaks
+        // The JSON arena will clean this up when the parsed JSON is deinit'd
         return MCPRequest{
             .jsonrpc = "2.0",
             .id = obj.get("id"),
-            .method = try self.allocator.dupe(u8, method.string),
+            .method = method.string,
             .params = obj.get("params"),
+            .owns_method = false, // We don't own the method string
         };
     }
 
@@ -548,8 +575,9 @@ pub const MCPCompliantServer = struct {
         self.tool_call_count += 1;
         self.total_response_time_ms += elapsed_ms;
 
-        // Log slow operations (>100ms)
-        if (elapsed_ms > 100) {
+        // Only log slow operations in debug mode to avoid interfering with MCP protocol
+        const debug_mode = std.posix.getenv("AGRAMA_DEBUG") != null;
+        if (debug_mode and elapsed_ms > 100) {
             const stderr = std.io.getStdErr().writer();
             stderr.print("[MCP Server] Slow tool call: {s} took {d}ms\n", .{ tool_name, elapsed_ms }) catch {};
         }
@@ -583,22 +611,80 @@ pub const MCPCompliantServer = struct {
         }
     }
 
-    /// Enhanced read_code tool with semantic context, history, and dependencies
+    /// Enhanced read_code tool with security validation and comprehensive error handling
     fn executeReadCode(self: *MCPCompliantServer, arguments: std.json.Value) !MCPToolResponse {
         const args_obj = arguments.object;
-        const path_value = args_obj.get("path") orelse return error.MissingPath;
+        const path_value = args_obj.get("path") orelse {
+            return self.createErrorResponse("Missing required 'path' parameter");
+        };
+
+        // Validate path parameter type
+        if (path_value != .string) {
+            return self.createErrorResponse("Path parameter must be a string");
+        }
+
         const path = path_value.string;
 
-        // Options for enhanced context
-        const include_history = if (args_obj.get("include_history")) |val| val.bool else false;
-        const include_dependencies = if (args_obj.get("include_dependencies")) |val| val.bool else false;
-        const include_similar = if (args_obj.get("include_similar")) |val| val.bool else false;
-        const max_similar = if (args_obj.get("max_similar")) |val| @as(u32, @intCast(val.integer)) else 5;
+        // Validate path length and content
+        if (path.len == 0) {
+            return self.createErrorResponse("Path cannot be empty");
+        }
 
-        // Get base file content
+        if (path.len > 4096) {
+            return self.createErrorResponse("Path too long (max 4096 characters)");
+        }
+
+        // Use database's built-in path validation for security
+        Database.validatePath(path) catch |err| {
+            const error_msg = switch (err) {
+                error.AbsolutePathNotAllowed => "Absolute paths not allowed",
+                error.PathTraversalAttempt => "Path traversal attempt detected",
+                error.InvalidPathSeparator => "Invalid path separator",
+                error.EncodedTraversalAttempt => "Encoded path traversal attempt",
+                error.NullByteInPath => "Null byte in path",
+                error.PathNotInAllowedDirectory => "Path not in allowed directory",
+                else => "Invalid path",
+            };
+            return self.createErrorResponse(error_msg);
+        };
+
+        // Validate optional parameters with type checking
+        const include_history = if (args_obj.get("include_history")) |val| blk: {
+            if (val != .bool) {
+                return self.createErrorResponse("include_history must be a boolean");
+            }
+            break :blk val.bool;
+        } else false;
+
+        const include_dependencies = if (args_obj.get("include_dependencies")) |val| blk: {
+            if (val != .bool) {
+                return self.createErrorResponse("include_dependencies must be a boolean");
+            }
+            break :blk val.bool;
+        } else false;
+
+        const include_similar = if (args_obj.get("include_similar")) |val| blk: {
+            if (val != .bool) {
+                return self.createErrorResponse("include_similar must be a boolean");
+            }
+            break :blk val.bool;
+        } else false;
+
+        const max_similar = if (args_obj.get("max_similar")) |val| blk: {
+            if (val != .integer) {
+                return self.createErrorResponse("max_similar must be an integer");
+            }
+            if (val.integer < 1 or val.integer > 100) {
+                return self.createErrorResponse("max_similar must be between 1 and 100");
+            }
+            break :blk @as(u32, @intCast(val.integer));
+        } else 5;
+
+        // Get base file content with proper error handling
         const content = self.database.getFile(path) catch |err| switch (err) {
             error.FileNotFound => "File not found",
-            else => return err,
+            error.PathNotInAllowedDirectory => return self.createErrorResponse("Access denied: path not allowed"),
+            else => return self.createErrorResponse("Failed to read file"),
         };
 
         var response_parts = ArrayList([]const u8).init(self.allocator);
@@ -661,8 +747,35 @@ pub const MCPCompliantServer = struct {
 
         // Add dependency information if requested and FRE is available
         if (include_dependencies and self.fre_engine != null) {
-            // TODO: Implement dependency analysis using FRE
-            try response_parts.append(try self.allocator.dupe(u8, "\n=== Dependencies ===\n[Dependency analysis would appear here]\n"));
+            const fre_engine = self.fre_engine.?;
+
+            // Convert file path to node ID for graph operations
+            const root_node_id = std.hash_map.hashString(path);
+
+            // Perform dependency analysis using FRE
+            if (fre_engine.analyzeDependencies(root_node_id, @import("fre.zig").TraversalDirection.bidirectional, 2)) |deps| {
+                defer deps.deinit(self.allocator);
+
+                var deps_text = ArrayList(u8).init(self.allocator);
+                defer deps_text.deinit();
+
+                try deps_text.appendSlice("\n=== Dependencies ===\n");
+
+                if (deps.edges.len > 0) {
+                    try deps_text.appendSlice("Dependency relationships:\n");
+                    for (deps.edges) |edge| {
+                        const line = try std.fmt.allocPrint(self.allocator, "- Node {d} -> Node {d} ({s})\n", .{ edge.source, edge.target, edge.relationship.toString() });
+                        defer self.allocator.free(line);
+                        try deps_text.appendSlice(line);
+                    }
+                } else {
+                    try deps_text.appendSlice("No dependency relationships found.\n");
+                }
+
+                try response_parts.append(try deps_text.toOwnedSlice());
+            } else |_| {
+                try response_parts.append(try self.allocator.dupe(u8, "\n=== Dependencies ===\nDependency analysis failed.\n"));
+            }
         }
 
         // Combine all parts
@@ -708,18 +821,87 @@ pub const MCPCompliantServer = struct {
         return error.NoEmbeddingForFile;
     }
 
-    /// Enhanced write_code tool with CRDT collaboration, provenance tracking, and embedding generation
+    /// Enhanced write_code tool with comprehensive security validation
     fn executeWriteCode(self: *MCPCompliantServer, arguments: std.json.Value) !MCPToolResponse {
         const args_obj = arguments.object;
-        const path_value = args_obj.get("path") orelse return error.MissingPath;
+
+        // Validate required path parameter
+        const path_value = args_obj.get("path") orelse {
+            return self.createErrorResponse("Missing required 'path' parameter");
+        };
+
+        if (path_value != .string) {
+            return self.createErrorResponse("Path parameter must be a string");
+        }
+
         const path = path_value.string;
-        const content_value = args_obj.get("content") orelse return error.MissingContent;
+
+        // Validate path security
+        if (path.len == 0) {
+            return self.createErrorResponse("Path cannot be empty");
+        }
+
+        if (path.len > 4096) {
+            return self.createErrorResponse("Path too long (max 4096 characters)");
+        }
+
+        Database.validatePath(path) catch |err| {
+            const error_msg = switch (err) {
+                error.AbsolutePathNotAllowed => "Absolute paths not allowed",
+                error.PathTraversalAttempt => "Path traversal attempt detected",
+                error.InvalidPathSeparator => "Invalid path separator",
+                error.EncodedTraversalAttempt => "Encoded path traversal attempt",
+                error.NullByteInPath => "Null byte in path",
+                error.PathNotInAllowedDirectory => "Path not in allowed directory",
+                else => "Invalid path",
+            };
+            return self.createErrorResponse(error_msg);
+        };
+
+        // Validate required content parameter
+        const content_value = args_obj.get("content") orelse {
+            return self.createErrorResponse("Missing required 'content' parameter");
+        };
+
+        if (content_value != .string) {
+            return self.createErrorResponse("Content parameter must be a string");
+        }
+
         const content = content_value.string;
 
-        // Optional parameters
-        const agent_id = if (args_obj.get("agent_id")) |val| val.string else "unknown-agent";
-        const agent_name = if (args_obj.get("agent_name")) |val| val.string else "Unknown Agent";
-        const generate_embedding = if (args_obj.get("generate_embedding")) |val| val.bool else true;
+        // Validate content size to prevent DoS attacks
+        const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB limit
+        if (content.len > MAX_FILE_SIZE) {
+            return self.createErrorResponse("File content too large (max 50MB)");
+        }
+
+        // Validate optional parameters with proper type checking
+        const agent_id = if (args_obj.get("agent_id")) |val| blk: {
+            if (val != .string) {
+                return self.createErrorResponse("agent_id must be a string");
+            }
+            if (val.string.len > 256) {
+                return self.createErrorResponse("agent_id too long (max 256 characters)");
+            }
+            break :blk val.string;
+        } else "unknown-agent";
+
+        const agent_name = if (args_obj.get("agent_name")) |val| blk: {
+            if (val != .string) {
+                return self.createErrorResponse("agent_name must be a string");
+            }
+            if (val.string.len > 256) {
+                return self.createErrorResponse("agent_name too long (max 256 characters)");
+            }
+            break :blk val.string;
+        } else "Unknown Agent";
+
+        const generate_embedding = if (args_obj.get("generate_embedding")) |val| blk: {
+            if (val != .bool) {
+                return self.createErrorResponse("generate_embedding must be a boolean");
+            }
+            break :blk val.bool;
+        } else true;
 
         // Save to basic database
         try self.database.saveFile(path, content);
@@ -739,41 +921,80 @@ pub const MCPCompliantServer = struct {
 
         // Handle CRDT document if collaborative editing is enabled
         if (self.active_documents.get(path)) |crdt_doc| {
-            // TODO: Convert write operation to CRDT operation
-            // For now, just update cursor position
-            const position = @import("crdt.zig").Position{
-                .line = 1,
-                .column = 1,
-                .offset = 0,
-            };
-            try crdt_doc.updateAgentCursor(agent_id, agent_name, position);
+            // Apply content as CRDT operation
+            // Create CRDT operation for text replacement
+            const replace_op = @import("crdt.zig").CRDTOperation.init(
+                self.allocator,
+                @import("crdt.zig").generateOperationId(),
+                agent_id,
+                path,
+                .modify,
+                @import("crdt.zig").Position{ .line = 1, .column = 1, .offset = 0 },
+                content,
+                crdt_doc.vector_clock
+            ) catch return self.createErrorResponse("CRDT operation creation failed");
+            
+            if (crdt_doc.applyOperation(replace_op)) |_| {
+                // Update agent cursor position to end of document
+                const position = @import("crdt.zig").Position{
+                    .line = @intCast(std.mem.count(u8, content, "\n") + 1),
+                    .column = @intCast(content.len - (std.mem.lastIndexOf(u8, content, "\n") orelse 0)),
+                    .offset = @intCast(content.len),
+                };
+                try crdt_doc.updateAgentCursor(agent_id, agent_name, position);
+                try response_parts.append(try self.allocator.dupe(u8, "Applied CRDT operation to collaborative document\n"));
+            } else |err| {
+                // Fallback to simple cursor update if CRDT operation fails
+                const position = @import("crdt.zig").Position{
+                    .line = 1,
+                    .column = 1,
+                    .offset = 0,
+                };
+                try crdt_doc.updateAgentCursor(agent_id, agent_name, position);
 
-            try response_parts.append(try self.allocator.dupe(u8, "Updated collaborative document\n"));
-        } else if (self.active_documents.count() > 0) {
-            // Create new CRDT document for collaboration
-            const crdt_doc = try self.allocator.create(CRDTDocument);
-            crdt_doc.* = try CRDTDocument.init(self.allocator, path, content);
+                const warn_msg = try std.fmt.allocPrint(self.allocator, "Warning: CRDT operation failed ({}), updated cursor only\n", .{err});
+                try response_parts.append(warn_msg);
+            }
+        } else if (self.active_documents.count() > 0 or self.agent_sessions.count() > 1) {
+            // Create new CRDT document for collaboration when multiple agents are active
+            if (CRDTDocument.init(self.allocator, path, content)) |crdt_doc_value| {
+                const crdt_doc = try self.allocator.create(CRDTDocument);
+                crdt_doc.* = crdt_doc_value;
 
-            const owned_path = try self.allocator.dupe(u8, path);
-            try self.active_documents.put(owned_path, crdt_doc);
+                const owned_path = try self.allocator.dupe(u8, path);
+                try self.active_documents.put(owned_path, crdt_doc);
 
-            try response_parts.append(try self.allocator.dupe(u8, "Enabled collaborative editing\n"));
+                // Add initial cursor for this agent
+                const position = @import("crdt.zig").Position{
+                    .line = @intCast(std.mem.count(u8, content, "\n") + 1),
+                    .column = @intCast(content.len - (std.mem.lastIndexOf(u8, content, "\n") orelse 0)),
+                    .offset = @intCast(content.len),
+                };
+                try crdt_doc.updateAgentCursor(agent_id, agent_name, position);
+
+                try response_parts.append(try self.allocator.dupe(u8, "Enabled collaborative editing with CRDT\n"));
+            } else |err| {
+                const warn_msg = try std.fmt.allocPrint(self.allocator, "Warning: Failed to enable CRDT collaboration ({})\n", .{err});
+                try response_parts.append(warn_msg);
+            }
         }
 
         // Generate and store semantic embedding if requested and semantic DB available
         if (generate_embedding and self.semantic_db != null) {
-            // TODO: Implement actual embedding generation
-            // For now, create a mock embedding based on content hash
-            if (self.generateMockEmbedding(content)) |embedding_result| {
+            if (self.generateContentEmbedding(content)) |embedding_result| {
                 var embedding = embedding_result;
                 defer embedding.deinit(self.allocator);
 
                 if (self.semantic_db) |semantic_db| {
-                    try semantic_db.saveFileWithEmbedding(path, content, embedding);
-                    try response_parts.append(try self.allocator.dupe(u8, "Generated semantic embedding\n"));
+                    semantic_db.saveFileWithEmbedding(path, content, embedding) catch |err| {
+                        const warn_msg = try std.fmt.allocPrint(self.allocator, "Warning: Failed to save embedding ({})\n", .{err});
+                        try response_parts.append(warn_msg);
+                    };
+                    try response_parts.append(try self.allocator.dupe(u8, "Generated and stored semantic embedding\n"));
                 }
-            } else |_| {
-                try response_parts.append(try self.allocator.dupe(u8, "Warning: Failed to generate embedding\n"));
+            } else |err| {
+                const warn_msg = try std.fmt.allocPrint(self.allocator, "Warning: Failed to generate embedding ({})\n", .{err});
+                try response_parts.append(warn_msg);
             }
         }
 
@@ -823,20 +1044,86 @@ pub const MCPCompliantServer = struct {
         }
     }
 
-    /// Generate mock embedding for testing (will be replaced with real embeddings)
-    fn generateMockEmbedding(self: *MCPCompliantServer, content: []const u8) !hnsw.MatryoshkaEmbedding {
-        // Simple hash-based mock embedding
-        const hash = std.hash_map.hashString(content);
+    /// Generate content-based embedding using statistical analysis
+    /// This is a placeholder implementation that uses text statistics
+    /// In production, this would use a proper embedding model
+    fn generateContentEmbedding(self: *MCPCompliantServer, content: []const u8) !hnsw.MatryoshkaEmbedding {
         const dims = [_]u32{ 64, 256, 768 };
-
         const embedding = try hnsw.MatryoshkaEmbedding.init(self.allocator, 768, &dims);
 
-        // Fill with deterministic pseudo-random values based on hash
-        var prng = std.Random.DefaultPrng.init(hash);
+        // Initialize with zeros
+        @memset(embedding.full_vector.data, 0.0);
+
+        if (content.len == 0) {
+            return embedding;
+        }
+
+        // Extract statistical features from content
+        var char_counts: [256]u32 = [_]u32{0} ** 256;
+        var line_count: u32 = 1;
+        var word_count: u32 = 0;
+        var in_word = false;
+
+        for (content) |char| {
+            char_counts[char] += 1;
+
+            if (char == '\n') {
+                line_count += 1;
+            }
+
+            const is_alpha = (char >= 'a' and char <= 'z') or (char >= 'A' and char <= 'Z');
+            if (is_alpha and !in_word) {
+                word_count += 1;
+                in_word = true;
+            } else if (!is_alpha) {
+                in_word = false;
+            }
+        }
+
+        // Generate embedding based on content statistics
+        var feature_index: usize = 0;
+
+        // Basic text statistics (first 16 dimensions)
+        if (feature_index < embedding.full_vector.data.len) {
+            embedding.full_vector.data[feature_index] = @as(f32, @floatFromInt(content.len)) / 10000.0;
+            feature_index += 1;
+        }
+        if (feature_index < embedding.full_vector.data.len) {
+            embedding.full_vector.data[feature_index] = @as(f32, @floatFromInt(line_count)) / 1000.0;
+            feature_index += 1;
+        }
+        if (feature_index < embedding.full_vector.data.len) {
+            embedding.full_vector.data[feature_index] = @as(f32, @floatFromInt(word_count)) / @as(f32, @floatFromInt(content.len + 1));
+            feature_index += 1;
+        }
+
+        // Character distribution features (next 256 dimensions, normalized)
+        const content_len_f32 = @as(f32, @floatFromInt(content.len));
+        for (char_counts) |count| {
+            if (feature_index >= embedding.full_vector.data.len) break;
+            embedding.full_vector.data[feature_index] = @as(f32, @floatFromInt(count)) / content_len_f32;
+            feature_index += 1;
+        }
+
+        // Content-based hash features for remaining dimensions
+        const content_hash = std.hash_map.hashString(content);
+        var prng = std.Random.DefaultPrng.init(content_hash);
         const random = prng.random();
 
-        for (embedding.full_vector.data) |*value| {
-            value.* = random.floatNorm(f32);
+        while (feature_index < embedding.full_vector.data.len) {
+            // Mix statistical features with content-derived randomness
+            const base_value = random.floatNorm(f32) * 0.1;
+            const stat_influence = if (feature_index % 4 == 0)
+                (@as(f32, @floatFromInt(word_count)) / 1000.0 - 0.5)
+            else if (feature_index % 4 == 1)
+                (@as(f32, @floatFromInt(line_count)) / 100.0 - 0.5)
+            else if (feature_index % 4 == 2)
+                (@as(f32, @floatFromInt(char_counts[' '])) / content_len_f32 - 0.1)
+            else
+                (@as(f32, @floatFromInt(char_counts['\n'])) / content_len_f32 - 0.05);
+
+            embedding.full_vector.data[feature_index] = base_value + stat_influence * 0.5;
+            feature_index += 1;
         }
 
         return embedding;
@@ -999,19 +1286,56 @@ pub const MCPCompliantServer = struct {
 
     // === NEW ADVANCED TOOLS ===
 
-    /// Semantic search tool using HNSW indices
+    /// Semantic search tool using HNSW indices with comprehensive validation
     fn executeSemanticSearch(self: *MCPCompliantServer, arguments: std.json.Value) !MCPToolResponse {
         const semantic_db = self.semantic_db orelse {
             return self.createErrorResponse("Semantic database not available. Initialize with initWithAdvancedFeatures()");
         };
 
         const args_obj = arguments.object;
-        const query_text = (args_obj.get("query") orelse return error.MissingQuery).string;
-        const max_results = if (args_obj.get("max_results")) |val| @as(u32, @intCast(val.integer)) else 10;
-        const similarity_threshold = if (args_obj.get("similarity_threshold")) |val| @as(f32, @floatCast(val.float)) else 0.7;
 
-        // Generate embedding for query (mock implementation)
-        var query_embedding = try self.generateMockEmbedding(query_text);
+        // Validate required query parameter
+        const query_value = args_obj.get("query") orelse {
+            return self.createErrorResponse("Missing required 'query' parameter");
+        };
+
+        if (query_value != .string) {
+            return self.createErrorResponse("Query parameter must be a string");
+        }
+
+        const query_text = query_value.string;
+
+        if (query_text.len == 0) {
+            return self.createErrorResponse("Query cannot be empty");
+        }
+
+        if (query_text.len > 10000) {
+            return self.createErrorResponse("Query too long (max 10000 characters)");
+        }
+
+        // Validate optional parameters
+        const max_results = if (args_obj.get("max_results")) |val| blk: {
+            if (val != .integer) {
+                return self.createErrorResponse("max_results must be an integer");
+            }
+            if (val.integer < 1 or val.integer > 1000) {
+                return self.createErrorResponse("max_results must be between 1 and 1000");
+            }
+            break :blk @as(u32, @intCast(val.integer));
+        } else 10;
+
+        const similarity_threshold = if (args_obj.get("similarity_threshold")) |val| blk: {
+            if (val != .float) {
+                return self.createErrorResponse("similarity_threshold must be a number");
+            }
+            if (val.float < 0.0 or val.float > 1.0) {
+                return self.createErrorResponse("similarity_threshold must be between 0.0 and 1.0");
+            }
+            break :blk @as(f32, @floatCast(val.float));
+        } else 0.7;
+
+        // Generate embedding for query using content-based embedding
+        var query_embedding = try self.generateContentEmbedding(query_text);
         defer query_embedding.deinit(self.allocator);
 
         // Perform semantic search
@@ -1071,8 +1395,8 @@ pub const MCPCompliantServer = struct {
         else
             @import("fre.zig").TraversalDirection.bidirectional;
 
-        // TODO: Convert file path to node ID (requires path->node mapping)
-        // For now, use a simple hash-based approach
+        // Convert file path to node ID using consistent hashing
+        // This ensures the same path always maps to the same node ID
         const root_node_id = std.hash_map.hashString(root_path);
 
         const deps = fre_engine.analyzeDependencies(root_node_id, direction, max_depth) catch |err| {
@@ -1097,8 +1421,12 @@ pub const MCPCompliantServer = struct {
         if (deps.nodes.len > 1) {
             try result_parts.append(try self.allocator.dupe(u8, "Dependencies:\n"));
             for (deps.edges) |edge| {
-                // TODO: Convert node IDs back to paths for display
-                const line = try std.fmt.allocPrint(self.allocator, "- {d} -> {d} ({s})\n", .{ edge.source, edge.target, edge.relationship.toString() });
+                // Display node IDs with their hash values - in production this would
+                // maintain a bidirectional mapping between paths and node IDs
+                const source_indicator = if (edge.source == root_node_id) root_path else "related_file";
+                const target_indicator = if (edge.target == root_node_id) root_path else "related_file";
+
+                const line = try std.fmt.allocPrint(self.allocator, "- {s}[{d}] -> {s}[{d}] ({s})\n", .{ source_indicator, edge.source, target_indicator, edge.target, edge.relationship.toString() });
                 try result_parts.append(line);
             }
         } else {
@@ -1122,7 +1450,7 @@ pub const MCPCompliantServer = struct {
         const gamma = if (args_obj.get("gamma")) |val| @as(f32, @floatCast(val.float)) else 0.2;
 
         // Generate embedding for semantic component
-        var query_embedding = try self.generateMockEmbedding(query_text);
+        var query_embedding = try self.generateContentEmbedding(query_text);
         defer query_embedding.deinit(self.allocator);
 
         // Create hybrid query
@@ -1759,7 +2087,7 @@ test "MCPCompliantServer initialization" {
     var server = try MCPCompliantServer.init(allocator, &db);
     defer server.deinit();
 
-    try testing.expect(server.tools.items.len == 3);
+    try testing.expect(server.tools.items.len == 8); // Updated count for all tools
     try testing.expectEqualSlices(u8, server.tools.items[0].name, "read_code");
     try testing.expectEqualSlices(u8, server.tools.items[1].name, "write_code");
     try testing.expectEqualSlices(u8, server.tools.items[2].name, "get_context");

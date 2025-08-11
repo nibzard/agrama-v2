@@ -379,7 +379,7 @@ pub const TripleHybridSearchEngine = struct {
         // Calculate combined scores and convert to array
         var combined_results = ArrayList(TripleHybridResult).init(self.allocator);
         defer combined_results.deinit(); // Fix memory leak
-        
+
         var document_iterator = all_documents.iterator();
         while (document_iterator.next()) |entry| {
             var result = entry.value_ptr.*;
@@ -478,9 +478,13 @@ test "TripleHybridSearchEngine basic operations" {
     var engine = TripleHybridSearchEngine.init(allocator);
     defer engine.deinit();
 
-    // Add test documents
+    // Add test documents - need more documents for meaningful BM25 IDF scores
     try engine.addDocument(1, "test.js", "function calculateDistance() { return 42; }", null);
     try engine.addDocument(2, "utils.js", "const validateEmail = (email) => true;", null);
+    try engine.addDocument(3, "math.js", "function square(x) { return x * x; }", null);
+    try engine.addDocument(4, "string.js", "function trimString(s) { return s.trim(); }", null);
+    try engine.addDocument(5, "array.js", "const sortArray = (arr) => arr.sort();", null);
+    try engine.addDocument(6, "object.js", "const deepClone = obj => JSON.parse(JSON.stringify(obj));", null);
 
     // Create test query
     const query = HybridQuery{

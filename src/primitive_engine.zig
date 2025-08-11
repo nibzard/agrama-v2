@@ -84,18 +84,14 @@ pub const PrimitiveEngine = struct {
 
     /// Clean up engine resources
     pub fn deinit(self: *PrimitiveEngine) void {
-        // Clean up registered primitive names
+        // Clean up registered primitive names (only once since both maps share the same keys)
         var primitive_iterator = self.primitives_map.iterator();
         while (primitive_iterator.next()) |entry| {
             self.allocator.free(entry.key_ptr.*);
         }
         self.primitives_map.deinit();
 
-        // Clean up operation counts
-        var count_iterator = self.operation_counts.iterator();
-        while (count_iterator.next()) |entry| {
-            self.allocator.free(entry.key_ptr.*);
-        }
+        // Clean up operation counts (don't free keys - they were already freed above)
         self.operation_counts.deinit();
 
         self.allocator.free(self.current_session_id);
@@ -112,7 +108,11 @@ pub const PrimitiveEngine = struct {
 
     /// Register a new primitive
     pub fn registerPrimitive(self: *PrimitiveEngine, name: []const u8, execute_fn: *const fn (context: *PrimitiveContext, params: std.json.Value) anyerror!std.json.Value, validate_fn: *const fn (params: std.json.Value) anyerror!void, metadata: PrimitiveMetadata) !void {
+        // Create one owned string for both maps - they will share the same key
         const owned_name = try self.allocator.dupe(u8, name);
+
+        // Use the same string for both maps to avoid double allocation/deallocation
+        errdefer self.allocator.free(owned_name);
 
         const primitive = Primitive{
             .name = owned_name,
@@ -123,9 +123,8 @@ pub const PrimitiveEngine = struct {
 
         try self.primitives_map.put(owned_name, primitive);
 
-        // Initialize operation count
-        const count_name = try self.allocator.dupe(u8, name);
-        try self.operation_counts.put(count_name, 0);
+        // Use the same string for operation counts - no need to duplicate again
+        try self.operation_counts.put(owned_name, 0);
     }
 
     /// Execute a primitive operation with full context and monitoring
@@ -230,7 +229,7 @@ pub const PrimitiveEngine = struct {
     fn logOperation(self: *PrimitiveEngine, operation: []const u8, params: std.json.Value, result: std.json.Value, agent_id: []const u8, execution_time_ns: u64) !void {
         // Create simplified log entry as string to avoid complex memory management
         const execution_time_ms = @as(f64, @floatFromInt(execution_time_ns)) / 1_000_000.0;
-        
+
         // Extract success status safely
         const success = if (result == .object) blk: {
             if (result.object.get("success")) |s| {

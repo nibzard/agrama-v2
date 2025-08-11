@@ -114,7 +114,55 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_lib_unit_tests.step);
     test_step.dependOn(&run_exe_unit_tests.step);
 
-    // Comprehensive test runner
+    // Comprehensive test infrastructure
+    const test_infrastructure = b.addExecutable(.{
+        .name = "test_infrastructure",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/test_infrastructure.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    test_infrastructure.root_module.addImport("agrama_lib", lib_mod);
+    b.installArtifact(test_infrastructure);
+
+    const run_test_infrastructure = b.addRunArtifact(test_infrastructure);
+    const test_infrastructure_step = b.step("test-infrastructure", "Run comprehensive test infrastructure");
+    test_infrastructure_step.dependOn(&run_test_infrastructure.step);
+
+    // Fuzz test framework
+    const fuzz_tests = b.addExecutable(.{
+        .name = "fuzz_tests",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/fuzz_test_framework.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    fuzz_tests.root_module.addImport("agrama_lib", lib_mod);
+    b.installArtifact(fuzz_tests);
+
+    const run_fuzz_tests = b.addRunArtifact(fuzz_tests);
+    const fuzz_test_step = b.step("test-fuzz", "Run fuzz tests");
+    fuzz_test_step.dependOn(&run_fuzz_tests.step);
+
+    // Concurrent stress tests
+    const concurrent_tests = b.addExecutable(.{
+        .name = "concurrent_tests",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/concurrent_stress_tests.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    concurrent_tests.root_module.addImport("agrama_lib", lib_mod);
+    b.installArtifact(concurrent_tests);
+
+    const run_concurrent_tests = b.addRunArtifact(concurrent_tests);
+    const concurrent_test_step = b.step("test-concurrent", "Run concurrent stress tests");
+    concurrent_test_step.dependOn(&run_concurrent_tests.step);
+
+    // Legacy comprehensive test runner (keeping for compatibility)
     const comprehensive_tests = b.addExecutable(.{
         .name = "comprehensive_test_runner",
         .root_module = b.createModule(.{
@@ -129,7 +177,8 @@ pub fn build(b: *std.Build) void {
 
     const run_comprehensive_tests = b.addRunArtifact(comprehensive_tests);
 
-    const test_all_step = b.step("test-all", "Run comprehensive test suite");
+    const test_all_step = b.step("test-all", "Run comprehensive test suite with new infrastructure");
+    test_all_step.dependOn(&run_test_infrastructure.step);
     test_all_step.dependOn(&run_comprehensive_tests.step);
 
     // Integration tests
@@ -208,12 +257,23 @@ pub fn build(b: *std.Build) void {
     });
     mcp_bench.root_module.addImport("agrama_lib", lib_mod);
 
+    const missing_components_bench = b.addExecutable(.{
+        .name = "missing_components_benchmark",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("benchmarks/missing_components_benchmark.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    missing_components_bench.root_module.addImport("agrama_lib", lib_mod);
+
     // Install benchmark executables
     b.installArtifact(benchmark_suite);
     b.installArtifact(hnsw_bench);
     b.installArtifact(fre_bench);
     b.installArtifact(db_bench);
     b.installArtifact(mcp_bench);
+    b.installArtifact(missing_components_bench);
 
     // Benchmark run commands
     const run_benchmark_suite = b.addRunArtifact(benchmark_suite);
@@ -280,7 +340,125 @@ pub fn build(b: *std.Build) void {
     const regression_step = b.step("bench-regression", "Check for performance regressions against baseline");
     regression_step.dependOn(&regression_cmd.step);
 
-    // Enhanced MCP Test Suites
+    // Primitive Test Suites - Comprehensive testing for primitive-based AI memory substrate
+
+    // Primitive test runner (main comprehensive test suite)
+    const primitive_test_runner = b.addExecutable(.{
+        .name = "primitive_test_runner",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/primitive_test_runner.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    primitive_test_runner.root_module.addImport("agrama_lib", lib_mod);
+    b.installArtifact(primitive_test_runner);
+
+    const run_primitive_tests = b.addRunArtifact(primitive_test_runner);
+    if (b.args) |args| {
+        run_primitive_tests.addArgs(args);
+    }
+
+    // Primitive test build steps
+    const test_primitives_step = b.step("test-primitives", "Run comprehensive primitive test suite");
+    test_primitives_step.dependOn(&run_primitive_tests.step);
+
+    // Individual primitive test categories
+    const test_primitives_unit_step = b.step("test-primitives-unit", "Run primitive unit tests only");
+    const run_primitive_unit_tests = b.addRunArtifact(primitive_test_runner);
+    run_primitive_unit_tests.addArg("--unit");
+    test_primitives_unit_step.dependOn(&run_primitive_unit_tests.step);
+
+    const test_primitives_security_step = b.step("test-primitives-security", "Run primitive security tests only");
+    const run_primitive_security_tests = b.addRunArtifact(primitive_test_runner);
+    run_primitive_security_tests.addArg("--security");
+    test_primitives_security_step.dependOn(&run_primitive_security_tests.step);
+
+    const test_primitives_integration_step = b.step("test-primitives-integration", "Run primitive integration tests only");
+    const run_primitive_integration_tests = b.addRunArtifact(primitive_test_runner);
+    run_primitive_integration_tests.addArg("--integration");
+    test_primitives_integration_step.dependOn(&run_primitive_integration_tests.step);
+
+    const test_primitives_performance_step = b.step("test-primitives-performance", "Run primitive performance tests only");
+    const run_primitive_performance_tests = b.addRunArtifact(primitive_test_runner);
+    run_primitive_performance_tests.addArg("--performance");
+    test_primitives_performance_step.dependOn(&run_primitive_performance_tests.step);
+
+    // Verbose primitive tests
+    const test_primitives_verbose_step = b.step("test-primitives-verbose", "Run primitive tests with verbose output");
+    const run_primitive_verbose_tests = b.addRunArtifact(primitive_test_runner);
+    run_primitive_verbose_tests.addArg("--verbose");
+    test_primitives_verbose_step.dependOn(&run_primitive_verbose_tests.step);
+
+    // Individual test suites as separate executables for better isolation
+
+    // Primitive unit tests
+    const primitive_unit_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/primitive_tests.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    primitive_unit_tests.root_module.addImport("agrama_lib", lib_mod);
+
+    // Primitive security tests
+    const primitive_security_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/primitive_security_tests.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    primitive_security_tests.root_module.addImport("agrama_lib", lib_mod);
+
+    // Primitive integration tests
+    const primitive_integration_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/primitive_integration_tests.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    primitive_integration_tests.root_module.addImport("agrama_lib", lib_mod);
+
+    // Primitive performance tests
+    const primitive_performance_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/primitive_performance_tests.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    primitive_performance_tests.root_module.addImport("agrama_lib", lib_mod);
+
+    // Run individual primitive test suites
+    const run_primitive_unit_tests_direct = b.addRunArtifact(primitive_unit_tests);
+    const run_primitive_security_tests_direct = b.addRunArtifact(primitive_security_tests);
+    const run_primitive_integration_tests_direct = b.addRunArtifact(primitive_integration_tests);
+    const run_primitive_performance_tests_direct = b.addRunArtifact(primitive_performance_tests);
+
+    // Direct test execution steps (for `zig test` style execution)
+    const test_primitive_unit_direct_step = b.step("test-primitive-unit-direct", "Run primitive unit tests directly");
+    test_primitive_unit_direct_step.dependOn(&run_primitive_unit_tests_direct.step);
+
+    const test_primitive_security_direct_step = b.step("test-primitive-security-direct", "Run primitive security tests directly");
+    test_primitive_security_direct_step.dependOn(&run_primitive_security_tests_direct.step);
+
+    const test_primitive_integration_direct_step = b.step("test-primitive-integration-direct", "Run primitive integration tests directly");
+    test_primitive_integration_direct_step.dependOn(&run_primitive_integration_tests_direct.step);
+
+    const test_primitive_performance_direct_step = b.step("test-primitive-performance-direct", "Run primitive performance tests directly");
+    test_primitive_performance_direct_step.dependOn(&run_primitive_performance_tests_direct.step);
+
+    // Full primitive test suite (all categories via zig test)
+    const test_all_primitives_direct_step = b.step("test-all-primitives-direct", "Run all primitive tests directly via zig test");
+    test_all_primitives_direct_step.dependOn(&run_primitive_unit_tests_direct.step);
+    test_all_primitives_direct_step.dependOn(&run_primitive_security_tests_direct.step);
+    test_all_primitives_direct_step.dependOn(&run_primitive_integration_tests_direct.step);
+    test_all_primitives_direct_step.dependOn(&run_primitive_performance_tests_direct.step);
+
+    // Enhanced MCP Test Suites (legacy - keeping for backward compatibility)
 
     // Enhanced MCP comprehensive tests
     const enhanced_mcp_tests = b.addTest(.{
@@ -306,7 +484,7 @@ pub fn build(b: *std.Build) void {
         }),
     });
     enhanced_mcp_perf_tests.root_module.addImport("agrama_lib", lib_mod);
-    // b.installArtifact(enhanced_mcp_perf_tests); // Temporarily disabled due to build issues
+    b.installArtifact(enhanced_mcp_perf_tests);
 
     const run_enhanced_mcp_perf = b.addRunArtifact(enhanced_mcp_perf_tests);
     if (b.args) |args| {
@@ -325,7 +503,7 @@ pub fn build(b: *std.Build) void {
         }),
     });
     enhanced_mcp_security_tests.root_module.addImport("agrama_lib", lib_mod);
-    // b.installArtifact(enhanced_mcp_security_tests); // Temporarily disabled due to build issues
+    b.installArtifact(enhanced_mcp_security_tests);
 
     const run_enhanced_mcp_security = b.addRunArtifact(enhanced_mcp_security_tests);
     if (b.args) |args| {

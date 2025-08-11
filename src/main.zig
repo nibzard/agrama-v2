@@ -404,7 +404,7 @@ fn primitiveCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
             .ef_construction = 200,
             .matryoshka_dims = &[_]u32{ 64, 256, 768, 1024 },
         };
-        
+
         semantic_db_instance = lib.SemanticDatabase.init(allocator, semantic_config) catch |err| {
             std.log.err("Failed to initialize semantic database: {any}", .{err});
             std.process.exit(1);
