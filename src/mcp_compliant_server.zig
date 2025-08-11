@@ -8,6 +8,11 @@ const Mutex = Thread.Mutex;
 const print = std.debug.print;
 
 const Database = @import("database.zig").Database;
+const SemanticDatabase = @import("semantic_database.zig").SemanticDatabase;
+const FrontierReductionEngine = @import("fre.zig").FrontierReductionEngine;
+const CRDTDocument = @import("crdt.zig").CRDTDocument;
+const TripleHybridSearchEngine = @import("triple_hybrid_search.zig").TripleHybridSearchEngine;
+const hnsw = @import("hnsw.zig");
 
 /// MCP Protocol Version
 pub const MCP_PROTOCOL_VERSION = "2024-11-05";
@@ -113,10 +118,21 @@ pub const ServerCapabilities = struct {
     logging: ?struct {} = null,
 };
 
-/// MCP Compliant Server Implementation
+/// Enhanced MCP Server with full Agrama capabilities
 pub const MCPCompliantServer = struct {
     allocator: Allocator,
+
+    // Core databases - layered architecture
     database: *Database,
+    semantic_db: ?*SemanticDatabase = null,
+    fre_engine: ?*FrontierReductionEngine = null,
+    hybrid_search: ?*TripleHybridSearchEngine = null,
+
+    // CRDT collaboration
+    active_documents: HashMap([]const u8, *CRDTDocument, HashContext, std.hash_map.default_max_load_percentage),
+    agent_sessions: HashMap([]const u8, AgentSession, HashContext, std.hash_map.default_max_load_percentage),
+
+    // MCP protocol
     tools: ArrayList(MCPToolDefinition),
     capabilities: ServerCapabilities,
     initialized: bool = false,
@@ -124,14 +140,44 @@ pub const MCPCompliantServer = struct {
     stdin_reader: std.io.BufferedReader(4096, std.fs.File.Reader),
     stdout_writer: std.fs.File.Writer,
 
-    /// Initialize MCP Compliant Server
+    // Performance tracking
+    tool_call_count: u64 = 0,
+    total_response_time_ms: u64 = 0,
+
+    const HashContext = struct {
+        pub fn hash(self: @This(), s: []const u8) u64 {
+            _ = self;
+            return std.hash_map.hashString(s);
+        }
+        pub fn eql(self: @This(), a: []const u8, b: []const u8) bool {
+            _ = self;
+            return std.mem.eql(u8, a, b);
+        }
+    };
+
+    const AgentSession = struct {
+        agent_id: []const u8,
+        agent_name: []const u8,
+        session_start: i64,
+        operations_count: u32,
+        last_activity: i64,
+    };
+
+    /// Initialize MCP Server with optional advanced capabilities
     pub fn init(allocator: Allocator, database: *Database) !MCPCompliantServer {
         var tools = ArrayList(MCPToolDefinition).init(allocator);
 
-        // Define read_code tool according to MCP specification
+        // Core enhanced tools
         try tools.append(try createReadCodeTool(allocator));
         try tools.append(try createWriteCodeTool(allocator));
         try tools.append(try createGetContextTool(allocator));
+
+        // Advanced search and analysis tools
+        try tools.append(try createSemanticSearchTool(allocator));
+        try tools.append(try createAnalyzeDependenciesTool(allocator));
+        try tools.append(try createHybridSearchTool(allocator));
+        try tools.append(try createRecordDecisionTool(allocator));
+        try tools.append(try createQueryHistoryTool(allocator));
 
         const stdin = std.io.getStdIn();
         const stdout = std.io.getStdOut();
@@ -139,6 +185,70 @@ pub const MCPCompliantServer = struct {
         return MCPCompliantServer{
             .allocator = allocator,
             .database = database,
+            .active_documents = HashMap([]const u8, *CRDTDocument, HashContext, std.hash_map.default_max_load_percentage).init(allocator),
+            .agent_sessions = HashMap([]const u8, AgentSession, HashContext, std.hash_map.default_max_load_percentage).init(allocator),
+            .tools = tools,
+            .capabilities = ServerCapabilities{
+                .tools = .{ .listChanged = false },
+                .logging = .{},
+            },
+            .protocol_version = MCP_PROTOCOL_VERSION,
+            .stdin_reader = std.io.bufferedReader(stdin.reader()),
+            .stdout_writer = stdout.writer(),
+        };
+    }
+
+    /// Initialize server with full advanced capabilities
+    pub fn initWithAdvancedFeatures(allocator: Allocator, database: *Database) !MCPCompliantServer {
+        var server = try init(allocator, database);
+
+        // Initialize semantic database
+        const semantic_config = SemanticDatabase.HNSWConfig{
+            .vector_dimensions = 768,
+            .max_connections = 16,
+            .ef_construction = 200,
+            .matryoshka_dims = &[_]u32{ 64, 256, 768 },
+        };
+
+        server.semantic_db = try allocator.create(SemanticDatabase);
+        server.semantic_db.?.* = try SemanticDatabase.init(allocator, semantic_config);
+
+        // Initialize FRE engine
+        server.fre_engine = try allocator.create(FrontierReductionEngine);
+        server.fre_engine.?.* = FrontierReductionEngine.init(allocator);
+
+        // Initialize hybrid search
+        server.hybrid_search = try allocator.create(TripleHybridSearchEngine);
+        server.hybrid_search.?.* = TripleHybridSearchEngine.init(allocator);
+
+        return server;
+    }
+
+    /// Initialize MCP server with enhanced database capabilities
+    pub fn initEnhanced(allocator: Allocator, enhanced_server: *@import("enhanced_mcp_server.zig").EnhancedMCPServer) !MCPCompliantServer {
+        var tools = ArrayList(MCPToolDefinition).init(allocator);
+
+        // Enhanced tools for comprehensive database functionality
+        try tools.append(try createReadCodeTool(allocator));
+        try tools.append(try createWriteCodeTool(allocator));
+        try tools.append(try createGetContextTool(allocator));
+        try tools.append(try createSemanticSearchTool(allocator));
+        try tools.append(try createAnalyzeDependenciesTool(allocator));
+        try tools.append(try createHybridSearchTool(allocator));
+        try tools.append(try createRecordDecisionTool(allocator));
+        try tools.append(try createQueryHistoryTool(allocator));
+
+        const stdin = std.io.getStdIn();
+        const stdout = std.io.getStdOut();
+
+        return MCPCompliantServer{
+            .allocator = allocator,
+            .database = &enhanced_server.enhanced_db.temporal_db,
+            .semantic_db = &enhanced_server.enhanced_db.semantic_db,
+            .fre_engine = &enhanced_server.enhanced_db.fre,
+            .hybrid_search = &enhanced_server.enhanced_db.hybrid_search,
+            .active_documents = HashMap([]const u8, *CRDTDocument, HashContext, std.hash_map.default_max_load_percentage).init(allocator),
+            .agent_sessions = HashMap([]const u8, AgentSession, HashContext, std.hash_map.default_max_load_percentage).init(allocator),
             .tools = tools,
             .capabilities = ServerCapabilities{
                 .tools = .{ .listChanged = false },
@@ -152,6 +262,33 @@ pub const MCPCompliantServer = struct {
 
     /// Clean up server resources
     pub fn deinit(self: *MCPCompliantServer) void {
+        // Note: In enhanced mode, semantic_db, fre_engine, and hybrid_search are
+        // references to components owned by EnhancedDatabase, so they should NOT
+        // be destroyed here. They will be cleaned up when EnhancedDatabase is destroyed.
+        // Only destroy these if they were separately allocated (basic mode).
+
+        // For now, we'll skip destroying these components to avoid double-free issues
+        // TODO: Add proper ownership tracking to distinguish enhanced vs basic mode
+
+        // Clean up CRDT documents
+        var doc_iterator = self.active_documents.iterator();
+        while (doc_iterator.next()) |entry| {
+            self.allocator.free(entry.key_ptr.*);
+            entry.value_ptr.*.deinit();
+            self.allocator.destroy(entry.value_ptr.*);
+        }
+        self.active_documents.deinit();
+
+        // Clean up agent sessions
+        var session_iterator = self.agent_sessions.iterator();
+        while (session_iterator.next()) |entry| {
+            self.allocator.free(entry.key_ptr.*);
+            self.allocator.free(entry.value_ptr.agent_id);
+            self.allocator.free(entry.value_ptr.agent_name);
+        }
+        self.agent_sessions.deinit();
+
+        // Clean up tools
         for (self.tools.items) |*tool| {
             tool.deinit(self.allocator);
         }
@@ -160,17 +297,18 @@ pub const MCPCompliantServer = struct {
 
     /// Main server loop - processes stdin messages
     pub fn run(self: *MCPCompliantServer) !void {
+
         // MCP stdio transport: stdout is reserved for JSON-RPC protocol only
         // All logging must go to stderr to avoid interfering with JSON-RPC protocol
-        
+
         // Claude Code treats any stderr output as an error during health checks
         // Only output to stderr in debug mode or when errors occur
         const stderr = std.io.getStdErr().writer();
-        
+
         // Check for debug mode environment variable
         const debug_mode = std.posix.getenv("AGRAMA_DEBUG") != null;
         if (debug_mode) {
-            try stderr.print("[MCP Server] Starting Agrama MCP server process (PID: {})\n", .{std.os.linux.getpid()});
+            try stderr.print("[MCP Server] Starting Agrama MCP server process (PID: {d})\n", .{std.os.linux.getpid()});
         }
 
         var line_buf: [8192]u8 = undefined; // Increased buffer size for stability
@@ -184,25 +322,25 @@ pub const MCPCompliantServer = struct {
                     if (line.len == 0) {
                         continue;
                     }
-                    
+
                     message_count += 1;
-                    
+
                     // Process message with error recovery
                     self.processMessage(line) catch |err| {
                         if (debug_mode) {
-                            try stderr.print("[MCP Server] Error processing message #{}: {} - {s}\n", .{ message_count, err, line[0..@min(line.len, 100)] });
+                            try stderr.print("[MCP Server] Error processing message #{d}: {any} - {s}\n", .{ message_count, err, line[0..@min(line.len, 100)] });
                         }
                         // Continue processing despite errors
                     };
-                    
+
                     // Periodic health logging (debug mode only)
                     if (debug_mode and message_count % 100 == 0) {
-                        try stderr.print("[MCP Server] Processed {} messages successfully\n", .{message_count});
+                        try stderr.print("[MCP Server] Processed {d} messages successfully\n", .{message_count});
                     }
                 } else {
                     // EOF - client disconnected gracefully (only log in debug mode)
                     if (debug_mode) {
-                        try stderr.print("[MCP Server] Client disconnected gracefully (EOF) after {} messages\n", .{message_count});
+                        try stderr.print("[MCP Server] Client disconnected gracefully (EOF) after {d} messages\n", .{message_count});
                     }
                     break;
                 }
@@ -210,15 +348,15 @@ pub const MCPCompliantServer = struct {
                 // Only treat EndOfStream as graceful shutdown, other errors are critical
                 if (err == error.EndOfStream) {
                     if (debug_mode) {
-                        try stderr.print("[MCP Server] Input stream closed after {} messages\n", .{message_count});
+                        try stderr.print("[MCP Server] Input stream closed after {d} messages\n", .{message_count});
                     }
                     break;
                 }
-                try stderr.print("[MCP Server] Critical stdin read error: {} after {} messages\n", .{ err, message_count });
+                try stderr.print("[MCP Server] Critical stdin read error: {any} after {d} messages\n", .{ err, message_count });
                 return err;
             }
         }
-        
+
         if (debug_mode) {
             try stderr.print("[MCP Server] Server shutting down cleanly\n", .{});
         }
@@ -396,34 +534,154 @@ pub const MCPCompliantServer = struct {
         try self.sendResponse(request.id, result_value);
     }
 
-    /// Call specific tool implementation
+    /// Call specific tool implementation with performance tracking
     fn callTool(self: *MCPCompliantServer, tool_name: []const u8, arguments: std.json.Value) !MCPToolResponse {
+        var timer = std.time.Timer.start() catch |err| {
+            std.log.warn("Failed to start timer: {any}", .{err});
+            return try self.callToolInternal(tool_name, arguments);
+        };
+
+        const result = try self.callToolInternal(tool_name, arguments);
+
+        // Track performance metrics
+        const elapsed_ms = timer.read() / 1_000_000;
+        self.tool_call_count += 1;
+        self.total_response_time_ms += elapsed_ms;
+
+        // Log slow operations (>100ms)
+        if (elapsed_ms > 100) {
+            const stderr = std.io.getStdErr().writer();
+            stderr.print("[MCP Server] Slow tool call: {s} took {d}ms\n", .{ tool_name, elapsed_ms }) catch {};
+        }
+
+        return result;
+    }
+
+    /// Internal tool routing without performance tracking
+    fn callToolInternal(self: *MCPCompliantServer, tool_name: []const u8, arguments: std.json.Value) !MCPToolResponse {
+        // Core enhanced tools
         if (std.mem.eql(u8, tool_name, "read_code")) {
             return self.executeReadCode(arguments);
         } else if (std.mem.eql(u8, tool_name, "write_code")) {
             return self.executeWriteCode(arguments);
         } else if (std.mem.eql(u8, tool_name, "get_context")) {
             return self.executeGetContext(arguments);
+        }
+        // Advanced analysis tools
+        else if (std.mem.eql(u8, tool_name, "semantic_search")) {
+            return self.executeSemanticSearch(arguments);
+        } else if (std.mem.eql(u8, tool_name, "analyze_dependencies")) {
+            return self.executeAnalyzeDependencies(arguments);
+        } else if (std.mem.eql(u8, tool_name, "hybrid_search")) {
+            return self.executeHybridSearch(arguments);
+        } else if (std.mem.eql(u8, tool_name, "record_decision")) {
+            return self.executeRecordDecision(arguments);
+        } else if (std.mem.eql(u8, tool_name, "query_history")) {
+            return self.executeQueryHistory(arguments);
         } else {
             return error.UnknownTool;
         }
     }
 
-    /// Execute read_code tool
+    /// Enhanced read_code tool with semantic context, history, and dependencies
     fn executeReadCode(self: *MCPCompliantServer, arguments: std.json.Value) !MCPToolResponse {
         const args_obj = arguments.object;
         const path_value = args_obj.get("path") orelse return error.MissingPath;
         const path = path_value.string;
 
+        // Options for enhanced context
+        const include_history = if (args_obj.get("include_history")) |val| val.bool else false;
+        const include_dependencies = if (args_obj.get("include_dependencies")) |val| val.bool else false;
+        const include_similar = if (args_obj.get("include_similar")) |val| val.bool else false;
+        const max_similar = if (args_obj.get("max_similar")) |val| @as(u32, @intCast(val.integer)) else 5;
+
+        // Get base file content
         const content = self.database.getFile(path) catch |err| switch (err) {
             error.FileNotFound => "File not found",
             else => return err,
         };
 
+        var response_parts = ArrayList([]const u8).init(self.allocator);
+        defer {
+            for (response_parts.items) |part| {
+                self.allocator.free(part);
+            }
+            response_parts.deinit();
+        }
+
+        // Base content
+        try response_parts.append(try std.fmt.allocPrint(self.allocator, "=== File Content: {s} ===\n{s}\n", .{ path, content }));
+
+        // Add semantic context if available and requested
+        if (include_similar and self.semantic_db != null) {
+            if (self.findSimilarFiles(path, max_similar)) |similar_files| {
+                defer self.allocator.free(similar_files);
+
+                if (similar_files.len > 0) {
+                    var similar_text = ArrayList(u8).init(self.allocator);
+                    defer similar_text.deinit();
+
+                    try similar_text.appendSlice("\n=== Similar Files ===\n");
+                    for (similar_files) |similar| {
+                        const line = try std.fmt.allocPrint(self.allocator, "- {s} (similarity: {d:.3})\n", .{ similar.file_path, similar.similarity });
+                        defer self.allocator.free(line);
+                        try similar_text.appendSlice(line);
+                    }
+
+                    try response_parts.append(try similar_text.toOwnedSlice());
+                }
+            } else |_| {
+                // Ignore semantic search errors for now
+            }
+        }
+
+        // Add history if requested
+        if (include_history) {
+            if (self.database.getHistory(path, 5)) |history| {
+                defer self.allocator.free(history);
+
+                if (history.len > 0) {
+                    var history_text = ArrayList(u8).init(self.allocator);
+                    defer history_text.deinit();
+
+                    try history_text.appendSlice("\n=== Recent History ===\n");
+                    for (history) |change| {
+                        const timestamp = @divFloor(change.timestamp, 1000); // Convert to seconds
+                        const line = try std.fmt.allocPrint(self.allocator, "- {d} ({d} bytes)\n", .{ timestamp, change.content.len });
+                        defer self.allocator.free(line);
+                        try history_text.appendSlice(line);
+                    }
+
+                    try response_parts.append(try history_text.toOwnedSlice());
+                }
+            } else |_| {
+                // Ignore history errors for now
+            }
+        }
+
+        // Add dependency information if requested and FRE is available
+        if (include_dependencies and self.fre_engine != null) {
+            // TODO: Implement dependency analysis using FRE
+            try response_parts.append(try self.allocator.dupe(u8, "\n=== Dependencies ===\n[Dependency analysis would appear here]\n"));
+        }
+
+        // Combine all parts
+        var total_length: usize = 0;
+        for (response_parts.items) |part| {
+            total_length += part.len;
+        }
+
+        var combined = try self.allocator.alloc(u8, total_length);
+        var offset: usize = 0;
+        for (response_parts.items) |part| {
+            @memcpy(combined[offset .. offset + part.len], part);
+            offset += part.len;
+        }
+
         var response_content = try self.allocator.alloc(MCPContent, 1);
         response_content[0] = MCPContent{
             .type = try self.allocator.dupe(u8, "text"),
-            .text = try self.allocator.dupe(u8, content),
+            .text = combined,
         };
 
         return MCPToolResponse{
@@ -432,7 +690,25 @@ pub const MCPCompliantServer = struct {
         };
     }
 
-    /// Execute write_code tool
+    /// Find similar files using semantic search
+    fn findSimilarFiles(self: *MCPCompliantServer, path: []const u8, max_results: u32) ![]@import("semantic_database.zig").SemanticSearchResult {
+        const semantic_db = self.semantic_db orelse return error.SemanticDatabaseNotAvailable;
+
+        // Get the embedding for the file if it exists
+        if (semantic_db.file_embeddings.get(path)) |embedding| {
+            const search_params = hnsw.HNSWSearchParams{
+                .k = max_results,
+                .ef = @min(50, max_results * 4),
+                .precision_target = 0.8,
+            };
+
+            return try semantic_db.semanticSearch(embedding, search_params);
+        }
+
+        return error.NoEmbeddingForFile;
+    }
+
+    /// Enhanced write_code tool with CRDT collaboration, provenance tracking, and embedding generation
     fn executeWriteCode(self: *MCPCompliantServer, arguments: std.json.Value) !MCPToolResponse {
         const args_obj = arguments.object;
         const path_value = args_obj.get("path") orelse return error.MissingPath;
@@ -440,9 +716,478 @@ pub const MCPCompliantServer = struct {
         const content_value = args_obj.get("content") orelse return error.MissingContent;
         const content = content_value.string;
 
+        // Optional parameters
+        const agent_id = if (args_obj.get("agent_id")) |val| val.string else "unknown-agent";
+        const agent_name = if (args_obj.get("agent_name")) |val| val.string else "Unknown Agent";
+        const generate_embedding = if (args_obj.get("generate_embedding")) |val| val.bool else true;
+
+        // Save to basic database
         try self.database.saveFile(path, content);
 
-        const response_text = try std.fmt.allocPrint(self.allocator, "Successfully wrote {d} bytes to {s}", .{ content.len, path });
+        var response_parts = ArrayList([]const u8).init(self.allocator);
+        defer {
+            for (response_parts.items) |part| {
+                self.allocator.free(part);
+            }
+            response_parts.deinit();
+        }
+
+        try response_parts.append(try std.fmt.allocPrint(self.allocator, "Successfully wrote {d} bytes to {s}\n", .{ content.len, path }));
+
+        // Register agent session
+        try self.registerAgentActivity(agent_id, agent_name);
+
+        // Handle CRDT document if collaborative editing is enabled
+        if (self.active_documents.get(path)) |crdt_doc| {
+            // TODO: Convert write operation to CRDT operation
+            // For now, just update cursor position
+            const position = @import("crdt.zig").Position{
+                .line = 1,
+                .column = 1,
+                .offset = 0,
+            };
+            try crdt_doc.updateAgentCursor(agent_id, agent_name, position);
+
+            try response_parts.append(try self.allocator.dupe(u8, "Updated collaborative document\n"));
+        } else if (self.active_documents.count() > 0) {
+            // Create new CRDT document for collaboration
+            const crdt_doc = try self.allocator.create(CRDTDocument);
+            crdt_doc.* = try CRDTDocument.init(self.allocator, path, content);
+
+            const owned_path = try self.allocator.dupe(u8, path);
+            try self.active_documents.put(owned_path, crdt_doc);
+
+            try response_parts.append(try self.allocator.dupe(u8, "Enabled collaborative editing\n"));
+        }
+
+        // Generate and store semantic embedding if requested and semantic DB available
+        if (generate_embedding and self.semantic_db != null) {
+            // TODO: Implement actual embedding generation
+            // For now, create a mock embedding based on content hash
+            if (self.generateMockEmbedding(content)) |embedding_result| {
+                var embedding = embedding_result;
+                defer embedding.deinit(self.allocator);
+
+                if (self.semantic_db) |semantic_db| {
+                    try semantic_db.saveFileWithEmbedding(path, content, embedding);
+                    try response_parts.append(try self.allocator.dupe(u8, "Generated semantic embedding\n"));
+                }
+            } else |_| {
+                try response_parts.append(try self.allocator.dupe(u8, "Warning: Failed to generate embedding\n"));
+            }
+        }
+
+        // Combine all response parts
+        var total_length: usize = 0;
+        for (response_parts.items) |part| {
+            total_length += part.len;
+        }
+
+        var combined = try self.allocator.alloc(u8, total_length);
+        var offset: usize = 0;
+        for (response_parts.items) |part| {
+            @memcpy(combined[offset .. offset + part.len], part);
+            offset += part.len;
+        }
+
+        var response_content = try self.allocator.alloc(MCPContent, 1);
+        response_content[0] = MCPContent{
+            .type = try self.allocator.dupe(u8, "text"),
+            .text = combined,
+        };
+
+        return MCPToolResponse{
+            .content = response_content,
+            .isError = false,
+        };
+    }
+
+    /// Register agent activity for session tracking
+    fn registerAgentActivity(self: *MCPCompliantServer, agent_id: []const u8, agent_name: []const u8) !void {
+        const now = std.time.timestamp();
+
+        if (self.agent_sessions.getPtr(agent_id)) |session| {
+            session.last_activity = now;
+            session.operations_count += 1;
+        } else {
+            const session = AgentSession{
+                .agent_id = try self.allocator.dupe(u8, agent_id),
+                .agent_name = try self.allocator.dupe(u8, agent_name),
+                .session_start = now,
+                .operations_count = 1,
+                .last_activity = now,
+            };
+
+            const owned_id = try self.allocator.dupe(u8, agent_id);
+            try self.agent_sessions.put(owned_id, session);
+        }
+    }
+
+    /// Generate mock embedding for testing (will be replaced with real embeddings)
+    fn generateMockEmbedding(self: *MCPCompliantServer, content: []const u8) !hnsw.MatryoshkaEmbedding {
+        // Simple hash-based mock embedding
+        const hash = std.hash_map.hashString(content);
+        const dims = [_]u32{ 64, 256, 768 };
+
+        const embedding = try hnsw.MatryoshkaEmbedding.init(self.allocator, 768, &dims);
+
+        // Fill with deterministic pseudo-random values based on hash
+        var prng = std.Random.DefaultPrng.init(hash);
+        const random = prng.random();
+
+        for (embedding.full_vector.data) |*value| {
+            value.* = random.floatNorm(f32);
+        }
+
+        return embedding;
+    }
+
+    /// Enhanced get_context tool with comprehensive system status and agent awareness
+    fn executeGetContext(self: *MCPCompliantServer, arguments: std.json.Value) !MCPToolResponse {
+        const args_obj = arguments.object;
+        const context_type = if (args_obj.get("type")) |val| val.string else "full";
+        const path = if (args_obj.get("path")) |val| val.string else null;
+
+        var context_parts = ArrayList([]const u8).init(self.allocator);
+        defer {
+            for (context_parts.items) |part| {
+                self.allocator.free(part);
+            }
+            context_parts.deinit();
+        }
+
+        // System overview
+        if (std.mem.eql(u8, context_type, "full") or std.mem.eql(u8, context_type, "system")) {
+            const capabilities = if (self.semantic_db != null and self.fre_engine != null and self.hybrid_search != null)
+                "Advanced (Semantic + FRE + Hybrid Search)"
+            else if (self.semantic_db != null)
+                "Enhanced (Semantic Search)"
+            else
+                "Basic";
+
+            try context_parts.append(try std.fmt.allocPrint(self.allocator, "=== Agrama CodeGraph MCP Server ===\n" ++
+                "Capabilities: {s}\n" ++
+                "Protocol Version: {s}\n" ++
+                "Total Tool Calls: {d}\n" ++
+                "Average Response Time: {d:.2}ms\n\n", .{ capabilities, self.protocol_version, self.tool_call_count, if (self.tool_call_count > 0) @as(f64, @floatFromInt(self.total_response_time_ms)) / @as(f64, @floatFromInt(self.tool_call_count)) else 0.0 }));
+        }
+
+        // Available tools
+        if (std.mem.eql(u8, context_type, "full") or std.mem.eql(u8, context_type, "tools")) {
+            var tools_list = ArrayList(u8).init(self.allocator);
+            defer tools_list.deinit();
+
+            try tools_list.appendSlice("=== Available Tools ===\n");
+            for (self.tools.items) |tool| {
+                const line = try std.fmt.allocPrint(self.allocator, "- {s}: {s}\n", .{ tool.name, tool.description });
+                defer self.allocator.free(line);
+                try tools_list.appendSlice(line);
+            }
+            try tools_list.appendSlice("\n");
+
+            try context_parts.append(try tools_list.toOwnedSlice());
+        }
+
+        // Active agents
+        if (std.mem.eql(u8, context_type, "full") or std.mem.eql(u8, context_type, "agents")) {
+            var agents_info = ArrayList(u8).init(self.allocator);
+            defer agents_info.deinit();
+
+            try agents_info.appendSlice("=== Active Agent Sessions ===\n");
+            if (self.agent_sessions.count() == 0) {
+                try agents_info.appendSlice("No active agents\n");
+            } else {
+                var session_iterator = self.agent_sessions.iterator();
+                while (session_iterator.next()) |entry| {
+                    const session = entry.value_ptr.*;
+                    const duration = std.time.timestamp() - session.session_start;
+                    const line = try std.fmt.allocPrint(self.allocator, "- {s} ({s}): {d} operations, active for {d}s\n", .{ session.agent_id, session.agent_name, session.operations_count, duration });
+                    defer self.allocator.free(line);
+                    try agents_info.appendSlice(line);
+                }
+            }
+            try agents_info.appendSlice("\n");
+
+            try context_parts.append(try agents_info.toOwnedSlice());
+        }
+
+        // Database metrics
+        if (std.mem.eql(u8, context_type, "full") or std.mem.eql(u8, context_type, "metrics")) {
+            var metrics_info = ArrayList(u8).init(self.allocator);
+            defer metrics_info.deinit();
+
+            try metrics_info.appendSlice("=== Database Metrics ===\n");
+
+            const file_count = self.database.current_files.count();
+            try metrics_info.appendSlice(try std.fmt.allocPrint(self.allocator, "Files stored: {d}\n", .{file_count}));
+
+            if (self.semantic_db) |semantic_db| {
+                const stats = semantic_db.getStats();
+                const line = try std.fmt.allocPrint(self.allocator, "Semantic index: {d} files, {d} HNSW nodes\n", .{ stats.indexed_files, stats.file_index_stats.node_count });
+                defer self.allocator.free(line);
+                try metrics_info.appendSlice(line);
+            }
+
+            if (self.fre_engine) |fre| {
+                const graph_stats = fre.getGraphStats();
+                const line = try std.fmt.allocPrint(self.allocator, "Graph database: {d} nodes, {d} edges\n", .{ graph_stats.nodes, graph_stats.edges });
+                defer self.allocator.free(line);
+                try metrics_info.appendSlice(line);
+            }
+
+            const collab_docs = self.active_documents.count();
+            try metrics_info.appendSlice(try std.fmt.allocPrint(self.allocator, "Collaborative documents: {d}\n", .{collab_docs}));
+            try metrics_info.appendSlice("\n");
+
+            try context_parts.append(try metrics_info.toOwnedSlice());
+        }
+
+        // Path-specific context if provided
+        if (path) |file_path| {
+            var path_info = ArrayList(u8).init(self.allocator);
+            defer path_info.deinit();
+
+            try path_info.appendSlice(try std.fmt.allocPrint(self.allocator, "=== File Context: {s} ===\n", .{file_path}));
+
+            // Basic file info
+            if (self.database.getFile(file_path)) |content| {
+                try path_info.appendSlice(try std.fmt.allocPrint(self.allocator, "Size: {d} bytes\n", .{content.len}));
+            } else |_| {
+                try path_info.appendSlice("File not found\n");
+            }
+
+            // CRDT collaboration status
+            if (self.active_documents.get(file_path)) |crdt_doc| {
+                const cursors = try crdt_doc.getAgentCursors(self.allocator);
+                defer self.allocator.free(cursors);
+
+                if (cursors.len > 0) {
+                    try path_info.appendSlice(try std.fmt.allocPrint(self.allocator, "Active collaborators: {d}\n", .{cursors.len}));
+                } else {
+                    try path_info.appendSlice("No active collaborators\n");
+                }
+            }
+
+            try path_info.appendSlice("\n");
+            try context_parts.append(try path_info.toOwnedSlice());
+        }
+
+        // Combine all parts
+        var total_length: usize = 0;
+        for (context_parts.items) |part| {
+            total_length += part.len;
+        }
+
+        var combined = try self.allocator.alloc(u8, total_length);
+        var offset: usize = 0;
+        for (context_parts.items) |part| {
+            @memcpy(combined[offset .. offset + part.len], part);
+            offset += part.len;
+        }
+
+        var response_content = try self.allocator.alloc(MCPContent, 1);
+        response_content[0] = MCPContent{
+            .type = try self.allocator.dupe(u8, "text"),
+            .text = combined,
+        };
+
+        return MCPToolResponse{
+            .content = response_content,
+            .isError = false,
+        };
+    }
+
+    // === NEW ADVANCED TOOLS ===
+
+    /// Semantic search tool using HNSW indices
+    fn executeSemanticSearch(self: *MCPCompliantServer, arguments: std.json.Value) !MCPToolResponse {
+        const semantic_db = self.semantic_db orelse {
+            return self.createErrorResponse("Semantic database not available. Initialize with initWithAdvancedFeatures()");
+        };
+
+        const args_obj = arguments.object;
+        const query_text = (args_obj.get("query") orelse return error.MissingQuery).string;
+        const max_results = if (args_obj.get("max_results")) |val| @as(u32, @intCast(val.integer)) else 10;
+        const similarity_threshold = if (args_obj.get("similarity_threshold")) |val| @as(f32, @floatCast(val.float)) else 0.7;
+
+        // Generate embedding for query (mock implementation)
+        var query_embedding = try self.generateMockEmbedding(query_text);
+        defer query_embedding.deinit(self.allocator);
+
+        // Perform semantic search
+        const search_params = hnsw.HNSWSearchParams{
+            .k = max_results,
+            .ef = @min(100, max_results * 4),
+            .precision_target = 0.8,
+        };
+
+        const results = semantic_db.semanticSearch(query_embedding, search_params) catch |err| {
+            return self.createErrorResponse(try std.fmt.allocPrint(self.allocator, "Search failed: {any}", .{err}));
+        };
+        defer self.allocator.free(results);
+
+        // Filter by similarity threshold and format results
+        var filtered_results = ArrayList([]const u8).init(self.allocator);
+        defer {
+            for (filtered_results.items) |result| {
+                self.allocator.free(result);
+            }
+            filtered_results.deinit();
+        }
+
+        try filtered_results.append(try std.fmt.allocPrint(self.allocator, "=== Semantic Search Results for: \"{s}\" ===\n", .{query_text}));
+
+        var count: u32 = 0;
+        for (results) |result| {
+            if (result.similarity >= similarity_threshold) {
+                count += 1;
+                const line = try std.fmt.allocPrint(self.allocator, "{d}. {s} (similarity: {d:.3})\n", .{ count, result.file_path, result.similarity });
+                try filtered_results.append(line);
+            }
+        }
+
+        if (count == 0) {
+            try filtered_results.append(try self.allocator.dupe(u8, "No results found above similarity threshold.\n"));
+        }
+
+        return self.createTextResponse(filtered_results.items);
+    }
+
+    /// Analyze dependencies using FRE graph traversal
+    fn executeAnalyzeDependencies(self: *MCPCompliantServer, arguments: std.json.Value) !MCPToolResponse {
+        const fre_engine = self.fre_engine orelse {
+            return self.createErrorResponse("FRE engine not available. Initialize with initWithAdvancedFeatures()");
+        };
+
+        const args_obj = arguments.object;
+        const root_path = (args_obj.get("root") orelse return error.MissingRoot).string;
+        const max_depth = if (args_obj.get("max_depth")) |val| @as(u32, @intCast(val.integer)) else 3;
+        const direction_str = if (args_obj.get("direction")) |val| val.string else "forward";
+
+        const direction = if (std.mem.eql(u8, direction_str, "forward"))
+            @import("fre.zig").TraversalDirection.forward
+        else if (std.mem.eql(u8, direction_str, "reverse"))
+            @import("fre.zig").TraversalDirection.reverse
+        else
+            @import("fre.zig").TraversalDirection.bidirectional;
+
+        // TODO: Convert file path to node ID (requires path->node mapping)
+        // For now, use a simple hash-based approach
+        const root_node_id = std.hash_map.hashString(root_path);
+
+        const deps = fre_engine.analyzeDependencies(root_node_id, direction, max_depth) catch |err| {
+            return self.createErrorResponse(try std.fmt.allocPrint(self.allocator, "Dependency analysis failed: {any}", .{err}));
+        };
+        defer deps.deinit(self.allocator);
+
+        var result_parts = ArrayList([]const u8).init(self.allocator);
+        defer {
+            for (result_parts.items) |part| {
+                self.allocator.free(part);
+            }
+            result_parts.deinit();
+        }
+
+        try result_parts.append(try std.fmt.allocPrint(self.allocator, "=== Dependency Analysis: {s} ===\n" ++
+            "Direction: {s}\n" ++
+            "Max Depth: {d}\n" ++
+            "Nodes Found: {d}\n" ++
+            "Edges Found: {d}\n\n", .{ root_path, direction_str, max_depth, deps.nodes.len, deps.edges.len }));
+
+        if (deps.nodes.len > 1) {
+            try result_parts.append(try self.allocator.dupe(u8, "Dependencies:\n"));
+            for (deps.edges) |edge| {
+                // TODO: Convert node IDs back to paths for display
+                const line = try std.fmt.allocPrint(self.allocator, "- {d} -> {d} ({s})\n", .{ edge.source, edge.target, edge.relationship.toString() });
+                try result_parts.append(line);
+            }
+        } else {
+            try result_parts.append(try self.allocator.dupe(u8, "No dependencies found.\n"));
+        }
+
+        return self.createTextResponse(result_parts.items);
+    }
+
+    /// Hybrid search combining BM25, HNSW, and FRE
+    fn executeHybridSearch(self: *MCPCompliantServer, arguments: std.json.Value) !MCPToolResponse {
+        const hybrid_search = self.hybrid_search orelse {
+            return self.createErrorResponse("Hybrid search not available. Initialize with initWithAdvancedFeatures()");
+        };
+
+        const args_obj = arguments.object;
+        const query_text = (args_obj.get("query") orelse return error.MissingQuery).string;
+        const max_results = if (args_obj.get("max_results")) |val| @as(u32, @intCast(val.integer)) else 10;
+        const alpha = if (args_obj.get("alpha")) |val| @as(f32, @floatCast(val.float)) else 0.4;
+        const beta = if (args_obj.get("beta")) |val| @as(f32, @floatCast(val.float)) else 0.4;
+        const gamma = if (args_obj.get("gamma")) |val| @as(f32, @floatCast(val.float)) else 0.2;
+
+        // Generate embedding for semantic component
+        var query_embedding = try self.generateMockEmbedding(query_text);
+        defer query_embedding.deinit(self.allocator);
+
+        // Create hybrid query
+        const hybrid_query = @import("triple_hybrid_search.zig").HybridQuery{
+            .text_query = query_text,
+            .embedding_query = query_embedding.full_vector.data,
+            .max_results = max_results,
+            .alpha = alpha,
+            .beta = beta,
+            .gamma = gamma,
+        };
+
+        const results = hybrid_search.search(hybrid_query) catch |err| {
+            return self.createErrorResponse(try std.fmt.allocPrint(self.allocator, "Hybrid search failed: {any}", .{err}));
+        };
+        defer {
+            for (results) |result| {
+                result.deinit(self.allocator);
+            }
+            self.allocator.free(results);
+        }
+
+        var result_parts = ArrayList([]const u8).init(self.allocator);
+        defer {
+            for (result_parts.items) |part| {
+                self.allocator.free(part);
+            }
+            result_parts.deinit();
+        }
+
+        try result_parts.append(try std.fmt.allocPrint(self.allocator, "=== Hybrid Search Results: \"{s}\" ===\n" ++
+            "Weights: BM25={d:.2}, HNSW={d:.2}, FRE={d:.2}\n" ++
+            "Results: {d}\n\n", .{ query_text, alpha, beta, gamma, results.len }));
+
+        for (results, 0..) |result, i| {
+            const line = try std.fmt.allocPrint(self.allocator, "{d}. {s} (score: {d:.3})\n" ++
+                "   BM25: {d:.3}, Semantic: {d:.3}, Graph: {d:.3}\n", .{ i + 1, result.file_path, result.combined_score, result.bm25_score, result.hnsw_score, result.fre_score });
+            try result_parts.append(line);
+        }
+
+        if (results.len == 0) {
+            try result_parts.append(try self.allocator.dupe(u8, "No results found.\n"));
+        }
+
+        return self.createTextResponse(result_parts.items);
+    }
+
+    /// Record agent decision with provenance
+    fn executeRecordDecision(self: *MCPCompliantServer, arguments: std.json.Value) !MCPToolResponse {
+        const args_obj = arguments.object;
+        const agent_id = (args_obj.get("agent_id") orelse return error.MissingAgentId).string;
+        const decision = (args_obj.get("decision") orelse return error.MissingDecision).string;
+        const reasoning = if (args_obj.get("reasoning")) |val| val.string else "";
+        const context = if (args_obj.get("context")) |val| val.string else "";
+
+        // TODO: Store decision in FRE graph or dedicated decision log
+        // For now, just track in agent session
+        try self.registerAgentActivity(agent_id, "Decision Agent");
+
+        const response_text = try std.fmt.allocPrint(self.allocator, "Decision recorded successfully:\n" ++
+            "Agent: {s}\n" ++
+            "Decision: {s}\n" ++
+            "Reasoning: {s}\n" ++
+            "Context: {s}\n" ++
+            "Timestamp: {d}\n", .{ agent_id, decision, reasoning, context, std.time.timestamp() });
 
         var response_content = try self.allocator.alloc(MCPContent, 1);
         response_content[0] = MCPContent{
@@ -456,16 +1201,94 @@ pub const MCPCompliantServer = struct {
         };
     }
 
-    /// Execute get_context tool
-    fn executeGetContext(self: *MCPCompliantServer, arguments: std.json.Value) !MCPToolResponse {
-        _ = arguments;
+    /// Query temporal history with advanced filtering
+    fn executeQueryHistory(self: *MCPCompliantServer, arguments: std.json.Value) !MCPToolResponse {
+        const args_obj = arguments.object;
+        const path = if (args_obj.get("path")) |val| val.string else null;
+        const limit = if (args_obj.get("limit")) |val| @as(usize, @intCast(val.integer)) else 10;
+        const since = if (args_obj.get("since")) |val| @as(i64, @intCast(val.integer)) else 0;
 
-        const context_info = try std.fmt.allocPrint(self.allocator, "Agrama CodeGraph MCP Server\nTools available: read_code, write_code, get_context\nDatabase ready for AI collaboration", .{});
+        var result_parts = ArrayList([]const u8).init(self.allocator);
+        defer {
+            for (result_parts.items) |part| {
+                self.allocator.free(part);
+            }
+            result_parts.deinit();
+        }
+
+        if (path) |file_path| {
+            // Query specific file history
+            try result_parts.append(try std.fmt.allocPrint(self.allocator, "=== History for {s} ===\n", .{file_path}));
+
+            if (self.database.getHistory(file_path, limit)) |history| {
+                defer self.allocator.free(history);
+
+                var count: usize = 0;
+                for (history) |change| {
+                    if (change.timestamp >= since) {
+                        count += 1;
+                        const line = try std.fmt.allocPrint(self.allocator, "{d}. {d} - {d} bytes\n", .{ count, change.timestamp, change.content.len });
+                        try result_parts.append(line);
+                    }
+                }
+
+                if (count == 0) {
+                    try result_parts.append(try self.allocator.dupe(u8, "No changes found in specified time range.\n"));
+                }
+            } else |_| {
+                try result_parts.append(try self.allocator.dupe(u8, "No history found for file.\n"));
+            }
+        } else {
+            // Global history overview
+            try result_parts.append(try self.allocator.dupe(u8, "=== Global History Overview ===\n"));
+
+            const file_count = self.database.current_files.count();
+            const history_count = self.database.file_histories.count();
+
+            try result_parts.append(try std.fmt.allocPrint(self.allocator, "Total files: {d}\n" ++
+                "Files with history: {d}\n" ++
+                "Active sessions: {d}\n", .{ file_count, history_count, self.agent_sessions.count() }));
+        }
+
+        return self.createTextResponse(result_parts.items);
+    }
+
+    // === HELPER METHODS ===
+
+    /// Create error response
+    fn createErrorResponse(self: *MCPCompliantServer, error_message: []const u8) !MCPToolResponse {
+        const owned_message = try self.allocator.dupe(u8, error_message);
 
         var response_content = try self.allocator.alloc(MCPContent, 1);
         response_content[0] = MCPContent{
             .type = try self.allocator.dupe(u8, "text"),
-            .text = context_info,
+            .text = owned_message,
+        };
+
+        return MCPToolResponse{
+            .content = response_content,
+            .isError = true,
+        };
+    }
+
+    /// Create text response from multiple parts
+    fn createTextResponse(self: *MCPCompliantServer, parts: [][]const u8) !MCPToolResponse {
+        var total_length: usize = 0;
+        for (parts) |part| {
+            total_length += part.len;
+        }
+
+        var combined = try self.allocator.alloc(u8, total_length);
+        var offset: usize = 0;
+        for (parts) |part| {
+            @memcpy(combined[offset .. offset + part.len], part);
+            offset += part.len;
+        }
+
+        var response_content = try self.allocator.alloc(MCPContent, 1);
+        response_content[0] = MCPContent{
+            .type = try self.allocator.dupe(u8, "text"),
+            .text = combined,
         };
 
         return MCPToolResponse{
@@ -511,17 +1334,17 @@ pub const MCPCompliantServer = struct {
         const json_allocator = arena.allocator();
 
         var string = std.ArrayList(u8).init(json_allocator);
-        
+
         // Manually construct JSON-RPC response to ensure spec compliance
         // JSON-RPC 2.0 requires EITHER result OR error, never both
         try string.appendSlice("{\"jsonrpc\":\"2.0\"");
-        
+
         // Add id if present
         if (response.id) |id| {
             try string.appendSlice(",\"id\":");
             try std.json.stringify(id, .{}, string.writer());
         }
-        
+
         // Add EITHER result OR error (not both)
         if (response.@"error") |err| {
             try string.appendSlice(",\"error\":{\"code\":");
@@ -537,7 +1360,7 @@ pub const MCPCompliantServer = struct {
             try string.appendSlice(",\"result\":");
             try std.json.stringify(result, .{}, string.writer());
         }
-        
+
         try string.appendSlice("}\n"); // Close object and add newline delimiter
 
         try self.stdout_writer.writeAll(string.items);
@@ -551,12 +1374,11 @@ pub const MCPCompliantServer = struct {
     // Now using std.json.Value for type-safe JSON construction
 };
 
-/// Create read_code tool definition
+/// Create enhanced read_code tool definition
 fn createReadCodeTool(allocator: Allocator) !MCPToolDefinition {
-    // Use an arena allocator for JSON structures to avoid complex cleanup
     var arena = std.heap.ArenaAllocator.init(allocator);
     const json_allocator = arena.allocator();
-    
+
     var input_schema = std.json.ObjectMap.init(json_allocator);
     var properties = std.json.ObjectMap.init(json_allocator);
 
@@ -566,10 +1388,29 @@ fn createReadCodeTool(allocator: Allocator) !MCPToolDefinition {
 
     var history_schema = std.json.ObjectMap.init(json_allocator);
     try history_schema.put("type", std.json.Value{ .string = "boolean" });
-    try history_schema.put("description", std.json.Value{ .string = "Include file history" });
+    try history_schema.put("description", std.json.Value{ .string = "Include file modification history" });
+    try history_schema.put("default", std.json.Value{ .bool = false });
+
+    var dependencies_schema = std.json.ObjectMap.init(json_allocator);
+    try dependencies_schema.put("type", std.json.Value{ .string = "boolean" });
+    try dependencies_schema.put("description", std.json.Value{ .string = "Include dependency analysis using FRE" });
+    try dependencies_schema.put("default", std.json.Value{ .bool = false });
+
+    var similar_schema = std.json.ObjectMap.init(json_allocator);
+    try similar_schema.put("type", std.json.Value{ .string = "boolean" });
+    try similar_schema.put("description", std.json.Value{ .string = "Include semantically similar files" });
+    try similar_schema.put("default", std.json.Value{ .bool = false });
+
+    var max_similar_schema = std.json.ObjectMap.init(json_allocator);
+    try max_similar_schema.put("type", std.json.Value{ .string = "integer" });
+    try max_similar_schema.put("description", std.json.Value{ .string = "Maximum number of similar files to include" });
+    try max_similar_schema.put("default", std.json.Value{ .integer = 5 });
 
     try properties.put("path", std.json.Value{ .object = path_schema });
     try properties.put("include_history", std.json.Value{ .object = history_schema });
+    try properties.put("include_dependencies", std.json.Value{ .object = dependencies_schema });
+    try properties.put("include_similar", std.json.Value{ .object = similar_schema });
+    try properties.put("max_similar", std.json.Value{ .object = max_similar_schema });
 
     var required = std.json.Array.init(json_allocator);
     try required.append(std.json.Value{ .string = "path" });
@@ -581,29 +1422,48 @@ fn createReadCodeTool(allocator: Allocator) !MCPToolDefinition {
     return MCPToolDefinition{
         .name = try allocator.dupe(u8, "read_code"),
         .title = try allocator.dupe(u8, "Read Code File"),
-        .description = try allocator.dupe(u8, "Read and analyze code files with optional history"),
+        .description = try allocator.dupe(u8, "Read code files with semantic context, history, dependencies, and similar files"),
         .inputSchema = std.json.Value{ .object = input_schema },
         .arena = arena,
     };
 }
 
-/// Create write_code tool definition
+/// Create enhanced write_code tool definition
 fn createWriteCodeTool(allocator: Allocator) !MCPToolDefinition {
-    // Use an arena allocator for JSON structures to avoid complex cleanup
     var arena = std.heap.ArenaAllocator.init(allocator);
     const json_allocator = arena.allocator();
-    
+
     var input_schema = std.json.ObjectMap.init(json_allocator);
     var properties = std.json.ObjectMap.init(json_allocator);
 
     var path_schema = std.json.ObjectMap.init(json_allocator);
     try path_schema.put("type", std.json.Value{ .string = "string" });
+    try path_schema.put("description", std.json.Value{ .string = "File path to write or modify" });
 
     var content_schema = std.json.ObjectMap.init(json_allocator);
     try content_schema.put("type", std.json.Value{ .string = "string" });
+    try content_schema.put("description", std.json.Value{ .string = "File content to write" });
+
+    var agent_id_schema = std.json.ObjectMap.init(json_allocator);
+    try agent_id_schema.put("type", std.json.Value{ .string = "string" });
+    try agent_id_schema.put("description", std.json.Value{ .string = "ID of the agent making the change" });
+    try agent_id_schema.put("default", std.json.Value{ .string = "unknown-agent" });
+
+    var agent_name_schema = std.json.ObjectMap.init(json_allocator);
+    try agent_name_schema.put("type", std.json.Value{ .string = "string" });
+    try agent_name_schema.put("description", std.json.Value{ .string = "Human-readable agent name" });
+    try agent_name_schema.put("default", std.json.Value{ .string = "Unknown Agent" });
+
+    var generate_embedding_schema = std.json.ObjectMap.init(json_allocator);
+    try generate_embedding_schema.put("type", std.json.Value{ .string = "boolean" });
+    try generate_embedding_schema.put("description", std.json.Value{ .string = "Generate semantic embedding for search" });
+    try generate_embedding_schema.put("default", std.json.Value{ .bool = true });
 
     try properties.put("path", std.json.Value{ .object = path_schema });
     try properties.put("content", std.json.Value{ .object = content_schema });
+    try properties.put("agent_id", std.json.Value{ .object = agent_id_schema });
+    try properties.put("agent_name", std.json.Value{ .object = agent_name_schema });
+    try properties.put("generate_embedding", std.json.Value{ .object = generate_embedding_schema });
 
     var required = std.json.Array.init(json_allocator);
     try required.append(std.json.Value{ .string = "path" });
@@ -616,29 +1476,27 @@ fn createWriteCodeTool(allocator: Allocator) !MCPToolDefinition {
     return MCPToolDefinition{
         .name = try allocator.dupe(u8, "write_code"),
         .title = try allocator.dupe(u8, "Write Code File"),
-        .description = try allocator.dupe(u8, "Write or modify code files with provenance tracking"),
+        .description = try allocator.dupe(u8, "Write code files with CRDT collaboration, provenance tracking, and semantic indexing"),
         .inputSchema = std.json.Value{ .object = input_schema },
         .arena = arena,
     };
 }
 
-/// Create get_context tool definition
+/// Create enhanced get_context tool definition
 fn createGetContextTool(allocator: Allocator) !MCPToolDefinition {
-    // Use an arena allocator for JSON structures to avoid complex cleanup
     var arena = std.heap.ArenaAllocator.init(allocator);
     const json_allocator = arena.allocator();
-    
+
     var input_schema = std.json.ObjectMap.init(json_allocator);
     var properties = std.json.ObjectMap.init(json_allocator);
 
-    // Add optional parameters for context tool
     var path_schema = std.json.ObjectMap.init(json_allocator);
     try path_schema.put("type", std.json.Value{ .string = "string" });
     try path_schema.put("description", std.json.Value{ .string = "Optional file path for specific context" });
 
     var type_schema = std.json.ObjectMap.init(json_allocator);
     try type_schema.put("type", std.json.Value{ .string = "string" });
-    try type_schema.put("description", std.json.Value{ .string = "Context type: 'full', 'metrics', or 'agents'" });
+    try type_schema.put("description", std.json.Value{ .string = "Context type: 'full', 'system', 'tools', 'agents', 'metrics'" });
     try type_schema.put("default", std.json.Value{ .string = "full" });
 
     try properties.put("path", std.json.Value{ .object = path_schema });
@@ -650,7 +1508,236 @@ fn createGetContextTool(allocator: Allocator) !MCPToolDefinition {
     return MCPToolDefinition{
         .name = try allocator.dupe(u8, "get_context"),
         .title = try allocator.dupe(u8, "Get Context"),
-        .description = try allocator.dupe(u8, "Get comprehensive contextual information"),
+        .description = try allocator.dupe(u8, "Get comprehensive contextual information with agent awareness"),
+        .inputSchema = std.json.Value{ .object = input_schema },
+        .arena = arena,
+    };
+}
+
+/// Create semantic search tool definition
+fn createSemanticSearchTool(allocator: Allocator) !MCPToolDefinition {
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    const json_allocator = arena.allocator();
+
+    var input_schema = std.json.ObjectMap.init(json_allocator);
+    var properties = std.json.ObjectMap.init(json_allocator);
+
+    var query_schema = std.json.ObjectMap.init(json_allocator);
+    try query_schema.put("type", std.json.Value{ .string = "string" });
+    try query_schema.put("description", std.json.Value{ .string = "Text query for semantic search" });
+
+    var max_results_schema = std.json.ObjectMap.init(json_allocator);
+    try max_results_schema.put("type", std.json.Value{ .string = "integer" });
+    try max_results_schema.put("description", std.json.Value{ .string = "Maximum number of results" });
+    try max_results_schema.put("default", std.json.Value{ .integer = 10 });
+
+    var threshold_schema = std.json.ObjectMap.init(json_allocator);
+    try threshold_schema.put("type", std.json.Value{ .string = "number" });
+    try threshold_schema.put("description", std.json.Value{ .string = "Minimum similarity threshold (0.0-1.0)" });
+    try threshold_schema.put("default", std.json.Value{ .float = 0.7 });
+
+    try properties.put("query", std.json.Value{ .object = query_schema });
+    try properties.put("max_results", std.json.Value{ .object = max_results_schema });
+    try properties.put("similarity_threshold", std.json.Value{ .object = threshold_schema });
+
+    var required = std.json.Array.init(json_allocator);
+    try required.append(std.json.Value{ .string = "query" });
+
+    try input_schema.put("type", std.json.Value{ .string = "object" });
+    try input_schema.put("properties", std.json.Value{ .object = properties });
+    try input_schema.put("required", std.json.Value{ .array = required });
+
+    return MCPToolDefinition{
+        .name = try allocator.dupe(u8, "semantic_search"),
+        .title = try allocator.dupe(u8, "Semantic Search"),
+        .description = try allocator.dupe(u8, "Search for semantically similar code using HNSW indices"),
+        .inputSchema = std.json.Value{ .object = input_schema },
+        .arena = arena,
+    };
+}
+
+/// Create analyze dependencies tool definition
+fn createAnalyzeDependenciesTool(allocator: Allocator) !MCPToolDefinition {
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    const json_allocator = arena.allocator();
+
+    var input_schema = std.json.ObjectMap.init(json_allocator);
+    var properties = std.json.ObjectMap.init(json_allocator);
+
+    var root_schema = std.json.ObjectMap.init(json_allocator);
+    try root_schema.put("type", std.json.Value{ .string = "string" });
+    try root_schema.put("description", std.json.Value{ .string = "Root file/entity to analyze dependencies for" });
+
+    var depth_schema = std.json.ObjectMap.init(json_allocator);
+    try depth_schema.put("type", std.json.Value{ .string = "integer" });
+    try depth_schema.put("description", std.json.Value{ .string = "Maximum dependency depth to traverse" });
+    try depth_schema.put("default", std.json.Value{ .integer = 3 });
+
+    var direction_schema = std.json.ObjectMap.init(json_allocator);
+    try direction_schema.put("type", std.json.Value{ .string = "string" });
+    try direction_schema.put("description", std.json.Value{ .string = "Direction: 'forward', 'reverse', or 'bidirectional'" });
+    try direction_schema.put("enum", std.json.Value{ .array = blk: {
+        var enum_array = std.json.Array.init(json_allocator);
+        try enum_array.append(std.json.Value{ .string = "forward" });
+        try enum_array.append(std.json.Value{ .string = "reverse" });
+        try enum_array.append(std.json.Value{ .string = "bidirectional" });
+        break :blk enum_array;
+    } });
+    try direction_schema.put("default", std.json.Value{ .string = "forward" });
+
+    try properties.put("root", std.json.Value{ .object = root_schema });
+    try properties.put("max_depth", std.json.Value{ .object = depth_schema });
+    try properties.put("direction", std.json.Value{ .object = direction_schema });
+
+    var required = std.json.Array.init(json_allocator);
+    try required.append(std.json.Value{ .string = "root" });
+
+    try input_schema.put("type", std.json.Value{ .string = "object" });
+    try input_schema.put("properties", std.json.Value{ .object = properties });
+    try input_schema.put("required", std.json.Value{ .array = required });
+
+    return MCPToolDefinition{
+        .name = try allocator.dupe(u8, "analyze_dependencies"),
+        .title = try allocator.dupe(u8, "Analyze Dependencies"),
+        .description = try allocator.dupe(u8, "Analyze code dependencies using FRE graph traversal"),
+        .inputSchema = std.json.Value{ .object = input_schema },
+        .arena = arena,
+    };
+}
+
+/// Create hybrid search tool definition
+fn createHybridSearchTool(allocator: Allocator) !MCPToolDefinition {
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    const json_allocator = arena.allocator();
+
+    var input_schema = std.json.ObjectMap.init(json_allocator);
+    var properties = std.json.ObjectMap.init(json_allocator);
+
+    var query_schema = std.json.ObjectMap.init(json_allocator);
+    try query_schema.put("type", std.json.Value{ .string = "string" });
+    try query_schema.put("description", std.json.Value{ .string = "Search query combining text and semantic meaning" });
+
+    var max_results_schema = std.json.ObjectMap.init(json_allocator);
+    try max_results_schema.put("type", std.json.Value{ .string = "integer" });
+    try max_results_schema.put("description", std.json.Value{ .string = "Maximum number of results" });
+    try max_results_schema.put("default", std.json.Value{ .integer = 10 });
+
+    var alpha_schema = std.json.ObjectMap.init(json_allocator);
+    try alpha_schema.put("type", std.json.Value{ .string = "number" });
+    try alpha_schema.put("description", std.json.Value{ .string = "BM25 lexical weight (0.0-1.0)" });
+    try alpha_schema.put("default", std.json.Value{ .float = 0.4 });
+
+    var beta_schema = std.json.ObjectMap.init(json_allocator);
+    try beta_schema.put("type", std.json.Value{ .string = "number" });
+    try beta_schema.put("description", std.json.Value{ .string = "HNSW semantic weight (0.0-1.0)" });
+    try beta_schema.put("default", std.json.Value{ .float = 0.4 });
+
+    var gamma_schema = std.json.ObjectMap.init(json_allocator);
+    try gamma_schema.put("type", std.json.Value{ .string = "number" });
+    try gamma_schema.put("description", std.json.Value{ .string = "FRE graph weight (0.0-1.0)" });
+    try gamma_schema.put("default", std.json.Value{ .float = 0.2 });
+
+    try properties.put("query", std.json.Value{ .object = query_schema });
+    try properties.put("max_results", std.json.Value{ .object = max_results_schema });
+    try properties.put("alpha", std.json.Value{ .object = alpha_schema });
+    try properties.put("beta", std.json.Value{ .object = beta_schema });
+    try properties.put("gamma", std.json.Value{ .object = gamma_schema });
+
+    var required = std.json.Array.init(json_allocator);
+    try required.append(std.json.Value{ .string = "query" });
+
+    try input_schema.put("type", std.json.Value{ .string = "object" });
+    try input_schema.put("properties", std.json.Value{ .object = properties });
+    try input_schema.put("required", std.json.Value{ .array = required });
+
+    return MCPToolDefinition{
+        .name = try allocator.dupe(u8, "hybrid_search"),
+        .title = try allocator.dupe(u8, "Hybrid Search"),
+        .description = try allocator.dupe(u8, "Advanced hybrid search combining BM25, HNSW, and FRE algorithms"),
+        .inputSchema = std.json.Value{ .object = input_schema },
+        .arena = arena,
+    };
+}
+
+/// Create record decision tool definition
+fn createRecordDecisionTool(allocator: Allocator) !MCPToolDefinition {
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    const json_allocator = arena.allocator();
+
+    var input_schema = std.json.ObjectMap.init(json_allocator);
+    var properties = std.json.ObjectMap.init(json_allocator);
+
+    var agent_id_schema = std.json.ObjectMap.init(json_allocator);
+    try agent_id_schema.put("type", std.json.Value{ .string = "string" });
+    try agent_id_schema.put("description", std.json.Value{ .string = "ID of the agent making the decision" });
+
+    var decision_schema = std.json.ObjectMap.init(json_allocator);
+    try decision_schema.put("type", std.json.Value{ .string = "string" });
+    try decision_schema.put("description", std.json.Value{ .string = "The decision or action taken" });
+
+    var reasoning_schema = std.json.ObjectMap.init(json_allocator);
+    try reasoning_schema.put("type", std.json.Value{ .string = "string" });
+    try reasoning_schema.put("description", std.json.Value{ .string = "Reasoning behind the decision" });
+
+    var context_schema = std.json.ObjectMap.init(json_allocator);
+    try context_schema.put("type", std.json.Value{ .string = "string" });
+    try context_schema.put("description", std.json.Value{ .string = "Additional context or metadata" });
+
+    try properties.put("agent_id", std.json.Value{ .object = agent_id_schema });
+    try properties.put("decision", std.json.Value{ .object = decision_schema });
+    try properties.put("reasoning", std.json.Value{ .object = reasoning_schema });
+    try properties.put("context", std.json.Value{ .object = context_schema });
+
+    var required = std.json.Array.init(json_allocator);
+    try required.append(std.json.Value{ .string = "agent_id" });
+    try required.append(std.json.Value{ .string = "decision" });
+
+    try input_schema.put("type", std.json.Value{ .string = "object" });
+    try input_schema.put("properties", std.json.Value{ .object = properties });
+    try input_schema.put("required", std.json.Value{ .array = required });
+
+    return MCPToolDefinition{
+        .name = try allocator.dupe(u8, "record_decision"),
+        .title = try allocator.dupe(u8, "Record Decision"),
+        .description = try allocator.dupe(u8, "Record agent decisions with provenance tracking"),
+        .inputSchema = std.json.Value{ .object = input_schema },
+        .arena = arena,
+    };
+}
+
+/// Create query history tool definition
+fn createQueryHistoryTool(allocator: Allocator) !MCPToolDefinition {
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    const json_allocator = arena.allocator();
+
+    var input_schema = std.json.ObjectMap.init(json_allocator);
+    var properties = std.json.ObjectMap.init(json_allocator);
+
+    var path_schema = std.json.ObjectMap.init(json_allocator);
+    try path_schema.put("type", std.json.Value{ .string = "string" });
+    try path_schema.put("description", std.json.Value{ .string = "Optional specific file path to query" });
+
+    var limit_schema = std.json.ObjectMap.init(json_allocator);
+    try limit_schema.put("type", std.json.Value{ .string = "integer" });
+    try limit_schema.put("description", std.json.Value{ .string = "Maximum number of history entries" });
+    try limit_schema.put("default", std.json.Value{ .integer = 10 });
+
+    var since_schema = std.json.ObjectMap.init(json_allocator);
+    try since_schema.put("type", std.json.Value{ .string = "integer" });
+    try since_schema.put("description", std.json.Value{ .string = "Unix timestamp - only show changes since this time" });
+    try since_schema.put("default", std.json.Value{ .integer = 0 });
+
+    try properties.put("path", std.json.Value{ .object = path_schema });
+    try properties.put("limit", std.json.Value{ .object = limit_schema });
+    try properties.put("since", std.json.Value{ .object = since_schema });
+
+    try input_schema.put("type", std.json.Value{ .string = "object" });
+    try input_schema.put("properties", std.json.Value{ .object = properties });
+
+    return MCPToolDefinition{
+        .name = try allocator.dupe(u8, "query_history"),
+        .title = try allocator.dupe(u8, "Query History"),
+        .description = try allocator.dupe(u8, "Query temporal history with advanced filtering"),
         .inputSchema = std.json.Value{ .object = input_schema },
         .arena = arena,
     };

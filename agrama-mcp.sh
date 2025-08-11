@@ -1,6 +1,6 @@
 #!/bin/bash
-# MCP Server Wrapper for Agrama
-# This ensures the binary is properly executed with correct paths
+# MCP Server Direct Execution Wrapper
+# Simply executes the binary directly without background processes
 
 # Get the directory where this script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -15,5 +15,7 @@ if [ ! -f "$AGRAMA_BIN" ]; then
     exit 1
 fi
 
-# Execute the MCP server
+# Execute the MCP server directly (no background process)
+# This preserves stdin/stdout for MCP protocol communication
+# Enhanced mode is default, so just use mcp command
 exec "$AGRAMA_BIN" mcp
