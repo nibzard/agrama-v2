@@ -486,6 +486,24 @@ pub const BenchmarkRunner = struct {
         }
         return false;
     }
+
+    /// Validate primitive performance claims (<1ms P50 latency)
+    pub fn validatePrimitiveClaims(self: *BenchmarkRunner) bool {
+        var primitive_results: usize = 0;
+        var primitive_passed: usize = 0;
+        
+        for (self.results.items) |result| {
+            if (std.mem.indexOf(u8, result.name, "primitive_") != null) {
+                primitive_results += 1;
+                if (result.p50_latency <= 1.0 and result.passed_targets) { // <1ms P50 target
+                    primitive_passed += 1;
+                }
+            }
+        }
+        
+        // At least 80% of primitive benchmarks should pass
+        return primitive_results > 0 and primitive_passed >= (primitive_results * 4) / 5;
+    }
 };
 
 /// Utility functions for statistical analysis

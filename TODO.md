@@ -1,8 +1,81 @@
 # Agrama Development Tasks
 
-## Current Sprint - Stability & Polish
+## PHASE 1: REVOLUTIONARY PRIMITIVE-BASED AI MEMORY SUBSTRATE (Week 1) [P0]
 
-### Critical Issues (P0)
+**CRITICAL TRANSFORMATION**: Moving from complex MCP tools to composable primitives that enable LLMs to architect their own memory systems. This represents a fundamental breakthrough in AI agent infrastructure.
+
+### Core Architecture Tasks [P0]
+- [ ] **[P0] Core Primitives Implementation** - Implement 5 fundamental primitives (store, retrieve, search, link, transform)
+  - File: `src/primitives.zig` - Define primitive interface, validation, and metadata system
+  - Context: Replace 50+ parameter tools with 5 composable primitives
+  - Acceptance: All primitives with full validation, metadata, and error handling
+  - Estimate: 2 days | Dependencies: None | Assignee: @db-engineer
+
+- [ ] **[P0] Primitive Execution Engine** - Create primitive registry and execution engine
+  - File: `src/primitive_engine.zig` - Registry, context management, logging, provenance
+  - Context: Central orchestrator for all primitive operations with full observability
+  - Acceptance: Engine handles primitive execution, validation, logging, and context
+  - Estimate: 2 days | Dependencies: Core primitives | Assignee: @db-engineer
+
+- [ ] **[P0] Primitives MCP Server** - Build new MCP server exposing primitive interface
+  - File: `src/mcp_primitive_server.zig` - WebSocket events, multi-agent support
+  - Context: Replace existing complex MCP tools with simple primitive interface
+  - Acceptance: MCP server exposes primitives, handles multi-agent, broadcasts events
+  - Estimate: 3 days | Dependencies: Primitive engine | Assignee: @mcp-specialist
+
+### Individual Primitive Implementation [P0]
+- [ ] **[P0] STORE Primitive** - Universal storage with rich metadata and provenance
+  - Implementation: Key-value storage, semantic indexing, metadata enhancement
+  - Features: Agent provenance, timestamp tracking, automatic semantic indexing
+  - Performance: <1ms P50 latency, metadata queryability
+  - Assignee: @db-engineer
+
+- [ ] **[P0] RETRIEVE Primitive** - Get data with full context and history
+  - Implementation: Content retrieval, metadata access, optional history inclusion
+  - Features: Existence checking, metadata parsing, temporal history access
+  - Performance: <1ms P50 latency, efficient metadata handling
+  - Assignee: @db-engineer
+
+- [ ] **[P0] SEARCH Primitive** - Unified search across all indices
+  - Implementation: Semantic (HNSW), lexical (BM25), graph (FRE), temporal, hybrid
+  - Features: Configurable search types, threshold filtering, result ranking
+  - Performance: <5ms P50 latency for complex hybrid searches
+  - Assignee: @db-engineer + @perf-engineer
+
+- [ ] **[P0] LINK Primitive** - Create relationships in knowledge graph
+  - Implementation: Bidirectional relationships, metadata support, graph updates
+  - Features: Relationship types, metadata attachment, graph consistency
+  - Performance: <1ms P50 latency, efficient graph updates
+  - Assignee: @db-engineer
+
+- [ ] **[P0] TRANSFORM Primitive** - Apply operations to data with extensible registry
+  - Implementation: Operation registry, composable transforms, validation
+  - Features: Text parsing, analysis, compression, validation operations
+  - Performance: <5ms P50 latency depending on operation complexity
+  - Assignee: @db-engineer
+
+### Quality Assurance [P0]
+- [ ] **[P0] Primitive Test Suite** - Comprehensive testing framework
+  - Coverage: Unit tests for each primitive, integration tests, performance tests
+  - Features: Multi-agent scenarios, error handling, edge cases
+  - Acceptance: >95% test coverage, all tests passing
+  - Assignee: @qa-engineer
+
+- [ ] **[P0] Performance Benchmarking** - Primitive performance validation
+  - Targets: <1ms P50 primitive execution, >1000 ops/second throughput
+  - Features: Latency measurement, throughput testing, memory profiling
+  - Acceptance: All performance targets met with regression detection
+  - Assignee: @perf-engineer
+
+- [ ] **[P0] Build System Updates** - Integrate primitive system into build
+  - Files: `build.zig` updates for new modules and dependencies
+  - Features: Primitive compilation, test integration, benchmarking
+  - Acceptance: `zig build`, `zig build test`, `zig build bench-primitives` all work
+  - Assignee: @db-engineer
+
+## Previous Sprint - Stability Issues [P1] (Deprioritized)
+
+### Critical Issues (P1) - After Phase 1
 - [ ] **Fix Memory Leak** - Resolve triple hybrid search memory leak causing 1 test failure
   - File: `src/triple_hybrid_search.zig:385`
   - Issue: Memory allocation in `combineResults` not properly cleaned up
@@ -13,63 +86,89 @@
   - Target: Stable performance up to 25K nodes
   - Focus: HNSW index efficiency and FRE scaling
 
-### High Priority (P1)
-- [ ] **Enhanced MCP Tools** - Add 3 new MCP tools for better AI integration
-  - `code_analysis`: AST parsing and static analysis
-  - `dependency_map`: Complete dependency visualization
-  - `temporal_query`: Time-based code evolution queries
-  - Target: 8 total MCP tools
+## PHASE 2: ADVANCED TRANSFORM OPERATIONS (Week 2) [P1] - After Phase 1
 
-- [ ] **Installation Script** - One-command setup for new users
-  - Create `install.sh` script for Linux/macOS
-  - Automate Zig installation if missing
-  - Configure MCP client settings
+### Transform Operation Registry [P1]
+- [ ] **[P1] Transform Operations** - Implement 20+ composable transform operations
+  - Context: Enable LLMs to apply complex operations through simple transform primitive
+  - Operations: parse_functions, extract_imports, generate_embedding, analyze_complexity
+  - Acceptance: Full operation registry with validation and composition support
+  - Estimate: 2 days | Dependencies: Transform primitive | Assignee: @db-engineer
+
+- [ ] **[P1] Advanced Search Types** - Enhanced search patterns and filtering
+  - Features: Temporal search, graph traversal patterns, semantic clustering
+  - Context: Enable sophisticated search compositions through search primitive
+  - Acceptance: 5+ search modes fully implemented and tested
+  - Estimate: 2 days | Dependencies: Search primitive | Assignee: @perf-engineer
+
+## PHASE 3: MULTI-AGENT COLLABORATION SUBSTRATE (Week 3) [P1] - After Phase 2
+
+### Collaboration Infrastructure [P1]  
+- [ ] **[P1] Agent Identity System** - Full provenance and identity tracking
+  - Features: Agent operations, dependency tracking, conflict detection
+  - Context: Enable seamless multi-agent collaboration with full traceability
+  - Acceptance: All operations tracked with full provenance chain
+  - Estimate: 2 days | Dependencies: Primitive engine | Assignee: @mcp-specialist
+
+- [ ] **[P1] Real-Time Events** - WebSocket streaming of all primitive operations
+  - Features: Event broadcasting, agent coordination, live collaboration
+  - Context: Enable real-time multi-agent awareness and coordination
+  - Acceptance: All primitive operations broadcast with <10ms latency
+  - Estimate: 2 days | Dependencies: Agent identity | Assignee: @mcp-specialist
+
+- [ ] **[P1] Conflict Resolution** - Automated conflict detection and resolution
+  - Features: Conflict detection primitives, resolution strategies, agent sync
+  - Context: Enable safe multi-agent collaboration without data corruption
+  - Acceptance: Conflict detection and resolution working for 5+ agents
+  - Estimate: 3 days | Dependencies: Real-time events | Assignee: @mcp-specialist
+
+## LEGACY FEATURES (P2) - Maintain But Deprioritize
+
+### Installation & Documentation [P2]
+- [ ] **[P2] Installation Script** - One-command setup for new users
+  - Create `install.sh` script for Linux/macOS, automate Zig installation
   - Target: <5 minute setup time
+  - Assignee: @qa-engineer
 
-- [ ] **API Documentation** - Complete REST/MCP API documentation
-  - Document all MCP tool parameters and responses
-  - Add code examples for each tool
-  - Create integration guides for Claude Code/Cursor
-  - Target: Production-ready documentation
+- [ ] **[P2] Primitive API Documentation** - Complete primitive interface documentation
+  - Document all primitive parameters, composition patterns, LLM usage examples
+  - Create integration guides for primitive-based workflows
+  - Target: Production-ready primitive documentation
+  - Assignee: @frontend-engineer
 
-### Medium Priority (P2)  
-- [ ] **Observatory Improvements** - Enhance web interface
-  - Add performance trend charts
-  - Implement graph filtering and search
-  - Create agent activity timeline
-  - Target: Better developer experience
+### Observatory Enhancements [P2]
+- [ ] **[P2] Observatory Primitive View** - Visualize primitive operations
+  - Add primitive operation timeline, agent activity visualization
+  - Show primitive compositions and data flow
+  - Target: Real-time primitive operation visibility
+  - Assignee: @frontend-engineer
 
-- [ ] **Error Handling** - Improve MCP server resilience
-  - Better error messages and recovery
-  - Graceful handling of malformed requests
-  - Connection retry logic
-  - Target: Production-stable MCP server
+- [ ] **[P2] Error Handling** - Improve primitive server resilience
+  - Better error messages for primitive validation failures
+  - Graceful handling of malformed primitive requests
+  - Target: Production-stable primitive server
+  - Assignee: @mcp-specialist
 
-- [ ] **Configuration System** - Centralized config management
-  - YAML/TOML configuration files
-  - Environment variable support
-  - Runtime configuration updates
-  - Target: Easy deployment configuration
+## BACKLOG - Advanced Features (P3)
 
-## Backlog - Future Features
+### Future Primitive Capabilities [P3]
+- [ ] **[P3] Advanced Primitives** - Specialized primitives for complex workflows
+  - Features: batch_execute, conditional_operations, workflow_primitives
+  - Context: Enable more sophisticated LLM compositions
+  
+- [ ] **[P3] Multi-Modal Primitives** - Support for non-text data
+  - Features: image_store, audio_transform, multi_modal_search
+  - Context: Expand beyond text-only AI memory substrate
 
-### Enhanced Capabilities
-- [ ] **Multi-Modal Search** - Support text + code + documentation search
-- [ ] **Advanced Visualizations** - 3D graph rendering, timeline views
-- [ ] **Collaboration Features** - Multi-agent coordination and conflict resolution
-- [ ] **Export/Import** - Data export to standard formats (GraphML, JSON)
+### Performance & Scaling [P3]
+- [ ] **[P3] Distributed Primitives** - Multi-node primitive execution
+- [ ] **[P3] Caching Layer** - Primitive result caching with intelligent invalidation
+- [ ] **[P3] Parallel Execution** - Concurrent primitive operations with dependency resolution
 
-### Performance & Scaling
-- [ ] **Parallel HNSW** - Multi-threaded index operations
-- [ ] **Caching Layer** - Query result caching with LRU eviction
-- [ ] **Database Backends** - PostgreSQL/SQLite backend options
-- [ ] **Distributed Architecture** - Multi-node deployment support
-
-### Production Features
-- [ ] **Authentication** - Role-based access control
-- [ ] **Rate Limiting** - API rate limiting and quotas
-- [ ] **Monitoring** - Prometheus metrics and health checks
-- [ ] **Docker Images** - Production-ready containerization
+### Production Features [P3]
+- [ ] **[P3] Authentication** - Role-based access control for primitives
+- [ ] **[P3] Rate Limiting** - Primitive operation quotas and throttling  
+- [ ] **[P3] Monitoring** - Primitive performance metrics and health checks
 
 ## Completed ✅
 
@@ -84,52 +183,120 @@
 - [x] **Build System** - Zig build configuration
 - [x] **Documentation Consolidation** - Realistic, focused docs
 
-## Development Guidelines
+## PRIMITIVE SYSTEM PERFORMANCE TARGETS
 
-### Before Starting Any Task
-1. Ensure `zig build test` passes (64/65 tests)
-2. Run `zig build bench-quick` to establish performance baseline
-3. Check current memory usage with valgrind if available
+### Phase 1 Primitive Targets (Week 1)
+- **Primitive Execution**: <1ms P50 latency for STORE, RETRIEVE, LINK
+- **Search Operations**: <5ms P50 latency for complex hybrid searches  
+- **Transform Operations**: <5ms P50 latency depending on operation complexity
+- **Throughput**: >1000 primitive operations/second sustained
+- **Memory Usage**: <100MB for 1M stored items with metadata
+- **Multi-Agent**: Support 10+ concurrent agents without degradation
 
-### Code Quality Standards
-- **Memory Safety**: Use proper Zig allocator patterns with `defer`
-- **Testing**: Add unit tests for all new functionality
-- **Performance**: Benchmark performance-critical changes
-- **Documentation**: Update relevant docs for user-facing changes
+### Phase 2-3 Advanced Targets (Week 2-3)
+- **Multi-Agent Sync**: <10ms conflict detection and resolution
+- **Event Broadcasting**: <10ms latency for real-time primitive events
+- **Complex Compositions**: 10+ step primitive workflows <100ms end-to-end
+- **Concurrency**: 100+ simultaneous agents collaborating safely
 
-### Definition of Done
-- [ ] Feature implemented and working
-- [ ] Unit tests added and passing
-- [ ] Integration tests pass
-- [ ] Performance impact measured (no regressions)
-- [ ] Documentation updated
-- [ ] Code reviewed and approved
+## DEVELOPMENT COORDINATION
 
-## Performance Targets
+### Team Assignment Strategy
+- **@db-engineer**: Lead on primitives.zig, primitive_engine.zig, core primitive implementations
+- **@mcp-specialist**: Lead on mcp_primitive_server.zig, multi-agent features, WebSocket events  
+- **@perf-engineer**: Performance optimization, benchmarking, advanced search implementations
+- **@qa-engineer**: Test frameworks, validation, installation scripts
+- **@frontend-engineer**: Observatory updates, documentation, visualization
+- **@task-master**: Coordinate phases, track dependencies, manage transitions
 
-### Current Baseline (5K nodes)
-- HNSW Search: 0.21ms P50, 4,600 QPS
-- FRE Traversal: 5.6ms P50, 180 QPS  
-- MCP Tools: 0.26ms P50, 3,800 QPS
-- Memory Usage: ~200MB total
+### Phase Dependencies
+```
+Week 1: Core Primitives Foundation
+├── Days 1-2: primitives.zig (all 5 primitives) → @db-engineer
+├── Days 3-4: primitive_engine.zig (execution engine) → @db-engineer  
+├── Days 5-7: mcp_primitive_server.zig (MCP interface) → @mcp-specialist
+└── Parallel: Testing & benchmarking → @qa-engineer + @perf-engineer
 
-### Phase 1 Targets (25K nodes)
-- HNSW Search: <0.5ms P50, >2,000 QPS
-- FRE Traversal: <10ms P50, >100 QPS
-- MCP Tools: <0.5ms P50, >2,000 QPS
-- Memory Usage: <500MB total
+Week 2: Advanced Operations (After Week 1 complete)
+├── Transform operations → @db-engineer
+├── Advanced search patterns → @perf-engineer
+└── Enhanced documentation → @frontend-engineer
 
-## Current Blockers
+Week 3: Multi-Agent Collaboration (After Week 2 complete)
+├── Agent identity & provenance → @mcp-specialist
+├── Real-time event system → @mcp-specialist
+└── Conflict resolution → @mcp-specialist
+```
 
-None - project is building and 98.5% of tests passing.
+### Critical Success Factors
+1. **Week 1 Foundation MUST be solid** - All phases depend on robust primitive implementation
+2. **Performance targets are non-negotiable** - <1ms primitive latency enables LLM composition
+3. **Multi-agent safety is critical** - Conflict resolution prevents data corruption
+4. **Comprehensive testing required** - 95%+ coverage ensures production readiness
 
-## Notes
+## PRIMITIVE SYSTEM DEFINITION OF DONE
 
-### Recent Changes
-- Fixed compilation errors in `agent_manager.zig`
-- Consolidated documentation from 9,000+ lines to focused guides
-- Validated actual performance through benchmark results
-- Aligned claims with demonstrated capabilities
+### For Each Primitive (STORE, RETRIEVE, SEARCH, LINK, TRANSFORM)
+- [ ] Core functionality implemented with full error handling
+- [ ] JSON schema validation for all inputs and outputs
+- [ ] Comprehensive metadata support with provenance tracking
+- [ ] Unit tests with >95% coverage including edge cases
+- [ ] Performance benchmarks meeting latency targets
+- [ ] Multi-agent safety validation (concurrent access)
+- [ ] Memory safety verification (no leaks, proper cleanup)
+- [ ] Integration with primitive engine and MCP server
 
-### Next Review
-Review and update this TODO list weekly to maintain focus on achievable, valuable work.
+### For Primitive Engine
+- [ ] Registry system for all primitive operations
+- [ ] Context management with agent identity and timestamps
+- [ ] Operation logging and provenance tracking
+- [ ] Error handling and validation framework
+- [ ] Performance monitoring and metrics collection
+- [ ] Memory management with proper allocator patterns
+
+### For MCP Primitive Server  
+- [ ] MCP protocol compliance for primitive interface
+- [ ] WebSocket event broadcasting for real-time updates
+- [ ] Multi-agent session management and identification
+- [ ] Request validation and error response handling
+- [ ] Integration testing with actual MCP clients
+- [ ] Performance testing under concurrent load
+
+## CURRENT STATUS & BLOCKERS
+
+### Project State
+- Building: ✅ `zig build` successful
+- Tests: ⚠️ 64/65 tests passing (1 memory leak in triple_hybrid_search.zig)
+- Performance: ✅ Baseline established, ready for primitive implementation
+- Architecture: ✅ Existing database/search/graph systems ready for primitive layer
+
+### Phase 1 Readiness
+- **No blockers** for primitive implementation
+- Existing codebase provides solid foundation (Database, SemanticDatabase, TripleHybridSearchEngine)
+- Memory leak fix can be addressed in parallel or after Phase 1
+- Team coordination established with clear responsibilities
+
+### Next Actions
+1. **@db-engineer**: Start primitives.zig implementation immediately
+2. **@mcp-specialist**: Review existing MCP server for primitive integration planning  
+3. **@perf-engineer**: Set up primitive benchmarking framework
+4. **@qa-engineer**: Design primitive test strategy and framework
+5. **@task-master**: Daily standup to track progress and resolve blockers
+
+## TRANSFORMATION SUCCESS METRICS
+
+### Technical Achievement
+- **5 Core Primitives**: All implemented with <1ms P50 latency
+- **Primitive Engine**: Robust execution with full observability
+- **MCP Interface**: Seamless integration replacing complex tools
+- **Multi-Agent Support**: 10+ agents collaborating safely
+- **LLM Composition**: Complex workflows through simple primitives
+
+### Business Impact
+- **Paradigm Shift**: From complex tools to composable primitives
+- **AI Agent Innovation**: Enable LLMs to architect their own memory
+- **Multi-Agent Breakthrough**: Seamless collaboration infrastructure  
+- **Developer Experience**: Simple primitives enable complex behaviors
+- **Industry Leadership**: "Git for the AI agent age" positioning
+
+This represents the most significant transformation in AI agent infrastructure - moving from building tools FOR AI to building infrastructure that AI can reconfigure. Success establishes Agrama as the definitive collaborative AI memory substrate.

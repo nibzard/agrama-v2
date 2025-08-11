@@ -489,6 +489,10 @@ const BenchmarkSuite = struct {
         try mcp_benchmarks.registerMCPBenchmarks(&self.runner.registry);
         print("   ✅ MCP benchmarks registered\n", .{});
 
+        const primitive_benchmarks = @import("primitive_benchmarks.zig");
+        try primitive_benchmarks.registerPrimitiveBenchmarks(&self.runner.registry);
+        print("   ✅ Primitive benchmarks registered\n", .{});
+
         print("📊 Total benchmarks registered: {d}\n\n", .{self.runner.registry.benchmarks.items.len});
     }
 
@@ -520,7 +524,14 @@ const BenchmarkSuite = struct {
         print("Sub-100ms MCP responses: {s}\n", .{if (mcp_validated) "✅ VALIDATED" else "❌ NOT MET"});
         if (mcp_validated) claims_met += 1;
 
-        print("\n📊 Performance Claims Summary: {d}/{d} validated ({d:.0}%)\n", .{ claims_met, total_claims, (@as(f64, @floatFromInt(claims_met)) / @as(f64, @floatFromInt(total_claims))) * 100 });
+        // Primitive Claims: <1ms P50 latency
+        const primitives_validated = self.runner.validatePrimitiveClaims();
+        print("Sub-1ms primitive operations: {s}\n", .{if (primitives_validated) "✅ VALIDATED" else "❌ NOT MET"});
+        if (primitives_validated) claims_met += 1;
+
+        const updated_total_claims: u32 = total_claims + 1;
+
+        print("\n📊 Performance Claims Summary: {d}/{d} validated ({d:.0}%)\n", .{ claims_met, updated_total_claims, (@as(f64, @floatFromInt(claims_met)) / @as(f64, @floatFromInt(updated_total_claims))) * 100 });
     }
 
     /// Generate comprehensive reports

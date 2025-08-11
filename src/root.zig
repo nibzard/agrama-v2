@@ -99,6 +99,24 @@ pub const TripleHybridQuery = @import("triple_hybrid_search.zig").HybridQuery;
 pub const TripleHybridResult = @import("triple_hybrid_search.zig").TripleHybridResult;
 pub const HybridSearchStats = @import("triple_hybrid_search.zig").HybridSearchStats;
 
+// Export Primitive System components
+pub const Primitive = @import("primitives.zig").Primitive;
+pub const PrimitiveContext = @import("primitives.zig").PrimitiveContext;
+pub const PrimitiveMetadata = @import("primitives.zig").PrimitiveMetadata;
+pub const StorePrimitive = @import("primitives.zig").StorePrimitive;
+pub const RetrievePrimitive = @import("primitives.zig").RetrievePrimitive;
+pub const SearchPrimitive = @import("primitives.zig").SearchPrimitive;
+pub const LinkPrimitive = @import("primitives.zig").LinkPrimitive;
+pub const TransformPrimitive = @import("primitives.zig").TransformPrimitive;
+
+// Export Primitive Engine components
+pub const PrimitiveEngine = @import("primitive_engine.zig").PrimitiveEngine;
+pub const PrimitiveEngineStats = @import("primitive_engine.zig").PrimitiveEngineStats;
+
+// Export Primitive MCP Server components
+pub const PrimitiveMCPServer = @import("mcp_primitive_server.zig").PrimitiveMCPServer;
+pub const MCPPrimitiveDefinition = @import("mcp_primitive_server.zig").MCPPrimitiveDefinition;
+
 // Re-export for convenience
 pub const TemporalGraphDB = Database;
 

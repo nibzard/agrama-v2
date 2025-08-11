@@ -26,6 +26,8 @@ pub fn main() !void {
         try serveCommand(allocator, args[2..]);
     } else if (std.mem.eql(u8, command, "mcp")) {
         try mcpCommand(allocator, args[2..]);
+    } else if (std.mem.eql(u8, command, "primitive")) {
+        try primitiveCommand(allocator, args[2..]);
     } else if (std.mem.eql(u8, command, "test-db")) {
         try testDatabaseCommand(allocator);
     } else if (std.mem.eql(u8, command, "version")) {
@@ -48,6 +50,7 @@ fn printUsage() !void {
         \\COMMANDS:
         \\    serve       Start the MCP server with WebSocket support (legacy)
         \\    mcp         Start MCP compliant server with stdio transport
+        \\    primitive   Start revolutionary primitive-based MCP server
         \\    test-db     Test database functionality
         \\    version     Show version information
         \\
@@ -60,6 +63,7 @@ fn printUsage() !void {
         \\EXAMPLES:
         \\    agrama serve                 # Start WebSocket server on default port 8080
         \\    agrama mcp                   # Start MCP compliant server (stdio transport)
+        \\    agrama primitive             # Start primitive-based MCP server (recommended)
         \\    agrama serve --port 9000     # Start WebSocket server on port 9000
         \\    agrama test-db               # Test database operations
         \\
@@ -296,6 +300,151 @@ fn mcpCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
             std.process.exit(1);
         };
     }
+
+    // MCP stdio transport: no shutdown logging to maintain protocol compliance
+}
+
+fn primitiveCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
+    var hnsw_dimensions: u32 = 768;
+    var enable_semantic = true;
+    var enable_graph = true;
+
+    // Parse primitive command arguments
+    var i: usize = 0;
+    while (i < args.len) {
+        const arg = args[i];
+        if (std.mem.eql(u8, arg, "--help")) {
+            const stdout = std.io.getStdOut().writer();
+            try stdout.writeAll(
+                \\Primitive-Based MCP Server
+                \\
+                \\Revolutionary MCP server exposing 5 core primitives instead of complex tools.
+                \\Enables LLMs to compose their own memory architectures and analysis pipelines.
+                \\
+                \\USAGE:
+                \\    agrama primitive [OPTIONS]
+                \\
+                \\OPTIONS:
+                \\    --dimensions <DIM>      HNSW vector dimensions (default: 768)
+                \\    --no-semantic           Disable semantic database
+                \\    --no-graph              Disable graph engine
+                \\    --help                  Show this help message
+                \\
+                \\CORE PRIMITIVES:
+                \\    store                   Universal storage with rich metadata and provenance
+                \\    retrieve                Data access with history and context
+                \\    search                  Unified search (semantic/lexical/graph/temporal/hybrid)
+                \\    link                    Knowledge graph relationships with metadata
+                \\    transform               Extensible operation registry for data transformation
+                \\
+                \\PERFORMANCE TARGETS:
+                \\    Response Time:          <1ms P50 latency for primitive operations
+                \\    Throughput:             1000+ primitive ops/second
+                \\    Memory Usage:           Fixed allocation <10GB for 1M entities
+                \\    Storage Efficiency:     5× reduction through anchor+delta compression
+                \\
+                \\COMPOSITION EXAMPLES:
+                \\    # Store concept with metadata
+                \\    store('concept_v1', idea_text, {'confidence': 0.7, 'source': 'brainstorm'})
+                \\
+                \\    # Retrieve with history
+                \\    retrieve('concept_v1', {'include_history': true})
+                \\
+                \\    # Hybrid search across all indices
+                \\    search('authentication code', 'hybrid', {'weights': {'semantic': 0.6, 'lexical': 0.4}})
+                \\
+                \\    # Create knowledge graph relationships
+                \\    link('module_a', 'module_b', 'depends_on', {'strength': 0.8})
+                \\
+                \\    # Transform data with extensible operations
+                \\    transform('parse_functions', code_content, {'language': 'zig'})
+                \\
+                \\EXAMPLE USAGE:
+                \\    agrama primitive                    # Start with full capabilities (recommended)
+                \\    agrama primitive --dimensions 1024  # Custom embedding dimensions
+                \\    agrama primitive --no-graph         # Disable graph features for basic usage
+                \\
+            );
+            return;
+        } else if (std.mem.eql(u8, arg, "--dimensions")) {
+            if (i + 1 >= args.len) {
+                std.log.err("--dimensions requires a value", .{});
+                std.process.exit(1);
+            }
+            i += 1;
+            hnsw_dimensions = std.fmt.parseInt(u32, args[i], 10) catch |err| {
+                std.log.err("Invalid dimensions: {s} ({any})", .{ args[i], err });
+                std.process.exit(1);
+            };
+        } else if (std.mem.eql(u8, arg, "--no-semantic")) {
+            enable_semantic = false;
+        } else if (std.mem.eql(u8, arg, "--no-graph")) {
+            enable_graph = false;
+        } else {
+            std.log.err("Unknown primitive option: {s}", .{arg});
+            std.process.exit(1);
+        }
+        i += 1;
+    }
+
+    // MCP stdio transport: stdout is reserved for JSON-RPC protocol only
+    // Suppressing all non-error startup messages for MCP compliance
+
+    // Initialize database
+    var database = lib.Database.init(allocator);
+    defer database.deinit();
+
+    // Initialize semantic database if enabled
+    var semantic_db_instance: ?lib.SemanticDatabase = null;
+    var semantic_db: ?*lib.SemanticDatabase = null;
+    if (enable_semantic) {
+        const semantic_config = lib.SemanticDatabase.HNSWConfig{
+            .vector_dimensions = hnsw_dimensions,
+            .max_connections = 16,
+            .ef_construction = 200,
+            .matryoshka_dims = &[_]u32{ 64, 256, 768, 1024 },
+        };
+        
+        semantic_db_instance = lib.SemanticDatabase.init(allocator, semantic_config) catch |err| {
+            std.log.err("Failed to initialize semantic database: {any}", .{err});
+            std.process.exit(1);
+        };
+        semantic_db = &semantic_db_instance.?;
+    } else {
+        // Create minimal semantic database instance for interface compatibility
+        semantic_db_instance = lib.SemanticDatabase.init(allocator, .{}) catch |err| {
+            std.log.err("Failed to initialize minimal semantic database: {any}", .{err});
+            std.process.exit(1);
+        };
+        semantic_db = &semantic_db_instance.?;
+    }
+    defer if (semantic_db_instance) |*sdb| sdb.deinit();
+
+    // Initialize graph engine if enabled
+    var graph_engine_instance: ?lib.TripleHybridSearchEngine = null;
+    var graph_engine: ?*lib.TripleHybridSearchEngine = null;
+    if (enable_graph) {
+        graph_engine_instance = lib.TripleHybridSearchEngine.init(allocator);
+        graph_engine = &graph_engine_instance.?;
+    } else {
+        // Create minimal graph engine instance for interface compatibility
+        graph_engine_instance = lib.TripleHybridSearchEngine.init(allocator);
+        graph_engine = &graph_engine_instance.?;
+    }
+    defer if (graph_engine_instance) |*ge| ge.deinit();
+
+    // Initialize primitive MCP server
+    var primitive_server = lib.PrimitiveMCPServer.init(allocator, &database, semantic_db.?, graph_engine.?) catch |err| {
+        std.log.err("Failed to initialize Primitive MCP server: {any}", .{err});
+        std.process.exit(1);
+    };
+    defer primitive_server.deinit();
+
+    // Run the primitive server (blocks until stdin closes)
+    primitive_server.run() catch |err| {
+        std.log.err("Primitive MCP server error: {any}", .{err});
+        std.process.exit(1);
+    };
 
     // MCP stdio transport: no shutdown logging to maintain protocol compliance
 }
