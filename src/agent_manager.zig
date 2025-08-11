@@ -547,7 +547,7 @@ test "AgentManager initialization and cleanup" {
     var db = Database.init(allocator);
     defer db.deinit();
 
-    var mcp_server = MCPServer.init(allocator, &db);
+    var mcp_server = try MCPServer.init(allocator, &db);
     defer mcp_server.deinit();
 
     var ws_server = WebSocketServer.init(allocator, 8080);
@@ -569,7 +569,7 @@ test "agent registration and session management" {
     var db = Database.init(allocator);
     defer db.deinit();
 
-    var mcp_server = MCPServer.init(allocator, &db);
+    var mcp_server = try MCPServer.init(allocator, &db);
     defer mcp_server.deinit();
 
     var ws_server = WebSocketServer.init(allocator, 8080);
@@ -601,7 +601,7 @@ test "file lock management" {
     var db = Database.init(allocator);
     defer db.deinit();
 
-    var mcp_server = MCPServer.init(allocator, &db);
+    var mcp_server = try MCPServer.init(allocator, &db);
     defer mcp_server.deinit();
 
     var ws_server = WebSocketServer.init(allocator, 8080);
@@ -642,7 +642,7 @@ test "file access checking" {
     var db = Database.init(allocator);
     defer db.deinit();
 
-    var mcp_server = MCPServer.init(allocator, &db);
+    var mcp_server = try MCPServer.init(allocator, &db);
     defer mcp_server.deinit();
 
     var ws_server = WebSocketServer.init(allocator, 8080);
