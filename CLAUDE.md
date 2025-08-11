@@ -247,3 +247,4 @@ Always prioritize:
 3. **Collaboration**: Enable seamless AI-human teamwork through comprehensive observability
 4. **Quality**: Maintain high code standards through comprehensive testing and validation
 - Mever do wrappers and mocks, we need to strive to excellence.
+- Never hype achievements, you are serious people boy.
