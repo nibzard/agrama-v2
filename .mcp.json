@@ -1,11 +1,12 @@
 {
   "mcpServers": {
     "agrama": {
-      "command": "/home/dev/agrama-v2/zig-out/bin/agrama_v2",
+      "command": "/home/niko/agrama-v2/zig-out/bin/agrama_v2",
       "args": ["mcp"],
+      "cwd": "/home/niko/agrama-v2",
       "env": {
         "PATH": "/usr/local/bin:/usr/bin:/bin:/snap/bin",
-        "HOME": "/home/dev"
+        "HOME": "/home/niko"
       }
     }
   }
