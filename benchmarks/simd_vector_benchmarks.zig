@@ -55,14 +55,14 @@ const SIMDBenchmarkContext = struct {
         // Initialize test vectors with random data
         for (test_vectors, 0..) |*vec, i| {
             vec.* = try optimized_hnsw.VectorSIMD.init(allocator, dimensions);
-            
+
             // Fill with normalized random values
             var norm_sq: f32 = 0.0;
             for (vec.data) |*val| {
                 val.* = rng.random().floatNorm(f32);
                 norm_sq += val.* * val.*;
             }
-            
+
             // Normalize vector
             const norm = @sqrt(norm_sq);
             if (norm > 0.0) {
@@ -123,7 +123,7 @@ fn benchmarkSIMDVsScalar(allocator: Allocator, config: BenchmarkConfig) !Benchma
     // Benchmark SIMD implementation
     print("🚀 Benchmarking SIMD implementation ({d} iterations)...\n", .{config.iterations});
     timer = try Timer.start();
-    
+
     for (0..config.iterations) |i| {
         const idx1 = i % vector_count;
         const idx2 = (i + 1) % vector_count;
@@ -140,7 +140,7 @@ fn benchmarkSIMDVsScalar(allocator: Allocator, config: BenchmarkConfig) !Benchma
 
     // Benchmark scalar implementation for comparison
     print("📊 Benchmarking scalar fallback ({d} iterations)...\n", .{config.iterations});
-    
+
     for (0..config.iterations) |i| {
         const idx1 = i % vector_count;
         const idx2 = (i + 1) % vector_count;
@@ -175,7 +175,7 @@ fn benchmarkSIMDVsScalar(allocator: Allocator, config: BenchmarkConfig) !Benchma
     print("   Speedup (P50): {d:.2}×\n", .{speedup_p50});
     print("   Speedup (Mean): {d:.2}×\n", .{speedup_mean});
 
-    const has_simd_support = comptime builtin.cpu.arch == .x86_64 and 
+    const has_simd_support = comptime builtin.cpu.arch == .x86_64 and
         std.Target.x86.featureSetHas(builtin.cpu.features, .avx2);
 
     return BenchmarkResult{
@@ -354,8 +354,7 @@ fn benchmarkDimensionScaling(allocator: Allocator, config: BenchmarkConfig) !Ben
             const prev = dimension_results.items[i - 1];
             const scaling_factor = result.latency / prev.latency;
             const theoretical_scaling = @as(f64, @floatFromInt(result.dims)) / @as(f64, @floatFromInt(prev.dims));
-            print("   {d}D→{d}D: {d:.2}× actual vs {d:.2}× theoretical\n", 
-                .{ prev.dims, result.dims, scaling_factor, theoretical_scaling });
+            print("   {d}D→{d}D: {d:.2}× actual vs {d:.2}× theoretical\n", .{ prev.dims, result.dims, scaling_factor, theoretical_scaling });
         }
     }
 

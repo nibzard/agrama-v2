@@ -434,12 +434,12 @@ pub fn main() !void {
         }
     }
     const allocator = gpa.allocator();
-    
+
     const config = FuzzConfig{
         .iterations = 500, // Reduced for faster testing
         .max_input_size = 5000,
     };
-    
+
     const results = try runFuzzTestSuite(allocator, config);
     defer {
         for (results) |*result| {
@@ -447,18 +447,17 @@ pub fn main() !void {
         }
         allocator.free(results);
     }
-    
+
     // Print summary
     print("\n🔀 FUZZ TEST SUMMARY:\n", .{});
     var all_passed = true;
     for (results) |result| {
         const status = if (result.passed) "✅" else "❌";
-        print("{s} {s}: {} iterations, {} crashes, {} hangs\n", 
-              .{ status, result.test_name, result.iterations_completed, result.crashes_detected, result.hangs_detected });
-        
+        print("{s} {s}: {} iterations, {} crashes, {} hangs\n", .{ status, result.test_name, result.iterations_completed, result.crashes_detected, result.hangs_detected });
+
         if (!result.passed) all_passed = false;
     }
-    
+
     const exit_code: u8 = if (all_passed) 0 else 1;
     std.process.exit(exit_code);
 }

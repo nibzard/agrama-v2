@@ -1909,7 +1909,8 @@ pub const EnhancedMCPSecurityTestSuite = struct {
         var medium_issues: u32 = 0;
         var low_issues: u32 = 0;
 
-        var category_stats = std.EnumMap(SecurityTestResult.TestCategory, struct { total: u32 = 0, passed: u32 = 0, vulns: u32 = 0 }){};
+        const StatEntry = struct { total: u32 = 0, passed: u32 = 0, vulns: u32 = 0 };
+        var category_stats = std.EnumMap(SecurityTestResult.TestCategory, StatEntry){};
 
         for (self.results.items) |result| {
             total_tests += 1;
@@ -1923,7 +1924,7 @@ pub const EnhancedMCPSecurityTestSuite = struct {
                 .low => low_issues += 1,
             }
 
-            var cat_stat = category_stats.get(result.category) orelse .{};
+            var cat_stat = category_stats.get(result.category) orelse StatEntry{};
             cat_stat.total += 1;
             if (result.passed) cat_stat.passed += 1;
             cat_stat.vulns += result.vulnerabilities_found;
@@ -1949,7 +1950,7 @@ pub const EnhancedMCPSecurityTestSuite = struct {
 
         // Category breakdown
         std.log.info("\n📂 CATEGORY RESULTS:", .{});
-        inline for (@typeInfo(SecurityTestResult.TestCategory).Enum.fields) |field| {
+        inline for (@typeInfo(SecurityTestResult.TestCategory).@"enum".fields) |field| {
             const category = @field(SecurityTestResult.TestCategory, field.name);
             const stats = category_stats.get(category) orelse .{};
             if (stats.total > 0) {

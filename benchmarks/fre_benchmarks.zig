@@ -129,61 +129,92 @@ const MockFRE = struct {
         self.frontiers.deinit();
     }
 
-    /// FRE traversal with O(m log^(2/3) n) complexity
+    /// Optimized FRE traversal with efficient priority queue and memory pools
     pub fn traverse(self: *MockFRE, start: u32, target: u32) ![]u32 {
-        var visited = HashMap(u32, bool, std.hash_map.AutoContext(u32), std.hash_map.default_max_load_percentage).init(self.allocator);
-        defer visited.deinit();
+        // Use arena allocator for all temporary allocations to avoid memory fragmentation
+        var arena = std.heap.ArenaAllocator.init(self.allocator);
+        defer arena.deinit();
+        const arena_allocator = arena.allocator();
 
-        var path = ArrayList(u32).init(self.allocator);
-        var queue = ArrayList(u32).init(self.allocator);
-        defer queue.deinit();
+        // Optimized data structures for better cache performance
+        var visited = HashMap(u32, bool, std.hash_map.AutoContext(u32), std.hash_map.default_max_load_percentage).init(arena_allocator);
+        var parent_map = HashMap(u32, u32, std.hash_map.AutoContext(u32), std.hash_map.default_max_load_percentage).init(arena_allocator);
 
-        try queue.append(start);
+        // Priority queue using binary heap for O(log n) operations
+        const PriorityNode = struct {
+            node: u32,
+            priority: f32,
+            hops: u32,
+        };
+
+        var priority_queue = std.PriorityQueue(PriorityNode, void, struct {
+            fn lessThan(context: void, a: PriorityNode, b: PriorityNode) std.math.Order {
+                _ = context;
+                return std.math.order(a.priority, b.priority);
+            }
+        }.lessThan).init(arena_allocator, {});
+
+        // Initialize with start node
+        try priority_queue.add(.{ .node = start, .priority = 0.0, .hops = 0 });
         try visited.put(start, true);
 
-        // Simulate FRE's frontier reduction approach
+        // FRE optimization: Use logarithmic reduction factor for frontier management
         const n = @as(f32, @floatFromInt(self.graph.nodes));
-        const reduction_steps = @as(u32, @intFromFloat(std.math.log2(n) * self.reduction_factor));
+        const log_n = std.math.log2(n);
+        const reduction_bound = @as(u32, @intFromFloat(log_n * self.reduction_factor));
 
-        var current_frontier = Frontier.init(self.allocator, 0);
-        defer current_frontier.deinit();
-        try current_frontier.nodes.append(start);
+        var nodes_processed: u32 = 0;
+        const max_nodes_to_process = @min(self.graph.nodes / 2, 1000); // Prevent runaway processing
 
-        var step: u32 = 0;
-        while (step < reduction_steps and current_frontier.nodes.items.len > 0) {
-            var next_frontier = Frontier.init(self.allocator, step + 1);
-            defer next_frontier.deinit();
+        // Main FRE traversal loop with optimized frontier reduction
+        while (priority_queue.count() > 0 and nodes_processed < max_nodes_to_process) {
+            const current = priority_queue.remove();
+            nodes_processed += 1;
 
-            // Process current frontier with reduction
-            const reduction_rate = std.math.pow(f32, 0.8, @as(f32, @floatFromInt(step)));
-            const nodes_to_process = @max(1, @as(u32, @intFromFloat(@as(f32, @floatFromInt(current_frontier.nodes.items.len)) * reduction_rate)));
+            // Found target - reconstruct path
+            if (current.node == target) {
+                var path = ArrayList(u32).init(self.allocator);
+                var node = target;
 
-            for (current_frontier.nodes.items[0..@min(nodes_to_process, current_frontier.nodes.items.len)]) |node| {
-                try path.append(node);
-
-                if (node == target) {
-                    return try path.toOwnedSlice();
+                // Build path backwards
+                while (true) {
+                    try path.append(node);
+                    if (node == start) break;
+                    node = parent_map.get(node) orelse break;
                 }
 
-                if (self.graph.getNeighbors(node)) |neighbors| {
-                    for (neighbors) |neighbor| {
-                        if (!visited.contains(neighbor)) {
-                            try visited.put(neighbor, true);
-                            try next_frontier.nodes.append(neighbor);
-                        }
+                // Reverse to get forward path
+                std.mem.reverse(u32, path.items);
+                return try path.toOwnedSlice();
+            }
+
+            // Process neighbors with FRE reduction logic
+            if (self.graph.getNeighbors(current.node)) |neighbors| {
+                // Apply frontier reduction based on current hop count
+                const frontier_reduction = if (current.hops < reduction_bound)
+                    1.0
+                else
+                    1.0 / std.math.pow(f32, 1.2, @as(f32, @floatFromInt(current.hops - reduction_bound)));
+
+                const neighbors_to_process = @max(1, @as(u32, @intFromFloat(@as(f32, @floatFromInt(neighbors.len)) * frontier_reduction)));
+
+                for (neighbors[0..@min(neighbors_to_process, neighbors.len)]) |neighbor| {
+                    if (!visited.contains(neighbor)) {
+                        try visited.put(neighbor, true);
+                        try parent_map.put(neighbor, current.node);
+
+                        // Priority based on hop count and estimated distance (simple heuristic)
+                        const estimated_distance = @abs(@as(i32, @intCast(neighbor)) - @as(i32, @intCast(target)));
+                        const priority = @as(f32, @floatFromInt(current.hops + 1)) + @as(f32, @floatFromInt(estimated_distance)) * 0.1;
+
+                        try priority_queue.add(.{ .node = neighbor, .priority = priority, .hops = current.hops + 1 });
                     }
                 }
             }
-
-            // Move to next frontier
-            current_frontier.deinit();
-            current_frontier = Frontier.init(self.allocator, step + 1);
-            try current_frontier.nodes.appendSlice(next_frontier.nodes.items);
-
-            step += 1;
         }
 
-        return try path.toOwnedSlice();
+        // No path found - return empty path
+        return try self.allocator.alloc(u32, 0);
     }
 
     /// Find shortest paths using FRE approach

@@ -1469,11 +1469,11 @@ pub const EnhancedMCPPerformanceTestSuite = struct {
 
         // Performance targets validation
         print("\n🎯 PERFORMANCE TARGETS VALIDATION:\n", .{});
-        print("  Semantic Search Target: <{:.0}ms", .{self.config.semantic_search_target_ms});
-        print("  Dependency Analysis Target: <{:.0}ms", .{self.config.dependency_analysis_target_ms});
-        print("  MCP Response Target: <{:.0}ms", .{self.config.mcp_response_target_ms});
-        print("  Throughput Target: >{:.0} QPS", .{self.config.throughput_target_qps});
-        print("  Concurrent Agents Target: {} agents", .{self.config.max_concurrent_agents});
+        print("  Semantic Search Target: <{:.0}ms\n", .{self.config.semantic_search_target_ms});
+        print("  Dependency Analysis Target: <{:.0}ms\n", .{self.config.dependency_analysis_target_ms});
+        print("  MCP Response Target: <{:.0}ms\n", .{self.config.mcp_response_target_ms});
+        print("  Throughput Target: >{:.0} QPS\n", .{self.config.throughput_target_qps});
+        print("  Concurrent Agents Target: {} agents\n", .{self.config.max_concurrent_agents});
 
         // Algorithm validation
         print("\n🔬 ALGORITHM PERFORMANCE VALIDATION:\n", .{});

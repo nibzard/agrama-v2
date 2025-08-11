@@ -198,6 +198,22 @@ pub fn build(b: *std.Build) void {
     const integration_step = b.step("test-integration", "Run integration tests");
     integration_step.dependOn(&run_integration_tests.step);
 
+    // Memory Pool System Demonstration
+    const memory_pool_demo = b.addExecutable(.{
+        .name = "memory_pool_demo",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/memory_pool_demo.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    memory_pool_demo.root_module.addImport("agrama_lib", lib_mod);
+    b.installArtifact(memory_pool_demo);
+
+    const run_memory_pool_demo = b.addRunArtifact(memory_pool_demo);
+    const memory_pool_demo_step = b.step("demo-memory-pools", "Demonstrate 50-70% allocation overhead reduction with memory pools");
+    memory_pool_demo_step.dependOn(&run_memory_pool_demo.step);
+
     // Benchmark infrastructure (module for potential future use)
     _ = b.createModule(.{
         .root_source_file = b.path("benchmarks/benchmark_runner.zig"),
