@@ -154,6 +154,3 @@ The primitives are powered by cutting-edge algorithms:
 3. Follow existing code patterns in `src/`
 4. Update tests for new features
 
-## License
-
-MIT License - see LICENSE file for details.

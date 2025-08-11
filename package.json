@@ -1,0 +1,33 @@
+{
+  "name": "agrama-v2",
+  "version": "1.0.0",
+  "description": "**Git for AI Agents**: A revolutionary temporal knowledge graph that serves as shared memory and communication substrate for multi-agent AI systems. Built in Zig for sub-millisecond performance.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nibzard/agrama-v2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/nibzard/agrama-v2/issues"
+  },
+  "homepage": "https://github.com/nibzard/agrama-v2#readme",
+  "devDependencies": {
+    "vitepress": "^1.6.4",
+    "vitepress-plugin-mermaid": "^2.0.17"
+  },
+  "dependencies": {
+    "mermaid": "^10.6.1"
+  }
+}

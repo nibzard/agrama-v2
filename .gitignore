@@ -48,4 +48,4 @@ target/
 # Temporary files
 *.tmp
 temp/
-tmp/
+tmp/.zig-cache/

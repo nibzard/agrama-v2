@@ -137,7 +137,7 @@ Agrama establishes the **AI Collaboration Platform** category with the world's f
 ## 💰 Commercial Model
 
 ### Open Source Foundation
-- **Core Platform**: MIT licensed open source (current)
+- **Core Platform**: Open source (current)
 - **Community**: Developer adoption and contribution
 - **Validation**: Proof of revolutionary capabilities
 

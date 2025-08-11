@@ -106,18 +106,18 @@ fn FixedPool(comptime T: type) type {
         pub fn acquire(self: *Self) !*T {
             // Try to get from free list first (O(1) operation)
             if (self.free_list.items.len > 0) {
-                const item = self.free_list.pop();
+                const item = self.free_list.pop().?;
                 _ = self.total_allocated.fetchAdd(1, .monotonic);
                 self.updatePeakUsage();
                 return item;
             }
 
             // Expand pool if needed
-            try self.expandPool(self.blocks.items.len / 2 + 1);
+            try self.expandPool(@as(u32, @intCast(self.blocks.items.len / 2 + 1)));
 
             // Should have items now
             if (self.free_list.items.len > 0) {
-                const item = self.free_list.pop();
+                const item = self.free_list.pop().?;
                 _ = self.total_allocated.fetchAdd(1, .monotonic);
                 self.updatePeakUsage();
                 return item;
@@ -158,7 +158,7 @@ fn FixedPool(comptime T: type) type {
 
             var current_peak = self.peak_usage.load(.monotonic);
             while (current > current_peak) {
-                const result = self.peak_usage.compareAndSwap(current_peak, current, .monotonic, .monotonic);
+                const result = self.peak_usage.cmpxchgWeak(current_peak, current, .monotonic, .monotonic);
                 if (result == null) break;
                 current_peak = result.?;
             }
@@ -244,7 +244,7 @@ pub const ArenaManager = struct {
     fn acquireArena(self: *ArenaManager, _: u32) !*std.heap.ArenaAllocator {
         // Try to reuse from pool first
         if (self.arena_pool.items.len > 0) {
-            const arena = self.arena_pool.pop();
+            const arena = self.arena_pool.pop().?;
             try self.active_arenas.append(arena);
             return arena;
         }
@@ -312,7 +312,7 @@ pub fn ObjectPool(comptime T: type) type {
 
         pub fn acquire(self: *Self) !*T {
             if (self.free_indices.items.len > 0) {
-                const index = self.free_indices.pop();
+                const index = self.free_indices.pop().?;
                 _ = self.allocation_count.fetchAdd(1, .monotonic);
                 return &self.objects.items[index];
             }
@@ -381,7 +381,7 @@ pub const EmbeddingPool = struct {
 
     pub fn acquireEmbedding(self: *EmbeddingPool) ?[]align(32) f32 {
         if (self.free_blocks.items.len > 0) {
-            const block = self.free_blocks.pop();
+            const block = self.free_blocks.pop().?;
             const slice = std.mem.bytesAsSlice(f32, block.data[0..self.block_size]);
             return @alignCast(slice);
         }

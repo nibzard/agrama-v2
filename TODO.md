@@ -496,8 +496,190 @@ Week 3: Multi-Agent Collaboration (After Week 2 complete)
 - **Advanced Operations**: Can proceed with primitive expansion and multi-agent features
 - **Market Position**: Transition from development crisis to production deployment and scaling
 
+## MCP SERVER OPTIMIZATION PRIORITIES - IMMEDIATE IMPLEMENTATION REQUIRED
+
+### **[P0] Schema Caching Implementation** - **IMMEDIATE 20-30% PERFORMANCE GAIN**
+- [ ] **[P0] Add Schema Cache Infrastructure** - Core caching system for MCP server
+  - **File**: `/home/niko/agrama-v2/src/mcp_compliant_server.zig` (MCPCompliantServer struct)
+  - **Implementation**: Add `schema_cache` and `content_cache` HashMaps to server struct
+  - **Technical Approach**: 
+    - Add `schema_cache: HashMap([]const u8, std.json.Value, HashContext, std.hash_map.default_max_load_percentage)`
+    - Add `content_cache: HashMap([]const u8, CachedContent, HashContext, std.hash_map.default_max_load_percentage)`
+    - Add `CachedContent` struct with `content: []const u8, timestamp: i64, hash: u64`
+  - **Integration Points**: `handleToolsList()`, `handleToolsCall()` methods
+  - **Performance Target**: 20-30% reduction in JSON parsing overhead
+  - **Memory Impact**: ~10-50MB cache size for typical workloads
+  - **Assignee**: @mcp-specialist
+  - **Estimate**: 2 days | **Dependencies**: None (standalone optimization)
+
+- [ ] **[P0] Implement Cached Tools List Response** - Cache `list_tools` JSON response
+  - **Current Issue**: `handleToolsList()` rebuilds entire tools JSON array on every request
+  - **Solution**: Cache serialized `list_tools` response, invalidate only when tools change
+  - **Implementation Steps**:
+    1. Add `cached_tools_response: ?[]const u8` field to MCPCompliantServer
+    2. Generate cache in `init()` method after tools registration
+    3. Modify `handleToolsList()` to return cached response directly
+    4. Add cache invalidation when tools are modified (future-proofing)
+  - **Performance Gain**: Eliminates 100+ JSON object allocations per request
+  - **Testing**: Verify identical responses between cached and uncached versions
+  - **Acceptance Criteria**: Sub-0.1ms response time for cached `list_tools` requests
+  - **Assignee**: @mcp-specialist
+
+- [ ] **[P0] File Content Caching with Hash Validation** - Cache repeated file reads
+  - **Current Issue**: `read_code` tool re-reads same files multiple times without caching
+  - **Solution**: LRU cache with content hashing for invalidation detection
+  - **Implementation Steps**:
+    1. Create `CachedFileContent` struct with content, mtime, hash, access_count
+    2. Add `file_cache: HashMap([]const u8, CachedFileContent, ...)` to server
+    3. Modify file reading in tools to check cache first
+    4. Implement LRU eviction (max 1000 files, 100MB total)
+    5. Add cache statistics for monitoring
+  - **Cache Key**: Absolute file path string
+  - **Invalidation**: File modification time + content hash verification
+  - **Performance Gain**: 50-80% reduction in file I/O for repeated reads
+  - **Memory Management**: Use arena allocators for cache content, proper cleanup
+  - **Testing**: Verify cache hit/miss behavior, invalidation correctness
+  - **Assignee**: @mcp-specialist
+
+### **[P1] Enhanced Error Categories Implementation** - **IMPROVED DEBUGGING EXPERIENCE**
+- [ ] **[P1] Create EnhancedMCPError Structure** - Structured error responses
+  - **File**: `/home/niko/agrama-v2/src/mcp_compliant_server.zig` (new error structures)
+  - **Current Issue**: Basic JSON-RPC errors without recovery information or categorization
+  - **Implementation Steps**:
+    1. Define `ErrorCategory` enum: `ValidationError, AuthError, DatabaseError, NetworkError, SystemError, ToolError`
+    2. Create `EnhancedMCPError` struct extending `MCPError`:
+       ```zig
+       pub const EnhancedMCPError = struct {
+           base: MCPError,
+           category: ErrorCategory,
+           context: ?[]const u8 = null,
+           recovery_hint: ?[]const u8 = null,
+           error_id: []const u8, // Unique error identifier
+           timestamp: i64,
+       };
+       ```
+    3. Add error context builders for each category
+    4. Create recovery hint generators based on error type
+  - **Integration**: Replace `MCPError` usage with `EnhancedMCPError` in all error responses
+  - **Testing**: Verify error categorization accuracy, recovery hint usefulness
+  - **Assignee**: @mcp-specialist
+  - **Estimate**: 2 days
+
+- [ ] **[P1] Implement Structured Error Recovery System** - Context-aware error handling
+  - **Enhancement**: Add recovery suggestions and error context to all tool errors
+  - **Implementation Steps**:
+    1. Create `ErrorContext` builder methods for common scenarios
+    2. Add `generateRecoveryHint()` method for each error category
+    3. Implement error aggregation for batch operations
+    4. Add error correlation IDs for debugging across requests
+    5. Create error severity levels (Warning, Error, Critical, Fatal)
+  - **Error Categories Implementation**:
+    - **ValidationError**: Parameter validation, schema errors → "Check parameter format"
+    - **AuthError**: Authorization failures → "Verify authentication token"
+    - **DatabaseError**: Storage/retrieval failures → "Check database connection"
+    - **NetworkError**: I/O failures → "Check network connectivity"
+    - **SystemError**: Internal server errors → "Retry with backoff"
+    - **ToolError**: Tool execution failures → "Verify tool parameters"
+  - **Testing Requirements**: Unit tests for each error category, recovery hint validation
+  - **Assignee**: @mcp-specialist
+
+- [ ] **[P1] Add Error Analytics and Monitoring** - Production error tracking
+  - **Purpose**: Enable error trend analysis and proactive issue resolution
+  - **Implementation**:
+    1. Add error metrics collection (count by category, frequency, timing)
+    2. Create error rate limiting based on categories
+    3. Add structured logging for error analysis
+    4. Implement error correlation across tool calls
+  - **Integration**: Hooks in all error response paths
+  - **Metrics**: Error rate, category distribution, recovery success rate
+  - **Assignee**: @mcp-specialist
+
+### **[P3] OAuth2 Authorization Implementation** - **PRODUCTION SECURITY**
+- [ ] **[P3] Design OAuth2 Configuration Structure** - Authentication framework
+  - **File**: `/home/niko/agrama-v2/src/mcp_compliant_server.zig` (new auth module)
+  - **Current Issue**: Basic session tracking without proper token validation per MCP spec
+  - **Implementation Steps**:
+    1. Create `AuthConfig` struct:
+       ```zig
+       pub const AuthConfig = struct {
+           oauth2_endpoints: OAuth2Endpoints,
+           token_validation_url: []const u8,
+           client_id: []const u8,
+           client_secret: []const u8,
+           required_scopes: [][]const u8,
+       };
+       ```
+    2. Define `OAuth2Endpoints` with authorization, token, and introspection URLs
+    3. Add JWT token validation infrastructure
+    4. Create scope-based access control for tools
+  - **Dependencies**: HTTP client for token validation, JWT parsing library
+  - **Security**: Token introspection, scope validation, expiration handling
+  - **Assignee**: @mcp-specialist
+  - **Estimate**: 4-5 days
+
+- [ ] **[P3] Implement Token Validation Middleware** - Request-level authentication
+  - **Purpose**: Validate OAuth2 tokens for all MCP requests per specification
+  - **Implementation Steps**:
+    1. Add token extraction from MCP request headers/params
+    2. Implement async token validation against OAuth2 provider
+    3. Add token caching with expiration tracking
+    4. Create fallback authentication methods
+    5. Add role-based access control (RBAC) for tools
+  - **Integration Points**: All `handle*()` methods in MCP server
+  - **Performance**: Token validation caching, async validation
+  - **Error Handling**: Use enhanced error categories for auth failures
+  - **Assignee**: @mcp-specialist
+
+- [ ] **[P3] Add Session Management with OAuth2** - Production session handling  
+  - **Current Issue**: Basic agent session tracking without proper security
+  - **Solution**: OAuth2-backed session management with role assignments
+  - **Implementation**:
+    1. Replace `AgentSession` with `OAuth2Session` including token info
+    2. Add session invalidation on token expiry
+    3. Implement session renewal flows
+    4. Add audit logging for security events
+  - **Security Features**: Session hijacking prevention, token refresh, audit trails
+  - **Integration**: Update all session-aware tool implementations
+  - **Assignee**: @mcp-specialist
+
+## TASK COORDINATION AND DEPENDENCIES
+
+### **Critical Implementation Path** (P0 → P1 → P3)
+```
+Week 1 (P0 Schema Caching):
+├── Day 1-2: Cache infrastructure + tools list caching → @mcp-specialist
+├── Day 3-4: File content caching with LRU eviction → @mcp-specialist  
+└── Day 5: Performance validation and testing → @perf-engineer + @qa-engineer
+
+Week 2 (P1 Enhanced Errors):
+├── Day 1-2: EnhancedMCPError structure + categorization → @mcp-specialist
+├── Day 3-4: Recovery system + error analytics → @mcp-specialist
+└── Day 5: Integration testing and validation → @qa-engineer
+
+Week 3+ (P3 OAuth2 - Production Phase):
+├── Day 1-2: AuthConfig design + OAuth2 endpoints → @mcp-specialist
+├── Day 3-5: Token validation middleware → @mcp-specialist
+└── Day 6-7: Session management integration → @mcp-specialist
+```
+
+### **Performance Impact Expectations**
+- **P0 Schema Caching**: 20-30% reduction in `list_tools` latency, 50-80% reduction in file I/O
+- **P1 Enhanced Errors**: Improved debugging efficiency (qualitative), better error recovery
+- **P3 OAuth2**: Production-ready security (compliance), ~5-10ms auth overhead per request
+
+### **Testing Requirements for Each Priority**
+- **P0**: Performance benchmarks (before/after), cache hit/miss ratio validation, memory usage monitoring
+- **P1**: Error categorization accuracy tests, recovery hint validation, error correlation testing  
+- **P3**: Security testing, token validation tests, session management validation, OAuth2 compliance
+
+### **Integration Points with Existing Systems**
+- **Database Integration**: Cache invalidation hooks, error context from database operations
+- **Memory Pools**: Leverage existing memory pool system for cache allocation efficiency
+- **Performance Monitoring**: Integrate with existing performance tracking infrastructure
+- **Existing Tools**: All MCP tools benefit from caching, enhanced errors, and OAuth2 security
+
 ### **TEAM COORDINATION PRIORITIES**
-- **@perf-engineer**: Continue P1 optimizations leveraging P0 breakthrough techniques
-- **@mcp-specialist**: Production deployment validation and monitoring setup
-- **@qa-engineer**: Documentation updates and deployment procedure validation
-- **@task-master**: Coordinate transition from crisis resolution to scaling optimization
+- **@mcp-specialist**: Lead implementation of all three priority areas (primary assignee)
+- **@perf-engineer**: Performance validation, benchmarking, cache efficiency optimization
+- **@qa-engineer**: Comprehensive testing, integration validation, security testing for OAuth2
+- **@task-master**: Coordinate implementation phases, track dependencies, manage transitions
