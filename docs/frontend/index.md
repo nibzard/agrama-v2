@@ -119,7 +119,7 @@ Interactive exploration of code evolution over time:
 node --version
 
 # Ensure Agrama MCP server is running
-./zig-out/bin/agrama_v2 mcp
+./zig-out/bin/agrama mcp
 ```
 
 ### Installation

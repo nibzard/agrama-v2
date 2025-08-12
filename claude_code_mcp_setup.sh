@@ -35,7 +35,7 @@ check_environment() {
         exit 1
     fi
     
-    if [[ ! -f "zig-out/bin/agrama_v2" ]]; then
+    if [[ ! -f "zig-out/bin/agrama" ]]; then
         log_warning "Agrama MCP server binary not found. Building..."
         if ! zig build; then
             log_error "Failed to build Agrama MCP server"
@@ -51,7 +51,7 @@ test_mcp_server() {
     # Test basic protocol compliance
     local test_message='{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}}},"id":1}'
     
-    if timeout 10 bash -c "echo '$test_message' | ./zig-out/bin/agrama_v2 mcp" > /dev/null 2>/dev/null; then
+    if timeout 10 bash -c "echo '$test_message' | ./zig-out/bin/agrama mcp" > /dev/null 2>/dev/null; then
         log_success "MCP server basic functionality test passed"
         return 0
     else
@@ -76,7 +76,7 @@ generate_claude_config() {
 {
   "mcpServers": {
     "agrama-codegraph": {
-      "command": "$current_dir/zig-out/bin/agrama_v2",
+      "command": "$current_dir/zig-out/bin/agrama",
       "args": ["mcp"],
       "env": {
         "PATH": "$current_dir:$PATH"
@@ -103,7 +103,7 @@ echo "===================================="
 echo ""
 
 # Check if server binary exists
-if [[ ! -f "zig-out/bin/agrama_v2" ]]; then
+if [[ ! -f "zig-out/bin/agrama" ]]; then
     echo "❌ Server binary not found. Run: zig build"
     exit 1
 else
@@ -112,11 +112,11 @@ fi
 
 # Test server startup
 echo "🧪 Testing server startup..."
-if timeout 5 bash -c "echo '{\"jsonrpc\":\"2.0\",\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{\"tools\":{}}},\"id\":1}' | ./zig-out/bin/agrama_v2 mcp" >/dev/null 2>&1; then
+if timeout 5 bash -c "echo '{\"jsonrpc\":\"2.0\",\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{\"tools\":{}}},\"id\":1}' | ./zig-out/bin/agrama mcp" >/dev/null 2>&1; then
     echo "✅ Server starts and responds to initialize"
 else
     echo "❌ Server failed to start or respond"
-    echo "   Try: zig build && ./zig-out/bin/agrama_v2 mcp"
+    echo "   Try: zig build && ./zig-out/bin/agrama mcp"
 fi
 
 # Check for common issues

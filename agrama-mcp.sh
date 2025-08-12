@@ -6,7 +6,7 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Path to the Agrama binary
-AGRAMA_BIN="$SCRIPT_DIR/zig-out/bin/agrama_v2"
+AGRAMA_BIN="$SCRIPT_DIR/zig-out/bin/agrama"
 
 # Check if binary exists
 if [ ! -f "$AGRAMA_BIN" ]; then

@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "agrama": {
-      "command": "/home/niko/agrama-v2/zig-out/bin/agrama_v2",
+      "command": "/home/niko/agrama-v2/zig-out/bin/agrama",
       "args": ["mcp"],
       "cwd": "/home/niko/agrama-v2",
       "env": {

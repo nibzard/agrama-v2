@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./zig-out/bin/database_benchmark:*)",
+      "Bash(zig build test:*)",
+      "Bash(find:*)",
+      "Bash(git mv:*)",
+      "Bash(zig build)",
+      "Bash(sed:*)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "agrama"
+  ]
+}

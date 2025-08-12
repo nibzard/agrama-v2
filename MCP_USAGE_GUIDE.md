@@ -22,7 +22,7 @@ Add to your Claude Code configuration:
 {
   "mcpServers": {
     "agrama-codegraph": {
-      "command": "/home/dev/agrama-v2/zig-out/bin/agrama_v2",
+      "command": "/home/dev/agrama-v2/zig-out/bin/agrama",
       "args": ["mcp"],
       "env": {}
     }
@@ -39,7 +39,7 @@ Configure in Cursor settings:
   "mcp": {
     "servers": {
       "agrama-codegraph": {
-        "command": "/home/dev/agrama-v2/zig-out/bin/agrama_v2",
+        "command": "/home/dev/agrama-v2/zig-out/bin/agrama",
         "args": ["mcp"]
       }
     }
@@ -51,7 +51,7 @@ Configure in Cursor settings:
 
 ```bash
 # Start MCP server (stdio transport)
-./zig-out/bin/agrama_v2 mcp
+./zig-out/bin/agrama mcp
 
 # The server will read JSON-RPC messages from stdin 
 # and write responses to stdout
@@ -178,7 +178,7 @@ npx @modelcontextprotocol/inspector --config mcp-inspector-config.json --server 
 
 For debugging, you can see stderr output:
 ```bash
-./zig-out/bin/agrama_v2 mcp 2>&1
+./zig-out/bin/agrama mcp 2>&1
 ```
 
 Note: In production MCP usage, stderr is ignored by clients as only stdout carries the protocol.

@@ -26,20 +26,20 @@ cd agrama-v2
 zig build
 
 # Verify installation
-./zig-out/bin/agrama_v2 --version
+./zig-out/bin/agrama --version
 ```
 
 ### Basic Server Setup
 
 ```bash
 # Start MCP server
-./zig-out/bin/agrama_v2 mcp
+./zig-out/bin/agrama mcp
 
 # Start with verbose logging
-./zig-out/bin/agrama_v2 mcp --verbose
+./zig-out/bin/agrama mcp --verbose
 
 # Start with custom database path
-AGRAMA_DB_PATH=./custom.db ./zig-out/bin/agrama_v2 mcp
+AGRAMA_DB_PATH=./custom.db ./zig-out/bin/agrama mcp
 ```
 
 ## Claude Code Integration
@@ -51,7 +51,7 @@ Claude Code provides the most seamless integration experience with native MCP su
 Claude Code automatically discovers and connects to MCP servers in your project directory:
 
 1. **Place the binary** in your project root or PATH
-2. **Start the server** with `./zig-out/bin/agrama_v2 mcp`
+2. **Start the server** with `./zig-out/bin/agrama mcp`
 3. **Claude Code detects** the server automatically
 4. **Tools become available** in the Claude Code interface
 
@@ -63,7 +63,7 @@ Create a `.claude-mcp.json` configuration file in your project root:
 {
   "servers": {
     "agrama": {
-      "command": "./zig-out/bin/agrama_v2",
+      "command": "./zig-out/bin/agrama",
       "args": ["mcp"],
       "env": {
         "AGRAMA_DB_PATH": "./.agrama/database",
@@ -124,7 +124,7 @@ Add to your Cursor settings (`settings.json`):
 {
   "mcp.servers": {
     "agrama": {
-      "command": "/absolute/path/to/agrama_v2",
+      "command": "/absolute/path/to/agrama",
       "args": ["mcp"],
       "env": {
         "AGRAMA_DB_PATH": "/absolute/path/to/.agrama/database",
@@ -155,7 +155,7 @@ For project-specific settings, create `.vscode/settings.json`:
 {
   "mcp.servers": {
     "agrama-project": {
-      "command": "${workspaceFolder}/zig-out/bin/agrama_v2",
+      "command": "${workspaceFolder}/zig-out/bin/agrama",
       "args": ["mcp"],
       "env": {
         "AGRAMA_DB_PATH": "${workspaceFolder}/.agrama",
@@ -294,7 +294,7 @@ class AgramaMCPClient extends EventEmitter {
 }
 
 // Usage example
-const client = new AgramaMCPClient('./zig-out/bin/agrama_v2');
+const client = new AgramaMCPClient('./zig-out/bin/agrama');
 
 client.on('initialized', (serverInfo) => {
   console.log('Connected to Agrama MCP server:', serverInfo);
@@ -464,7 +464,7 @@ class RobustAgramaMCPClient(AgramaMCPClient):
 
 # Usage
 async def main():
-    client = RobustAgramaMCPClient('./zig-out/bin/agrama_v2', env={
+    client = RobustAgramaMCPClient('./zig-out/bin/agrama', env={
         'AGRAMA_DB_PATH': './.agrama/db',
         'AGRAMA_LOG_LEVEL': 'info'
     })
@@ -658,7 +658,7 @@ func (c *MCPClient) Close() error {
 
 // Usage example
 func main() {
-    client, err := NewMCPClient("./zig-out/bin/agrama_v2")
+    client, err := NewMCPClient("./zig-out/bin/agrama")
     if err != nil {
         log.Fatal(err)
     }
@@ -737,8 +737,8 @@ FROM alpine:latest
 RUN apk add --no-cache zig
 
 # Copy Agrama binary
-COPY zig-out/bin/agrama_v2 /usr/local/bin/agrama_v2
-RUN chmod +x /usr/local/bin/agrama_v2
+COPY zig-out/bin/agrama /usr/local/bin/agrama
+RUN chmod +x /usr/local/bin/agrama
 
 # Create data directory
 RUN mkdir -p /data/.agrama
@@ -751,7 +751,7 @@ ENV AGRAMA_LOG_LEVEL=info
 EXPOSE 8080
 
 # Start server
-CMD ["agrama_v2", "mcp"]
+CMD ["agrama", "mcp"]
 ```
 
 ## Best Practices
@@ -917,10 +917,10 @@ Error: spawn ENOENT
 
 ```javascript
 // Instead of
-const client = new AgramaMCPClient('agrama_v2');
+const client = new AgramaMCPClient('agrama');
 
 // Use
-const client = new AgramaMCPClient('/absolute/path/to/zig-out/bin/agrama_v2');
+const client = new AgramaMCPClient('/absolute/path/to/zig-out/bin/agrama');
 ```
 
 #### Tool Not Found
@@ -955,17 +955,17 @@ console.log('Required parameters:', readCodeTool.inputSchema.required);
 
 ```bash
 # Enable debug logging
-AGRAMA_LOG_LEVEL=debug ./zig-out/bin/agrama_v2 mcp --verbose
+AGRAMA_LOG_LEVEL=debug ./zig-out/bin/agrama mcp --verbose
 
 # Save logs to file
-AGRAMA_LOG_LEVEL=debug ./zig-out/bin/agrama_v2 mcp 2> debug.log
+AGRAMA_LOG_LEVEL=debug ./zig-out/bin/agrama mcp 2> debug.log
 ```
 
 ### Performance Monitoring
 
 ```bash
 # Monitor performance metrics
-echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_performance_metrics","arguments":{"metric_types":["latency","memory"]}}}' | ./zig-out/bin/agrama_v2 mcp
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_performance_metrics","arguments":{"metric_types":["latency","memory"]}}}' | ./zig-out/bin/agrama mcp
 ```
 
 This comprehensive integration guide provides everything needed to successfully integrate AI agents with the Agrama MCP server across different platforms and use cases.

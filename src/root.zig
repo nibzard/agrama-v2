@@ -1,46 +1,99 @@
-//! Agrama Temporal Knowledge Graph Database
-//! Phase 2: MCP Server with AI Agent Collaboration
+//! Agrama - Temporal Knowledge Graph Database
+//!
+//! A powerful temporal knowledge graph system with multiple interface options.
+//! At its core, Agrama provides temporal data storage, semantic search, and
+//! advanced graph algorithms. Various interfaces (MCP, WebSocket, etc.) allow
+//! different types of clients to interact with the system.
+//!
+//! See ARCHITECTURE.md for detailed system design and interface documentation.
+
 const std = @import("std");
 const testing = std.testing;
 
-// Export the core Database module
+// ============================================================================
+// CORE AGRAMA SYSTEM
+// These are the fundamental components that power Agrama
+// ============================================================================
+
+// Core Database - Temporal storage with anchor+delta compression
 pub const Database = @import("database.zig").Database;
 pub const Change = @import("database.zig").Change;
 
-// Export MCP Server components
-pub const MCPServer = @import("mcp_server.zig").MCPServer;
-pub const MCPRequest = @import("mcp_server.zig").MCPRequest;
-pub const MCPResponse = @import("mcp_server.zig").MCPResponse;
-pub const AgentInfo = @import("mcp_server.zig").AgentInfo;
-pub const MCPMetrics = @import("mcp_server.zig").MCPMetrics;
+// Semantic Search - HNSW vector indices for O(log n) search
+pub const SemanticDatabase = @import("semantic_database.zig").SemanticDatabase;
 
-// Export MCP Compliant Server components
-pub const MCPCompliantServer = @import("mcp_compliant_server.zig").MCPCompliantServer;
-pub const MCPToolDefinition = @import("mcp_compliant_server.zig").MCPToolDefinition;
-pub const MCPContent = @import("mcp_compliant_server.zig").MCPContent;
-pub const MCPToolResponse = @import("mcp_compliant_server.zig").MCPToolResponse;
+// Graph Engine - Triple hybrid search with FRE traversal
+pub const TripleHybridSearchEngine = @import("triple_hybrid_search.zig").TripleHybridSearchEngine;
 
-// Export WebSocket components
-pub const WebSocketServer = @import("websocket.zig").WebSocketServer;
-pub const WebSocketConnection = @import("websocket.zig").WebSocketConnection;
-pub const EventBroadcaster = @import("websocket.zig").EventBroadcaster;
+// Primitive Engine - 5 core operations all interfaces use
+pub const PrimitiveEngine = @import("primitive_engine.zig").PrimitiveEngine;
+pub const primitives = @import("primitives.zig");
 
-// Export Agent Manager components
-pub const AgentManager = @import("agent_manager.zig").AgentManager;
-pub const AgentSession = @import("agent_manager.zig").AgentSession;
-pub const FileLock = @import("agent_manager.zig").FileLock;
+// Orchestration - Manage participants (humans and AI agents)
+pub const OrchestrationContext = @import("orchestration_context.zig").OrchestrationContext;
+pub const Participant = @import("orchestration_context.zig").Participant;
+pub const ParticipantType = @import("orchestration_context.zig").ParticipantType;
+pub const ConnectionType = @import("orchestration_context.zig").ConnectionType;
+pub const CollaborativeEvent = @import("orchestration_context.zig").CollaborativeEvent;
 
-// Export Frontier Reduction Engine components
-pub const FrontierReductionEngine = @import("fre.zig").FrontierReductionEngine;
-pub const TemporalNode = @import("fre.zig").TemporalNode;
-pub const TemporalEdge = @import("fre.zig").TemporalEdge;
-pub const PathResult = @import("fre.zig").PathResult;
-pub const ImpactAnalysis = @import("fre.zig").ImpactAnalysis;
-pub const DependencyGraph = @import("fre.zig").DependencyGraph;
-pub const TraversalDirection = @import("fre.zig").TraversalDirection;
-pub const NodeType = @import("fre.zig").NodeType;
-pub const RelationType = @import("fre.zig").RelationType;
-pub const TimeRange = @import("fre.zig").TimeRange;
+// ============================================================================
+// MAIN SERVER
+// The orchestrator that brings everything together
+// ============================================================================
+
+// Main Agrama Server
+pub const AgramaServer = @import("agrama_server.zig").AgramaServer;
+
+// ============================================================================
+// INTERFACE ADAPTERS
+// Different ways to interact with Agrama - MCP is just one option!
+// ============================================================================
+
+pub const interfaces = struct {
+    // MCP Interface - For AI agents like Claude
+    pub const MCP = struct {
+        pub const Interface = @import("interfaces/mcp/mcp_interface.zig").MCPInterface;
+        
+        // Protocol implementation details (usually not needed directly)
+        pub const PrimitiveMCPServer = @import("mcp_primitive_server.zig").PrimitiveMCPServer;
+        pub const Request = @import("mcp_primitive_server.zig").MCPRequest;
+        pub const Response = @import("mcp_primitive_server.zig").MCPResponse;
+        pub const ToolDefinition = @import("mcp_primitive_server.zig").MCPToolDefinition;
+        pub const Content = @import("mcp_primitive_server.zig").MCPContent;
+        pub const ToolResponse = @import("mcp_primitive_server.zig").MCPToolResponse;
+    };
+    
+    // WebSocket Interface - For real-time web clients
+    pub const WebSocket = struct {
+        pub const Interface = @import("interfaces/websocket/websocket_interface.zig").WebSocketInterface;
+        
+        // Protocol implementation details
+        pub const Server = @import("websocket.zig").WebSocketServer;
+        pub const Connection = @import("websocket.zig").WebSocketConnection;
+        pub const EventBroadcaster = @import("websocket.zig").EventBroadcaster;
+    };
+    
+    // Future interfaces will be added here:
+    // pub const HTTP = struct { ... };
+    // pub const gRPC = struct { ... };
+};
+
+
+// Export Frontier Reduction Engine components (using paper-compliant implementation)
+pub const TrueFrontierReductionEngine = @import("fre_true.zig").TrueFrontierReductionEngine;
+pub const FREPathResult = @import("fre_true.zig").PathResult;
+pub const FREWeight = @import("fre_true.zig").Weight;
+pub const FREEdge = @import("fre_true.zig").Edge;
+
+// Compatibility aliases for transition period
+pub const FrontierReductionEngine = TrueFrontierReductionEngine;
+
+// Simple compatibility types for gradual migration
+pub const TraversalDirection = enum {
+    forward,
+    reverse, 
+    bidirectional,
+};
 
 // Export HNSW components
 pub const HNSWIndex = @import("hnsw.zig").HNSWIndex;
@@ -50,8 +103,7 @@ pub const SearchResult = @import("hnsw.zig").SearchResult;
 pub const HNSWSearchParams = @import("hnsw.zig").HNSWSearchParams;
 pub const NodeID = @import("hnsw.zig").NodeID;
 
-// Export Semantic Database components
-pub const SemanticDatabase = @import("semantic_database.zig").SemanticDatabase;
+// Export Semantic Database components (additional types)
 pub const SemanticSearchResult = @import("semantic_database.zig").SemanticSearchResult;
 pub const SemanticHybridQuery = @import("semantic_database.zig").HybridQuery;
 pub const SemanticDatabaseStats = @import("semantic_database.zig").SemanticDatabaseStats;
@@ -78,23 +130,9 @@ pub const WriteCodeCRDTTool = @import("mcp_crdt_tools.zig").WriteCodeCRDTTool;
 pub const UpdateCursorTool = @import("mcp_crdt_tools.zig").UpdateCursorTool;
 pub const GetCollaborativeContextTool = @import("mcp_crdt_tools.zig").GetCollaborativeContextTool;
 
-// Export Enhanced Database components
-pub const EnhancedDatabase = @import("enhanced_database.zig").EnhancedDatabase;
-pub const EnhancedDatabaseConfig = @import("enhanced_database.zig").EnhancedDatabaseConfig;
-pub const EnhancedFileResult = @import("enhanced_database.zig").EnhancedFileResult;
-pub const EnhancedSearchQuery = @import("enhanced_database.zig").EnhancedSearchQuery;
-pub const EnhancedSearchResult = @import("enhanced_database.zig").EnhancedSearchResult;
-pub const DatabaseStats = @import("enhanced_database.zig").DatabaseStats;
-pub const DatabaseMetrics = @import("enhanced_database.zig").DatabaseMetrics;
+// Enhanced components moved to archive - using primitives instead
 
-// Export Enhanced MCP Tools
-pub const EnhancedMCPTools = @import("enhanced_mcp_tools.zig").EnhancedMCPTools;
-
-// Export Enhanced MCP Server
-pub const EnhancedMCPServer = @import("enhanced_mcp_server.zig").EnhancedMCPServer;
-
-// Export Triple Hybrid Search components
-pub const TripleHybridSearchEngine = @import("triple_hybrid_search.zig").TripleHybridSearchEngine;
+// Export Triple Hybrid Search components (additional types)
 pub const TripleHybridQuery = @import("triple_hybrid_search.zig").HybridQuery;
 pub const TripleHybridResult = @import("triple_hybrid_search.zig").TripleHybridResult;
 pub const HybridSearchStats = @import("triple_hybrid_search.zig").HybridSearchStats;
@@ -109,118 +147,13 @@ pub const SearchPrimitive = @import("primitives.zig").SearchPrimitive;
 pub const LinkPrimitive = @import("primitives.zig").LinkPrimitive;
 pub const TransformPrimitive = @import("primitives.zig").TransformPrimitive;
 
-// Export Primitive Engine components
-pub const PrimitiveEngine = @import("primitive_engine.zig").PrimitiveEngine;
+// Export Primitive Engine components (additional types)
 pub const PrimitiveEngineStats = @import("primitive_engine.zig").PrimitiveEngineStats;
 
-// Export Primitive MCP Server components
-pub const PrimitiveMCPServer = @import("mcp_primitive_server.zig").PrimitiveMCPServer;
-pub const MCPPrimitiveDefinition = @import("mcp_primitive_server.zig").MCPPrimitiveDefinition;
 
 // Re-export for convenience
 pub const TemporalGraphDB = Database;
 
-// Agrama CodeGraph Server - Main integration structure
-pub const AgramaCodeGraphServer = struct {
-    allocator: std.mem.Allocator,
-    database: Database,
-    mcp_server: MCPServer,
-    websocket_server: WebSocketServer,
-    agent_manager: AgentManager,
-    event_broadcaster: EventBroadcaster,
-
-    /// Initialize complete Agrama CodeGraph server
-    pub fn init(allocator: std.mem.Allocator, websocket_port: u16) !AgramaCodeGraphServer {
-        var database = Database.init(allocator);
-        var websocket_server = WebSocketServer.init(allocator, websocket_port);
-        var mcp_server = try MCPServer.init(allocator, &database);
-        const agent_manager = AgentManager.init(allocator, &mcp_server, &websocket_server);
-        const event_broadcaster = EventBroadcaster.init(allocator, &websocket_server);
-
-        return AgramaCodeGraphServer{
-            .allocator = allocator,
-            .database = database,
-            .mcp_server = mcp_server,
-            .websocket_server = websocket_server,
-            .agent_manager = agent_manager,
-            .event_broadcaster = event_broadcaster,
-        };
-    }
-
-    /// Start all server components
-    pub fn start(self: *AgramaCodeGraphServer) !void {
-        std.log.info("Starting Agrama CodeGraph Server...", .{});
-
-        // Start WebSocket server
-        try self.websocket_server.start();
-        std.log.info("WebSocket server started on port {d}", .{self.websocket_server.port});
-
-        // Add event callback for MCP server
-        // Note: This is a simplified approach - production would need proper callback management
-
-        std.log.info("Agrama CodeGraph Server started successfully", .{});
-        std.log.info("Ready for AI agent connections via MCP", .{});
-    }
-
-    /// Stop all server components
-    pub fn stop(self: *AgramaCodeGraphServer) void {
-        std.log.info("Stopping Agrama CodeGraph Server...", .{});
-        self.websocket_server.stop();
-        std.log.info("Agrama CodeGraph Server stopped", .{});
-    }
-
-    /// Clean up all resources
-    pub fn deinit(self: *AgramaCodeGraphServer) void {
-        self.stop();
-        self.agent_manager.deinit();
-        self.mcp_server.deinit();
-        self.websocket_server.deinit();
-        self.database.deinit();
-    }
-
-    /// Handle MCP tool request from any agent
-    pub fn handleMCPRequest(self: *AgramaCodeGraphServer, request: MCPRequest, agent_id: []const u8) !MCPResponse {
-        return self.mcp_server.handleRequest(request, agent_id);
-    }
-
-    /// Register new AI agent
-    pub fn registerAgent(self: *AgramaCodeGraphServer, agent_id: []const u8, agent_name: []const u8, capabilities: []const []const u8) !void {
-        try self.agent_manager.registerAgent(agent_id, agent_name, capabilities);
-    }
-
-    /// Get comprehensive server statistics
-    pub fn getServerStats(self: *AgramaCodeGraphServer) struct {
-        mcp: struct { agents: u32, requests: u64, avg_response_ms: f64 },
-        websocket: struct { active_connections: u32, total_messages_sent: u64 },
-        agent_manager: struct { active_agents: u32, total_file_locks: u32, total_requests_handled: u64 },
-    } {
-        // MCP server stats not available in new implementation - using defaults
-        const mcp_stats = struct { agents: u32, requests: u64, avg_response_ms: f64 }{
-            .agents = 0,
-            .requests = 0,
-            .avg_response_ms = 0.0,
-        };
-        const ws_stats = self.websocket_server.getStats();
-        const am_stats = self.agent_manager.getStats();
-
-        return .{
-            .mcp = .{
-                .agents = mcp_stats.agents,
-                .requests = mcp_stats.requests,
-                .avg_response_ms = mcp_stats.avg_response_ms,
-            },
-            .websocket = .{
-                .active_connections = ws_stats.active_connections,
-                .total_messages_sent = ws_stats.total_messages_sent,
-            },
-            .agent_manager = .{
-                .active_agents = am_stats.active_agents,
-                .total_file_locks = am_stats.total_file_locks,
-                .total_requests_handled = am_stats.total_requests_handled,
-            },
-        };
-    }
-};
 
 test "Database module exports" {
     // Verify that our main exports are accessible
@@ -231,27 +164,34 @@ test "Database module exports" {
     try testing.expect(change_type_info == .@"struct");
 }
 
-test "MCP Server module exports" {
-    // Verify MCP server types are accessible
-    const mcp_server_type_info = @typeInfo(MCPServer);
-    try testing.expect(mcp_server_type_info == .@"struct");
+test "Interface exports" {
+    // Verify MCP interface types are accessible
+    const mcp_interface_type_info = @typeInfo(interfaces.MCP.Interface);
+    try testing.expect(mcp_interface_type_info == .@"struct");
 
-    const mcp_request_type_info = @typeInfo(MCPRequest);
+    const mcp_request_type_info = @typeInfo(interfaces.MCP.Request);
     try testing.expect(mcp_request_type_info == .@"struct");
+    
+    // Verify WebSocket interface types are accessible
+    const ws_interface_type_info = @typeInfo(interfaces.WebSocket.Interface);
+    try testing.expect(ws_interface_type_info == .@"struct");
 }
 
-test "AgramaCodeGraphServer initialization" {
+test "AgramaServer initialization" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    var server = try AgramaCodeGraphServer.init(allocator, 8080);
+    var server = try AgramaServer.init(allocator, .{
+        .enable_mcp = true,
+        .enable_websocket = true,
+        .websocket_port = 8080,
+    });
     defer server.deinit();
 
-    const stats = server.getServerStats();
-    try testing.expect(stats.mcp.agents == 0);
-    try testing.expect(stats.websocket.active_connections == 0);
-    try testing.expect(stats.agent_manager.active_agents == 0);
+    const stats = server.getStats();
+    try testing.expect(stats.total_operations == 0);
+    try testing.expect(stats.core.active_participants == 0);
 }
 
 test "FRE module exports" {
@@ -259,18 +199,13 @@ test "FRE module exports" {
     const fre_type_info = @typeInfo(FrontierReductionEngine);
     try testing.expect(fre_type_info == .@"struct");
 
-    const node_type_info = @typeInfo(TemporalNode);
-    try testing.expect(node_type_info == .@"struct");
+    // TemporalNode moved to archive - test removed
 
-    const edge_type_info = @typeInfo(TemporalEdge);
-    try testing.expect(edge_type_info == .@"struct");
+    // TemporalEdge also moved to archive
 
-    // Test enum types
-    const node_type_enum_info = @typeInfo(NodeType);
-    try testing.expect(node_type_enum_info == .@"enum");
+    // NodeType also moved to archive
 
-    const relation_type_enum_info = @typeInfo(RelationType);
-    try testing.expect(relation_type_enum_info == .@"enum");
+    // RelationType also moved to archive
 }
 
 test "HNSW module exports" {

@@ -45,10 +45,10 @@ zig build
 zig build test
 
 # Start the MCP server (primitive-based, production-ready)
-./zig-out/bin/agrama_v2 mcp
+./zig-out/bin/agrama mcp
 
 # Alternative: legacy enhanced server (if needed)
-./zig-out/bin/agrama_v2 mcp --legacy
+./zig-out/bin/agrama mcp --legacy
 
 # Start web interface (optional)
 cd web && npm install && npm run dev

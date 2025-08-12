@@ -1,233 +1,248 @@
-# Agrama Technical Architecture
+# Agrama Architecture
 
-## System Overview
+## Overview
 
-Agrama is a temporal knowledge graph database designed for AI-assisted software development. It combines advanced graph algorithms with traditional database operations to provide fast semantic search, efficient graph traversal, and temporal versioning.
+Agrama is a temporal knowledge graph database designed for AI-human collaboration. At its core, it provides a powerful graph database with temporal tracking, semantic search, and advanced traversal algorithms. Multiple interfaces allow different types of clients to interact with the system.
 
-## Core Components
-
-### 1. Database Layer (`src/database.zig`)
-
-**Purpose**: Persistent storage with temporal versioning
-**Implementation**: File-based storage with JSON serialization
-**Key Features**:
-- Temporal node and edge operations
-- File versioning with timestamps
-- Path validation for security
-- Memory-safe operations with Zig
-
-**Performance**: ~2ms P50 latency for basic operations
-
-### 2. HNSW Vector Index (`src/hnsw.zig`)
-
-**Purpose**: Hierarchical Navigable Small World graphs for semantic search
-**Implementation**: Multi-layer graph structure with probabilistic connections
-**Algorithm Complexity**: O(log n) search vs O(n) linear scan
-**Key Features**:
-- Matryoshka embeddings (64D to 3072D dimensions)
-- Configurable graph parameters (M, efConstruction)
-- Memory-efficient priority queues
-- SIMD-optimized distance calculations
-
-**Performance**: 0.21ms P50 latency, 360× speedup over linear scan
-
-### 3. Frontier Reduction Engine (`src/fre.zig`)
-
-**Purpose**: Advanced graph traversal with O(m log^(2/3) n) complexity
-**Implementation**: Recursive bounded multi-source shortest path algorithm
-**Key Features**:
-- Pivot-based frontier reduction
-- Temporal-aware traversal
-- Multi-target optimization
-- Adaptive level selection
-
-**Performance**: 5.6ms P50 latency, 120× speedup over Dijkstra
-
-### 4. MCP Server (`src/mcp_server.zig`)
-
-**Purpose**: Model Context Protocol server for AI agent integration
-**Implementation**: JSON-RPC 2.0 over HTTP/WebSocket
-**Key Features**:
-- Tool registry with dynamic loading
-- Real-time WebSocket broadcasting
-- Agent session management
-- Error handling and validation
-
-**Performance**: 0.26ms P50 latency for tool calls
-
-**Available Tools**:
-- `read_code`: Read files with temporal context
-- `write_code`: Save files with versioning
-- `get_context`: Query recent changes
-- `semantic_search`: HNSW-powered similarity search
-- `analyze_dependencies`: FRE graph traversal
-
-### 5. Web Observatory (`web/`)
-
-**Purpose**: Real-time visualization and monitoring interface
-**Implementation**: React + TypeScript with D3.js
-**Key Features**:
-- Live agent activity feeds
-- Performance metric dashboards
-- Graph visualization with force-directed layout
-- WebSocket integration for real-time updates
-
-## Data Model
-
-### Temporal Nodes
-```zig
-pub const TemporalNode = struct {
-    id: u128,
-    node_type: NodeType,
-    properties: HashMap([]const u8, Value),
-    embedding: ?[]f32,
-    created_at: i64,
-    updated_at: i64,
-    valid_from: i64,
-    valid_to: ?i64,
-};
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Agrama Server                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │                  Core Components                    │     │
+│  ├────────────────────────────────────────────────────┤     │
+│  │                                                     │     │
+│  │  • Temporal Database (anchor+delta compression)    │     │
+│  │  • Semantic Search (HNSW vector indices)           │     │
+│  │  • Graph Engine (FRE traversal algorithm)          │     │
+│  │  • Primitive Engine (5 core operations)            │     │
+│  │  • Orchestration Context (participant management)  │     │
+│  │                                                     │     │
+│  └────────────────────────────────────────────────────┘     │
+│                            ▲                                 │
+│                            │                                 │
+│  ┌─────────────────────────┴──────────────────────────┐     │
+│  │              Interface Adapters Layer              │     │
+│  ├────────────────────────────────────────────────────┤     │
+│  │                                                     │     │
+│  │  ┌─────────────┐  ┌──────────────┐  ┌──────────┐ │     │
+│  │  │     MCP     │  │  WebSocket   │  │   HTTP   │ │     │
+│  │  │  Interface  │  │  Interface   │  │  (future)│ │     │
+│  │  └─────────────┘  └──────────────┘  └──────────┘ │     │
+│  │                                                     │     │
+│  └─────────────────────────────────────────────────────┘     │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+                              ▲
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+   ┌─────────┐         ┌─────────────┐      ┌─────────┐
+   │   AI    │         │ Observatory │      │  REST   │
+   │ Agents  │         │   Web UI    │      │ Clients │
+   └─────────┘         └─────────────┘      └─────────┘
+    (via MCP)          (via WebSocket)       (future)
 ```
 
-### Temporal Edges
-```zig
-pub const TemporalEdge = struct {
-    id: u128,
-    source: u128,
-    target: u128,
-    edge_type: EdgeType,
-    weight: f32,
-    properties: HashMap([]const u8, Value),
-    created_at: i64,
-    valid_from: i64,
-    valid_to: ?i64,
-};
+## Core System
+
+The core of Agrama is independent of any specific protocol or interface. It provides:
+
+### 1. Temporal Database (`src/database.zig`)
+- **Anchor+Delta Storage**: Periodic snapshots with delta compression for 5× storage efficiency
+- **File History Tracking**: Complete version history for all stored entities
+- **CRDT Support**: Conflict-free replicated data types for collaborative editing
+
+### 2. Semantic Database (`src/semantic_database.zig`)
+- **HNSW Indices**: Hierarchical Navigable Small World graphs for O(log n) semantic search
+- **Matryoshka Embeddings**: Multi-scale embeddings (64D-3072D) with progressive precision
+- **Vector Operations**: Optimized similarity search and clustering
+
+### 3. Graph Engine (`src/triple_hybrid_search.zig`)
+- **BM25 Lexical Search**: Traditional text search with TF-IDF scoring
+- **Semantic Vector Search**: Neural embedding-based similarity
+- **FRE Graph Traversal**: O(m log^(2/3) n) complexity for dense graphs
+- **Hybrid Scoring**: Combines all three approaches for optimal results
+
+### 4. Primitive Engine (`src/primitive_engine.zig`)
+The 5 core operations that all interfaces use:
+- **STORE**: Save data with rich metadata and provenance
+- **RETRIEVE**: Access data with full history and context
+- **SEARCH**: Unified search across all modalities
+- **LINK**: Create knowledge graph relationships
+- **TRANSFORM**: Apply data transformations
+
+### 5. Orchestration Context (`src/orchestration_context.zig`)
+- **Participant Management**: Track humans and AI agents as equal collaborators
+- **Activity Monitoring**: Record contributions and context
+- **Collaborative Events**: Pattern discovery, consensus, conflict resolution
+
+## Interface Adapters
+
+Interfaces are **adapters** that translate between external protocols and Agrama's core primitives. They are optional and can be enabled/disabled independently.
+
+### MCP Interface (`src/interfaces/mcp/`)
+**Purpose**: Enable AI agents to interact with Agrama
+
+The Model Context Protocol (MCP) is a standardized protocol for AI agent communication. Our MCP interface:
+- Translates MCP requests to Agrama primitives
+- Manages agent sessions
+- Provides tool definitions for AI consumption
+- Maintains protocol compliance with MCP specification
+
+**Important**: MCP is just ONE way to interact with Agrama, not the core of the system.
+
+### WebSocket Interface (`src/interfaces/websocket/`)
+**Purpose**: Real-time event streaming for web clients
+
+The WebSocket interface enables:
+- Observatory web UI connections
+- Live collaboration monitoring
+- Event broadcasting
+- Push-based updates
+
+### Future Interfaces
+
+#### HTTP REST Interface (planned)
+- Traditional REST API
+- CRUD operations
+- OpenAPI specification
+- Browser-friendly
+
+#### gRPC Interface (planned)
+- High-performance RPC
+- Streaming support
+- Protocol buffers
+- Language-agnostic
+
+## Key Design Principles
+
+### 1. Core-Interface Separation
+The core system is completely independent of interface protocols. New interfaces can be added without modifying core functionality.
+
+### 2. Primitive-Based Architecture
+All operations decompose to the 5 primitives. This ensures consistency across interfaces and enables powerful composition.
+
+### 3. Temporal-First Design
+Every piece of data has history. The system is designed for time-travel queries and understanding evolution.
+
+### 4. Collaborative by Default
+Multiple participants (human and AI) can work simultaneously. The orchestration layer manages coordination without central control.
+
+### 5. Performance Critical
+- <1ms P50 latency for primitive operations
+- Memory pools reduce allocations by 50-70%
+- SIMD-optimized vector operations
+- Lock-free data structures where possible
+
+## File Organization
+
+```
+src/
+├── core/                      # Core Agrama components
+│   ├── database.zig          # Temporal database
+│   ├── semantic_database.zig # Vector search
+│   ├── graph_engine.zig      # Graph algorithms
+│   ├── primitives.zig        # Core operations
+│   └── orchestration.zig     # Participant coordination
+│
+├── interfaces/               # Protocol adapters
+│   ├── mcp/                 # Model Context Protocol
+│   │   └── mcp_interface.zig
+│   ├── websocket/           # Real-time streaming
+│   │   └── websocket_interface.zig
+│   └── http/                # REST API (future)
+│       └── http_interface.zig
+│
+├── algorithms/              # Advanced algorithms
+│   ├── fre_true.zig        # Frontier Reduction Engine
+│   ├── hnsw.zig           # HNSW implementation
+│   └── crdt.zig           # CRDT algorithms
+│
+└── agrama_server.zig      # Main server orchestration
 ```
 
-## Algorithm Implementations
+## Usage Examples
 
-### HNSW Construction
+### Starting with Different Interfaces
 
-1. **Layer Assignment**: Nodes assigned to layers with exponential probability
-2. **Connection Building**: Connect to M nearest neighbors per layer
-3. **Dynamic Updates**: Support for insertions without full rebuilds
-4. **Distance Functions**: Cosine similarity for embeddings
+```bash
+# Start with all interfaces
+agrama serve --all
 
-### FRE Traversal
+# MCP interface only (for AI agents)
+agrama serve --mcp
 
-1. **Pivot Selection**: Choose high-degree nodes as pivots
-2. **Recursive Decomposition**: Split graph into smaller subproblems
-3. **Frontier Reduction**: Maintain small exploration frontiers
-4. **Result Aggregation**: Combine results from recursive calls
+# WebSocket only (for Observatory)
+agrama serve --websocket --port 8080
 
-### Temporal Operations
+# Multiple specific interfaces
+agrama serve --mcp --websocket
+```
 
-1. **Anchor+Delta Storage**: Periodic full snapshots with incremental deltas
-2. **Time Travel Queries**: Query graph state at specific timestamps
-3. **Evolution Tracking**: Monitor how relationships change over time
-4. **Version Management**: Efficient storage of multiple versions
+### Direct Core Access (Embedded)
 
-## Memory Management
+```zig
+const agrama = @import("agrama");
 
-### Allocator Strategy
-- **ArenaAllocator**: For temporary operations and graph traversal
-- **GeneralPurposeAllocator**: For long-lived objects (debug mode)
-- **FixedBufferAllocator**: For predictable performance in hot paths
+// Use Agrama as a library without any interfaces
+var server = try agrama.AgramaServer.init(allocator, .{
+    .enable_mcp = false,
+    .enable_websocket = false,
+});
 
-### Memory Safety
-- All memory operations use Zig's safety guarantees
-- Explicit `defer` cleanup for resource management
-- No memory leaks detected in 64/65 tests (one minor leak in triple hybrid search)
+// Direct primitive execution
+const result = try server.executePrimitive("store", params, "embedded_app");
+```
 
 ## Performance Characteristics
 
-### Benchmarked Performance (5K node dataset)
+### Storage
+- **Compression**: 5× reduction via anchor+delta
+- **Write Speed**: 0.11ms P50 for database operations
+- **Memory Usage**: <10GB for 1M entities
 
-| Operation | Latency P50 | Latency P99 | Throughput | Memory |
-|-----------|-------------|-------------|------------|--------|
-| Node Insert | 1.2ms | 2.1ms | 830 QPS | 50MB |
-| HNSW Search | 0.21ms | 0.29ms | 4,600 QPS | 59MB |
-| FRE Traversal | 5.6ms | 9.4ms | 180 QPS | 430MB |
-| MCP Tool Call | 0.26ms | 0.37ms | 3,800 QPS | 50MB |
+### Search
+- **Vector Search**: O(log n) with HNSW
+- **Hybrid Query**: 4.91ms P50 for complex queries
+- **Graph Traversal**: 2.778ms P50 with FRE
 
-### Scaling Characteristics
-- **HNSW**: O(log n) search scales well to 50K+ nodes
-- **FRE**: O(m log^(2/3) n) traversal maintains sub-10ms latency
-- **Storage**: Linear growth with data size, efficient compression
-- **Memory**: ~200MB total for typical 10K node graphs
-
-## Integration Points
-
-### AI Agent Integration
-- **Claude Code**: Native MCP client support
-- **Cursor**: MCP server configuration
-- **Custom Agents**: JSON-RPC 2.0 protocol compliance
-
-### WebSocket Events
-- Real-time agent activity broadcasting
-- Graph update notifications
-- Performance metric streaming
-
-### File System Integration
-- Secure path validation prevents traversal attacks
-- Configurable storage location
-- JSON-based serialization for interoperability
-
-## Error Handling
-
-### Error Types
-- `ValidationError`: Input validation failures
-- `StorageError`: File system operation errors
-- `NetworkError`: MCP protocol errors
-- `AllocationError`: Memory allocation failures
-
-### Recovery Strategies
-- Graceful degradation for non-critical operations
-- Automatic retry with exponential backoff
-- Transaction rollback for consistency
-- Comprehensive error logging
+### Interfaces
+- **MCP Tools**: 0.255ms P50 response time
+- **WebSocket**: <1ms broadcast latency
+- **Concurrent Connections**: 100+ participants
 
 ## Security Considerations
 
-### Path Security
-- All file paths validated against traversal attacks
-- Whitelist-based path permissions
-- Sandboxed file operations
+### Interface Layer
+- Authentication per interface type
+- Rate limiting and quotas
+- TLS/SSL for network interfaces
 
-### Network Security
-- MCP protocol input validation
-- Rate limiting for API endpoints
-- Secure WebSocket connections (configurable TLS)
+### Core Layer
+- Input validation on all primitives
+- Memory safety via Zig's compile-time checks
+- Audit logging for all operations
 
-### Memory Security
-- Zig's compile-time safety guarantees
-- No buffer overflows or use-after-free
-- Explicit memory management
+### Data Layer
+- Encryption at rest (planned)
+- Versioned access control
+- Immutable history logs
 
-## Testing Strategy
+## Future Enhancements
 
-### Test Coverage
-- Unit tests: Core algorithms and data structures
-- Integration tests: MCP server and database operations
-- Performance tests: Benchmark validation
-- Memory tests: Leak detection and allocation patterns
+### Near Term
+- HTTP REST interface
+- GraphQL interface
+- Prometheus metrics endpoint
 
-### Current Status
-- 64/65 tests passing (98.5% success rate)
-- One minor memory leak in triple hybrid search
-- Comprehensive benchmark suite with regression detection
+### Medium Term
+- Distributed clustering
+- Cross-region replication
+- Advanced CRDT types
 
-## Deployment
-
-### Build Requirements
-- Zig 0.14+ for database compilation
-- Node.js 18+ for web interface
-- 2GB RAM minimum for development
-- 4GB RAM recommended for production
-
-### Runtime Requirements
-- ~200MB memory for typical workloads
-- Network access for MCP protocol
-- File system write permissions
-- Optional: WebSocket capabilities for real-time features
-
-This architecture provides a solid foundation for temporal knowledge graph operations with proven performance characteristics and comprehensive testing coverage.
+### Long Term
+- Native language SDKs
+- Embedded database mode
+- Query optimization engine

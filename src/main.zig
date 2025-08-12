@@ -4,7 +4,7 @@
 const std = @import("std");
 
 /// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.
-const lib = @import("agrama_v2_lib");
+const lib = @import("agrama_lib");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -56,8 +56,8 @@ fn printUsage() !void {
         \\    --help                  Show detailed MCP help
         \\
         \\PRIMITIVE-BASED ARCHITECTURE (DEFAULT):
-        \\    The revolutionary primitive-based server exposes 5 core operations
-        \\    that enable unlimited composition and sub-1ms performance:
+        \\    The primitive-based server exposes 5 core operations
+        \\    that enable composition and sub-1ms performance:
         \\
         \\    store       Universal storage with rich metadata and provenance
         \\    retrieve    Data access with history and context
@@ -194,7 +194,7 @@ fn mcpCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
             try stdout.writeAll(
                 \\Primitive-Based MCP Server (CONSOLIDATED ARCHITECTURE)
                 \\
-                \\Revolutionary MCP server exposing 5 core primitives instead of complex tools.
+                \\MCP server exposing 5 core primitives instead of complex tools.
                 \\Enables LLMs to compose their own memory architectures and analysis pipelines.
                 \\
                 \\USAGE:
@@ -214,7 +214,7 @@ fn mcpCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
                 \\    link                    Knowledge graph relationships with metadata
                 \\    transform               Extensible operation registry for data transformation
                 \\
-                \\PERFORMANCE BREAKTHROUGH:
+                \\PERFORMANCE TARGETS:
                 \\    Response Time:          <1ms P50 latency for primitive operations
                 \\    Throughput:             1000+ primitive ops/second
                 \\    Memory Usage:           Fixed allocation <10GB for 1M entities
@@ -323,41 +323,11 @@ fn runPrimitiveServer(allocator: std.mem.Allocator, hnsw_dimensions: u32, enable
 }
 
 fn runLegacyEnhancedServer(allocator: std.mem.Allocator, hnsw_dimensions: u32) !void {
-    // Legacy enhanced server implementation (deprecated)
-    const enhanced_config = lib.EnhancedDatabaseConfig{
-        .hnsw_vector_dimensions = hnsw_dimensions,
-        .hnsw_max_connections = 16,
-        .hnsw_ef_construction = 200,
-        .matryoshka_dims = &[_]u32{ 64, 256, 768, 1024 },
-        .fre_default_recursion_levels = 3,
-        .fre_max_frontier_size = 1000,
-        .fre_pivot_threshold = 0.1,
-        .crdt_enable_real_time_sync = true,
-        .crdt_conflict_resolution = .last_writer_wins,
-        .crdt_broadcast_events = true,
-        .hybrid_bm25_weight = 0.4,
-        .hybrid_hnsw_weight = 0.4,
-        .hybrid_fre_weight = 0.2,
-    };
-
-    var enhanced_server = lib.EnhancedMCPServer.init(allocator, enhanced_config) catch |err| {
-        std.log.err("Failed to initialize Enhanced MCP server: {any}", .{err});
-        std.process.exit(1);
-    };
-    defer enhanced_server.deinit();
-
-    // Initialize enhanced MCP compliant server
-    var mcp_compliant_server = lib.MCPCompliantServer.initEnhanced(allocator, &enhanced_server) catch |err| {
-        std.log.err("Failed to initialize Enhanced MCP compliant server: {any}", .{err});
-        std.process.exit(1);
-    };
-    defer mcp_compliant_server.deinit();
-
-    // Run the enhanced server (blocks until stdin closes)
-    mcp_compliant_server.run() catch |err| {
-        std.log.err("Enhanced MCP server error: {any}", .{err});
-        std.process.exit(1);
-    };
+    _ = allocator;
+    _ = hnsw_dimensions;
+    // Legacy enhanced server moved to archive - use 'mcp' command instead
+    std.log.err("Enhanced server moved to archive. Use 'agrama mcp' for MCP primitive server.", .{});
+    std.process.exit(1);
 }
 
 fn primitiveCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
@@ -374,7 +344,7 @@ fn primitiveCommand(allocator: std.mem.Allocator, args: [][:0]u8) !void {
             try stdout.writeAll(
                 \\Primitive-Based MCP Server
                 \\
-                \\Revolutionary MCP server exposing 5 core primitives instead of complex tools.
+                \\MCP server exposing 5 core primitives instead of complex tools.
                 \\Enables LLMs to compose their own memory architectures and analysis pipelines.
                 \\
                 \\USAGE:
@@ -551,7 +521,20 @@ fn testDatabaseCommand(allocator: std.mem.Allocator) !void {
 
     // Test MCP server integration
     std.log.info("✅ Testing MCP Server initialization...", .{});
-    var mcp_server = try lib.MCPServer.init(allocator, &db);
+    
+    // Initialize required components for MCP server
+    const hnsw_config = lib.SemanticDatabase.HNSWConfig{
+        .vector_dimensions = 768,
+        .max_connections = 16,
+        .ef_construction = 200,
+    };
+    var semantic_db = try lib.SemanticDatabase.init(allocator, hnsw_config);
+    defer semantic_db.deinit();
+    
+    var graph_engine = lib.TripleHybridSearchEngine.init(allocator);
+    defer graph_engine.deinit();
+    
+    var mcp_server = try lib.MCPPrimitiveServer.init(allocator, &db, &semantic_db, &graph_engine);
     defer mcp_server.deinit();
 
     std.log.info("✅ MCP Server initialized successfully", .{});
@@ -576,24 +559,21 @@ test "MCP server integration test - MEMORY FIXED" {
     defer test_arena.deinit();
     const allocator = test_arena.allocator();
 
-    var server = try lib.AgramaCodeGraphServer.init(allocator, 8080);
+    var server = try lib.AgramaServer.init(allocator, .{
+        .enable_mcp = true,
+        .enable_websocket = true,
+        .websocket_port = 8080,
+    });
     defer server.deinit();
 
-    // Create capability strings with allocator
-    const capabilities = [_][]const u8{ "read_code", "write_code" };
-    var owned_capabilities = try allocator.alloc([]const u8, capabilities.len);
-    for (capabilities, 0..) |cap, i| {
-        owned_capabilities[i] = try allocator.dupe(u8, cap);
-    }
+    // Test participant registration with owned strings
+    const test_participant_id = try allocator.dupe(u8, "test-agent");
+    defer allocator.free(test_participant_id);
 
-    // Test agent registration with owned strings - THIS SHOULD NOW WORK
-    const test_agent_id = try allocator.dupe(u8, "test-agent");
-    const test_agent_name = try allocator.dupe(u8, "Test Agent");
+    try server.registerParticipant(test_participant_id, .AIAgent, .MCP);
 
-    try server.registerAgent(test_agent_id, test_agent_name, owned_capabilities);
-
-    const stats = server.getServerStats();
-    try std.testing.expect(stats.websocket.active_connections == 0);
+    const stats = server.getStats();
+    try std.testing.expect(stats.core.active_participants == 1);
 }
 
 test "database integration from main" {

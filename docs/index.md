@@ -37,7 +37,7 @@ graph TB
 zig build
 
 # Start MCP server
-./zig-out/bin/agrama_v2 mcp
+./zig-out/bin/agrama mcp
 
 # Run tests
 zig build test

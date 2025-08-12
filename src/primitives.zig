@@ -1538,10 +1538,38 @@ test "SearchPrimitive validation" {
 
 // Simplified JSON cleanup using arena allocator approach
 // This function only handles structures we create, not arbitrary JSON
-fn cleanupPrimitiveResult(allocator: Allocator, value: std.json.Value) void {
+pub fn cleanupPrimitiveResult(allocator: Allocator, value: std.json.Value) void {
     switch (value) {
         .object => |obj| {
-            // Free the object map itself - strings within are managed by arena or caller
+            // Free strings that we know we've allocated (key, value fields in our results)
+            var iter = obj.iterator();
+            while (iter.next()) |entry| {
+                const key = entry.key_ptr.*;
+                const val = entry.value_ptr.*;
+                // Free specific string fields that we know we duplicate
+                if ((std.mem.eql(u8, key, "key") or 
+                     std.mem.eql(u8, key, "value") or 
+                     std.mem.eql(u8, key, "source") or
+                     std.mem.eql(u8, key, "target") or
+                     std.mem.eql(u8, key, "current_session") or
+                     std.mem.eql(u8, key, "name") or
+                     std.mem.eql(u8, key, "description") or
+                     std.mem.eql(u8, key, "performance")) and val == .string) {
+                    allocator.free(val.string);
+                }
+                // Handle operation_counts object - need to free keys
+                if (std.mem.eql(u8, key, "operation_counts") and val == .object) {
+                    var op_iter = val.object.iterator();
+                    while (op_iter.next()) |op_entry| {
+                        allocator.free(op_entry.key_ptr.*);
+                    }
+                }
+                // Recursively clean nested objects/arrays
+                if (val == .object or val == .array) {
+                    cleanupPrimitiveResult(allocator, val);
+                }
+            }
+            // Free the object map itself
             var mutable_obj = obj;
             mutable_obj.deinit();
         },
@@ -1555,8 +1583,8 @@ fn cleanupPrimitiveResult(allocator: Allocator, value: std.json.Value) void {
             mutable_arr.deinit();
         },
         .string => {
-            // Don't automatically free strings - too risky without clear ownership tracking
-            // Most strings should be managed by arena allocator or caller
+            // Don't automatically free top-level strings - too risky without clear ownership tracking
+            // Strings within objects are handled above when we know they're ours
         },
         else => {
             // No cleanup needed for primitives like bool, integer, float, null

@@ -9,7 +9,7 @@ const print = std.debug.print;
 
 const Database = @import("database.zig").Database;
 const SemanticDatabase = @import("semantic_database.zig").SemanticDatabase;
-const FrontierReductionEngine = @import("fre.zig").FrontierReductionEngine;
+const TrueFrontierReductionEngine = @import("fre_true.zig").TrueFrontierReductionEngine;
 const CRDTDocument = @import("crdt.zig").CRDTDocument;
 const TripleHybridSearchEngine = @import("triple_hybrid_search.zig").TripleHybridSearchEngine;
 const hnsw = @import("hnsw.zig");
@@ -135,7 +135,7 @@ pub const MCPCompliantServer = struct {
     // Core databases - layered architecture
     database: *Database,
     semantic_db: ?*SemanticDatabase = null,
-    fre_engine: ?*FrontierReductionEngine = null,
+    fre_engine: ?*TrueFrontierReductionEngine = null,
     hybrid_search: ?*TripleHybridSearchEngine = null,
 
     // CRDT collaboration
@@ -225,8 +225,8 @@ pub const MCPCompliantServer = struct {
         server.semantic_db.?.* = try SemanticDatabase.init(allocator, semantic_config);
 
         // Initialize FRE engine
-        server.fre_engine = try allocator.create(FrontierReductionEngine);
-        server.fre_engine.?.* = FrontierReductionEngine.init(allocator);
+        server.fre_engine = try allocator.create(TrueFrontierReductionEngine);
+        server.fre_engine.?.* = TrueFrontierReductionEngine.init(allocator);
 
         // Initialize hybrid search
         server.hybrid_search = try allocator.create(TripleHybridSearchEngine);

@@ -21,7 +21,7 @@ const PoolConfig = @import("memory_pools.zig").PoolConfig;
 
 const bm25 = @import("bm25.zig");
 const hnsw = @import("hnsw.zig");
-const fre = @import("fre.zig");
+const fre = @import("fre_true.zig");
 
 const BM25Index = bm25.BM25Index;
 const BM25SearchResult = bm25.BM25SearchResult;

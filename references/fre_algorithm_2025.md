@@ -2,13 +2,14 @@
 
 ## Paper Information
 
-**Title:** Breaking the Sorting Barrier for Directed Single-Source Shortest Paths  
-**Authors:** Ran Duan, Jiayi Mao, Xinkai Shu, Longhui Yin, Xiao Mao  
-**Publication:** alphaXiv preprint  
-**Date:** July 30, 2025  
-**ArXiv ID:** 2504.17033  
-**Category:** Computer Science - Data Structures and Algorithms (cs.DS)  
-**URL:** https://alphaxiv.org/abs/2504.17033  
+**Title:** Breaking the Sorting Barrier for Directed Single-Source Shortest Paths
+**Authors:** Ran Duan, Jiayi Mao, Xinkai Shu, Longhui Yin, Xiao Mao
+**Publication:** alphaXiv preprint
+**Date:** July 30, 2025
+**ArXiv ID:** 2504.17033
+**Category:** Computer Science - Data Structures and Algorithms (cs.DS)
+**URL:** https://alphaxiv.org/abs/2504.17033
+**FRE paper name**: 2504.17033v2.pdf
 
 ## Abstract
 
@@ -17,7 +18,7 @@ We give a deterministic O(m log^(2/3)n)-time algorithm for single-source shortes
 ## Key Technical Contributions
 
 ### Algorithmic Innovation
-- **Time Complexity:** O(m log^(2/3) n) 
+- **Time Complexity:** O(m log^(2/3) n)
 - **Graph Type:** Directed graphs with non-negative real edge weights
 - **Computational Model:** Comparison-addition operations
 - **Deterministic:** No randomization required
@@ -89,7 +90,7 @@ For the Agrama project, the following aspects should be verified:
 
 - [ ] **Complexity Analysis:** Confirm implementation achieves O(m log^(2/3) n) complexity
 - [ ] **Correctness:** Validate shortest path results match Dijkstra baseline
-- [ ] **Performance:** Measure actual speedup vs theoretical expectations  
+- [ ] **Performance:** Measure actual speedup vs theoretical expectations
 - [ ] **Memory Efficiency:** Optimize data structures for practical use
 - [ ] **Edge Cases:** Handle degenerate graphs and numerical precision issues
 

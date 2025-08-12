@@ -13,7 +13,7 @@ zig build
 
 ### 2. Run MCP Compliant Server
 ```bash
-./zig-out/bin/agrama_v2 mcp
+./zig-out/bin/agrama mcp
 ```
 
 The server will start and listen on stdin for JSON-RPC messages, responding on stdout.
@@ -28,7 +28,7 @@ To use with Claude Code, you'll need to register the server in your MCP configur
 {
   "mcpServers": {
     "agrama-codegraph": {
-      "command": "/path/to/agrama_v2",
+      "command": "/path/to/agrama",
       "args": ["mcp"],
       "env": {}
     }
@@ -44,7 +44,7 @@ Configure in your Cursor settings:
 {
   "mcp.servers": {
     "agrama-codegraph": {
-      "command": "/path/to/agrama_v2 mcp"
+      "command": "/path/to/agrama mcp"
     }
   }
 }
@@ -56,7 +56,7 @@ Any MCP client can connect using stdio transport:
 
 ```bash
 # Example: pipe JSON-RPC messages to the server
-echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{}}}' | ./zig-out/bin/agrama_v2 mcp
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{}}}' | ./zig-out/bin/agrama mcp
 ```
 
 ## Available Tools
@@ -175,13 +175,13 @@ Run the comprehensive test suite:
 The original WebSocket-based server is still available for backward compatibility:
 
 ```bash
-./zig-out/bin/agrama_v2 serve --port 8080
+./zig-out/bin/agrama serve --port 8080
 ```
 
 However, for MCP compliance and AI tool integration, use the new MCP server:
 
 ```bash
-./zig-out/bin/agrama_v2 mcp
+./zig-out/bin/agrama mcp
 ```
 
 ## Architecture Benefits
@@ -229,7 +229,7 @@ However, for MCP compliance and AI tool integration, use the new MCP server:
 
 Enable debug logging:
 ```bash
-RUST_LOG=debug ./zig-out/bin/agrama_v2 mcp
+RUST_LOG=debug ./zig-out/bin/agrama mcp
 ```
 
 The server logs to stderr, so it won't interfere with JSON-RPC communication on stdout.

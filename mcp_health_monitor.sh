@@ -6,7 +6,7 @@
 set -euo pipefail
 
 # Configuration
-MCP_SERVER_BINARY="./zig-out/bin/agrama_v2"
+MCP_SERVER_BINARY="./zig-out/bin/agrama"
 MCP_SERVER_ARGS="mcp"
 LOG_FILE="mcp_server.log"
 HEALTH_CHECK_INTERVAL=30

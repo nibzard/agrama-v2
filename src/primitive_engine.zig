@@ -477,7 +477,7 @@ test "PrimitiveEngine primitive execution" {
 
     // Execute store primitive
     const result = try engine.executePrimitive("store", params, "test_agent");
-    // Note: result memory is managed by primitive engine
+    defer primitives.cleanupPrimitiveResult(allocator, result);
 
     try testing.expect(result.object.get("success").?.bool == true);
     try testing.expect(engine.total_executions == 1);
@@ -528,7 +528,7 @@ test "PrimitiveEngine performance statistics" {
 
     // Get performance stats
     const stats = try engine.getPerformanceStats();
-    // Note: stats memory is managed by primitive engine
+    defer primitives.cleanupPrimitiveResult(allocator, stats);
 
     try testing.expect(stats.object.get("total_executions").?.integer == 0);
     try testing.expect(stats.object.get("avg_execution_time_ms").?.float == 0.0);
@@ -553,7 +553,7 @@ test "PrimitiveEngine list primitives" {
     defer engine.deinit();
 
     const primitives_list = try engine.listPrimitives();
-    // Note: primitives_list memory is managed by primitive engine
+    defer primitives.cleanupPrimitiveResult(allocator, primitives_list);
 
     try testing.expect(primitives_list.object.get("count").?.integer == 5);
     try testing.expect(primitives_list.object.get("total_executions").?.integer == 0);

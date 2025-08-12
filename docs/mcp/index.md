@@ -79,23 +79,23 @@ The MCP server exposes the following capabilities to connecting agents:
 zig build
 
 # Start MCP server on stdio
-./zig-out/bin/agrama_v2 mcp
+./zig-out/bin/agrama mcp
 
 # Start with WebSocket support (planned)
-./zig-out/bin/agrama_v2 mcp --websocket --port 8080
+./zig-out/bin/agrama mcp --websocket --port 8080
 ```
 
 ### Basic Tool Usage
 
 ```bash
 # Initialize connection
-echo '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}}}' | ./zig-out/bin/agrama_v2 mcp
+echo '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}}}' | ./zig-out/bin/agrama mcp
 
 # List available tools
-echo '{"jsonrpc": "2.0", "id": 2, "method": "tools/list"}' | ./zig-out/bin/agrama_v2 mcp
+echo '{"jsonrpc": "2.0", "id": 2, "method": "tools/list"}' | ./zig-out/bin/agrama mcp
 
 # Call read_code tool
-echo '{"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "read_code", "arguments": {"path": "src/main.zig"}}}' | ./zig-out/bin/agrama_v2 mcp
+echo '{"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "read_code", "arguments": {"path": "src/main.zig"}}}' | ./zig-out/bin/agrama mcp
 ```
 
 ## Available Tools
@@ -143,7 +143,7 @@ The server provides comprehensive tools for AI agent collaboration:
 ```typescript
 // Connect to Agrama MCP server
 const mcpClient = new MCPClient({
-  command: "./zig-out/bin/agrama_v2",
+  command: "./zig-out/bin/agrama",
   args: ["mcp"]
 });
 
@@ -161,7 +161,7 @@ Configure in Cursor settings:
 {
   "mcp.servers": {
     "agrama": {
-      "command": "./zig-out/bin/agrama_v2",
+      "command": "./zig-out/bin/agrama",
       "args": ["mcp"]
     }
   }
@@ -175,7 +175,7 @@ import subprocess
 
 # Start MCP server
 process = subprocess.Popen(
-    ["./zig-out/bin/agrama_v2", "mcp"],
+    ["./zig-out/bin/agrama", "mcp"],
     stdin=subprocess.PIPE,
     stdout=subprocess.PIPE,
     text=True

@@ -57,7 +57,7 @@ zig build -Doptimize=Debug
 zig build test
 
 # Run with debug output
-./zig-out/bin/agrama_v2 mcp --verbose
+./zig-out/bin/agrama mcp --verbose
 ```
 
 ### IDE Setup

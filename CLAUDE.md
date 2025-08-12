@@ -6,11 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This repository contains **Agrama**, the world's first PRODUCTION temporal knowledge graph database system for collaborative AI coding, and **Agrama CodeGraph**, a fully operational Model Context Protocol server demonstrating revolutionary multi-agent capabilities in real-world scenarios.
+This repository contains **Agrama**, a production temporal knowledge graph database system for collaborative AI coding, and **Agrama CodeGraph**, a fully operational Model Context Protocol server demonstrating multi-agent capabilities in real-world scenarios.
 
 ### Production Architecture
 - **Agrama Database**: Production Zig-based temporal knowledge graph with validated CRDT collaboration, operational HNSW vector indices, and working Frontier Reduction Engine
-- **Agrama CodeGraph MCP Server**: Fully functional Model Context Protocol server enabling real multi-agent collaboration  
+- **Agrama CodeGraph MCP Server**: Fully functional Model Context Protocol server enabling real multi-agent collaboration
 - **Observatory Web Interface**: Deployed React-based real-time visualization of live AI-human collaboration
 - **AI Agent Integration**: Production support for Claude Code, Cursor, and custom AI agents
 
@@ -22,6 +22,10 @@ This repository contains **Agrama**, the world's first PRODUCTION temporal knowl
 - **MCP**: Model Context Protocol for AI agent integration
 - **React/TypeScript**: Web Observatory interface
 
+## References
+
+References like scientific papers, standards, dependancies documentation and other supporting materials for development is saved in "references/" folder.
+
 ## Production Usage Commands
 
 ### Project Setup
@@ -30,7 +34,7 @@ This repository contains **Agrama**, the world's first PRODUCTION temporal knowl
 zig build
 
 # Start MCP server
-./zig-out/bin/agrama_v2 mcp
+./zig-out/bin/agrama mcp
 
 # Run comprehensive tests
 zig build test
@@ -87,7 +91,7 @@ The @task-master subagent should be invoked proactively in the following situati
 
 **Why This Matters:**
 - TODO.md serves as the single source of truth for project status
-- Other team members and stakeholders rely on accurate task tracking  
+- Other team members and stakeholders rely on accurate task tracking
 - Project momentum and coordination depend on up-to-date status
 - @task-master provides strategic oversight that prevents scope drift and maintains focus
 
@@ -111,7 +115,7 @@ The heart of Agrama is a temporal graph database that captures code evolution ov
 - **HNSW Vector Index**: O(log n) semantic search vs O(n) linear scan for 100-1000× speedup
 
 ### Frontier Reduction Engine (Performance)
-Revolutionary graph traversal algorithm breaking the "sorting barrier":
+Advanced graph traversal algorithm with improved complexity:
 
 - **Complexity**: O(m log^(2/3) n) vs traditional O(m + n log n) Dijkstra
 - **Applications**: Dependency analysis, impact assessment, semantic discovery
@@ -128,7 +132,7 @@ Model Context Protocol server bridging AI agents to the knowledge graph:
 React-based web interface providing unprecedented visibility:
 
 - **Knowledge Graph Viz**: D3.js real-time force-directed graph of code entities
-- **Agent Activity Feed**: Live stream of AI agent actions and decisions  
+- **Agent Activity Feed**: Live stream of AI agent actions and decisions
 - **Human Command Interface**: Natural language commands to guide AI agents
 - **Temporal Analytics**: Evolution tracking and pattern recognition
 
@@ -137,7 +141,7 @@ React-based web interface providing unprecedented visibility:
 This project uses specialized AI subagents located in `.claude/agents/`:
 
 - **@task-master**: Project coordination, TODO.md management, sprint planning
-- **@db-engineer**: Zig development, temporal database, core algorithms  
+- **@db-engineer**: Zig development, temporal database, core algorithms
 - **@mcp-specialist**: MCP server, AI agent integration, real-time communication
 - **@frontend-engineer**: React Observatory interface, D3.js visualization
 - **@perf-engineer**: Algorithm optimization, FRE, HNSW implementation
@@ -151,7 +155,7 @@ Use `@subagent-name` for explicit invocation or let them activate automatically 
 ```bash
 # After EVERY file modification:
 zig build                    # Verify compilation
-zig build test               # Run tests  
+zig build test               # Run tests
 zig fmt .                    # Format code
 
 # Before ANY commit:
@@ -199,13 +203,13 @@ pub const Database = struct {
 ```zig
 // MCP tools follow this pattern from MVP.md
 const readCodeTool = MCPTool{
-    .name = "read_code", 
+    .name = "read_code",
     .description = "Read and analyze code files with full context",
     .parameters = &[_]MCPParameter{ /* ... */ },
     .handler = struct {
         fn execute(params: MCPParameters, context: *MCPContext) !MCPResult {
             // 1. Read file content
-            // 2. Add historical context if requested  
+            // 2. Add historical context if requested
             // 3. Add dependency context
             // 4. Add semantic context (similar code via HNSW)
             // 5. Return comprehensive result
@@ -216,13 +220,13 @@ const readCodeTool = MCPTool{
 
 ### Error Handling Pattern
 - Define specific error sets for each domain (ValidationError, NetworkError, etc.)
-- Combine error sets with `||` operator 
+- Combine error sets with `||` operator
 - Always include context in error messages
 - Use `catch |err| switch (err)` for detailed error handling
 
 ### Testing Requirements
 - Unit tests for all core algorithms and data structures (`zig build test`)
-- Integration tests for MCP server and database operations  
+- Integration tests for MCP server and database operations
 - Fuzz tests for robustness and security (`tests/fuzz_test_framework.zig`)
 - Performance benchmarks with regression detection (`benchmarks/` directory)
 - Memory safety validation (`tests/memory_safety_validator.zig`)
@@ -248,15 +252,15 @@ The `benchmarks/` directory contains comprehensive performance testing:
 
 ### Technical Targets (from SPECS.md)
 - **Storage Efficiency**: 5× reduction through anchor+delta compression
-- **Semantic Search**: O(log n) via HNSW vs O(n) linear scan  
+- **Semantic Search**: O(log n) via HNSW vs O(n) linear scan
 - **Graph Traversal**: O(m log^(2/3) n) via FRE vs O(m + n log n) Dijkstra
 - **Query Performance**: Sub-10ms for hybrid semantic+graph queries on 1M+ nodes
 - **Concurrent Agents**: Support 100+ simultaneous AI agents
 - **Memory Usage**: Fixed allocation <10GB for 1M nodes
 
-### MVP Deliverables (from MVP.md)  
+### MVP Deliverables (from MVP.md)
 - **MCP Server**: Tool registry with core AI agent tools
-- **Web Observatory**: React interface with real-time knowledge graph visualization  
+- **Web Observatory**: React interface with real-time knowledge graph visualization
 - **Agent Integration**: Claude Code, Cursor, custom agent support
 - **Human Commands**: Natural language interface to guide AI agents
 - **Complete Traceability**: All agent decisions recorded and explainable
@@ -266,7 +270,7 @@ The `benchmarks/` directory contains comprehensive performance testing:
 This project represents a temporal knowledge graph database for AI-assisted collaborative development. The combination of temporal knowledge graphs, advanced algorithms (FRE, HNSW), and memory pool optimizations provides production-ready performance for code understanding and collaboration.
 
 Always prioritize:
-1. **Safety**: Memory safety and correctness over premature optimization  
+1. **Safety**: Memory safety and correctness over premature optimization
 2. **Performance**: Maintain the achieved sub-10ms query targets through careful implementation
 3. **Collaboration**: Enable seamless AI-human teamwork through comprehensive observability
 4. **Quality**: Maintain high code standards through comprehensive testing and validation
@@ -276,3 +280,4 @@ Development principles:
 - Never hype achievements, focus on measured results
 - All performance claims must be backed by benchmark data
 - Memory safety is critical - use arena allocators and memory pools appropriately
+- Never use overhyped words like "world's first," "revolutionary," "game-changing", we are speaking to other developers, keep it real!

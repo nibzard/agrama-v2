@@ -29,10 +29,10 @@ cd agrama-v2
 zig build -Doptimize=ReleaseSafe
 
 # 3. Initialize enterprise configuration
-./zig-out/bin/agrama_v2 init-enterprise
+./zig-out/bin/agrama init-enterprise
 
 # 4. Start production services
-./zig-out/bin/agrama_v2 mcp &          # MCP server on port 3001
+./zig-out/bin/agrama mcp &          # MCP server on port 3001
 cd web && npm install && npm run build # Observatory production build
 ```
 
@@ -42,7 +42,7 @@ cd web && npm install && npm run build # Observatory production build
 {
   "mcpServers": {
     "agrama-enterprise": {
-      "command": "/path/to/agrama-v2/zig-out/bin/agrama_v2",
+      "command": "/path/to/agrama-v2/zig-out/bin/agrama",
       "args": ["mcp", "--enterprise"],
       "env": {
         "AGRAMA_MODE": "production",
@@ -137,12 +137,12 @@ export AGRAMA_RETENTION_POLICY="7years"
 FROM ubuntu:22.04 as production
 
 # Copy optimized binaries  
-COPY zig-out/bin/agrama_v2 /usr/local/bin/
+COPY zig-out/bin/agrama /usr/local/bin/
 COPY web/dist /opt/agrama/web/
 
 # Enterprise configuration
 EXPOSE 3001 3000
-CMD ["/usr/local/bin/agrama_v2", "mcp", "--enterprise"]
+CMD ["/usr/local/bin/agrama", "mcp", "--enterprise"]
 ```
 
 ```bash

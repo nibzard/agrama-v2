@@ -156,7 +156,7 @@ zig build
 zig build test
 
 # Start MCP server
-./zig-out/bin/agrama_v2 mcp
+./zig-out/bin/agrama mcp
 
 # Run performance benchmarks
 zig build bench-quick

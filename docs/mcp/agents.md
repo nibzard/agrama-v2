@@ -32,10 +32,10 @@ Standard stdin/stdout communication for local agent integration:
 
 ```bash
 # Direct command execution
-./zig-out/bin/agrama_v2 mcp
+./zig-out/bin/agrama mcp
 
 # With specific configuration
-./zig-out/bin/agrama_v2 mcp --verbose --log-level debug
+./zig-out/bin/agrama mcp --verbose --log-level debug
 ```
 
 #### 2. WebSocket Connection (Planned)
@@ -43,10 +43,10 @@ Real-time bidirectional communication for advanced scenarios:
 
 ```bash
 # WebSocket server mode
-./zig-out/bin/agrama_v2 mcp --websocket --port 8080
+./zig-out/bin/agrama mcp --websocket --port 8080
 
 # With authentication
-./zig-out/bin/agrama_v2 mcp --websocket --port 8080 --auth-token <token>
+./zig-out/bin/agrama mcp --websocket --port 8080 --auth-token <token>
 ```
 
 #### 3. HTTP API Connection (Future)
@@ -54,7 +54,7 @@ RESTful API for web-based integrations:
 
 ```bash
 # HTTP server mode
-./zig-out/bin/agrama_v2 mcp --http --port 3000
+./zig-out/bin/agrama mcp --http --port 3000
 ```
 
 ## Claude Code Integration
@@ -69,7 +69,7 @@ zig build
 
 # Start in Claude Code directory
 cd /path/to/your/project
-./path/to/agrama/zig-out/bin/agrama_v2 mcp
+./path/to/agrama/zig-out/bin/agrama mcp
 ```
 
 ### Configuration
@@ -80,7 +80,7 @@ Create a `.claude-mcp.json` configuration file:
 {
   "servers": {
     "agrama": {
-      "command": "./zig-out/bin/agrama_v2",
+      "command": "./zig-out/bin/agrama",
       "args": ["mcp"],
       "env": {
         "AGRAMA_DB_PATH": "./agrama.db",
@@ -149,7 +149,7 @@ Add Agrama to your Cursor settings:
 {
   "mcp.servers": {
     "agrama": {
-      "command": "/path/to/agrama/zig-out/bin/agrama_v2",
+      "command": "/path/to/agrama/zig-out/bin/agrama",
       "args": ["mcp"],
       "env": {
         "AGRAMA_DB_PATH": "./.agrama/database",
@@ -287,7 +287,7 @@ class AgramaMCPClient:
 
 # Usage example
 async def main():
-    client = AgramaMCPClient("./zig-out/bin/agrama_v2")
+    client = AgramaMCPClient("./zig-out/bin/agrama")
     
     try:
         # Initialize connection
@@ -393,7 +393,7 @@ class AgramaMCPClient {
 
 // Usage
 (async () => {
-    const client = new AgramaMCPClient('./zig-out/bin/agrama_v2');
+    const client = new AgramaMCPClient('./zig-out/bin/agrama');
     
     try {
         await client.initialize();
@@ -491,7 +491,7 @@ class AgramaMCPPool:
     async def get_client(self):
         async with self.semaphore:
             if not self.pool:
-                client = AgramaMCPClient("./zig-out/bin/agrama_v2")
+                client = AgramaMCPClient("./zig-out/bin/agrama")
                 await client.initialize()
                 return client
             return self.pool.pop()
@@ -616,7 +616,7 @@ Always initialize the MCP connection before using tools:
 
 ```python
 async def setup_agent():
-    client = AgramaMCPClient("./zig-out/bin/agrama_v2")
+    client = AgramaMCPClient("./zig-out/bin/agrama")
     await client.initialize()
     
     # Verify tools are available

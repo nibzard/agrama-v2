@@ -5,7 +5,7 @@ const Allocator = std.mem.Allocator;
 const Database = @import("database.zig").Database;
 const CRDTManager = @import("crdt_manager.zig").CRDTManager;
 const crdt = @import("crdt.zig");
-const MCPServer = @import("mcp_server.zig").MCPServer;
+const MCPPrimitiveServer = @import("mcp_primitive_server.zig").MCPPrimitiveServer;
 
 const CRDTOperation = crdt.CRDTOperation;
 const Position = crdt.Position;

@@ -76,7 +76,7 @@ cd /home/niko/agrama-v2
 zig build
 
 # Start the MCP server (required for Observatory)
-./zig-out/bin/agrama_v2 mcp
+./zig-out/bin/agrama mcp
 
 # Verify server is running
 curl http://localhost:8080/health
@@ -227,7 +227,7 @@ export default defineConfig({
 ```bash
 # Terminal 1: Start Agrama MCP server
 cd /home/niko/agrama-v2
-./zig-out/bin/agrama_v2 mcp
+./zig-out/bin/agrama mcp
 
 # Verify server startup
 # You should see: "MCP server starting on port 8080"
@@ -487,7 +487,7 @@ if (import.meta.env.DEV) {
 #### WebSocket Connection Failures
 ```bash
 # Check backend is running
-ps aux | grep agrama_v2
+ps aux | grep agrama
 
 # Verify port availability
 netstat -an | grep 8080

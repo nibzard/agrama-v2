@@ -10,7 +10,7 @@ RUN apk add --no-cache ca-certificates
 RUN adduser -D -s /bin/sh agrama
 
 # Copy pre-built executables
-COPY zig-out/bin/agrama_v2 /usr/local/bin/agrama
+COPY zig-out/bin/agrama /usr/local/bin/agrama
 COPY zig-out/bin/benchmark_suite /usr/local/bin/agrama-bench
 
 # Create data directories with proper permissions
