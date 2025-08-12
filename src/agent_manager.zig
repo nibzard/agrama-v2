@@ -191,15 +191,17 @@ pub const AgentManager = struct {
         };
     }
 
-    /// Clean up Agent Manager resources
+    /// Clean up Agent Manager resources - FIXED MEMORY CLEANUP
     pub fn deinit(self: *AgentManager) void {
         self.mutex.lock();
         defer self.mutex.unlock();
 
-        // Clean up sessions
-        var session_iterator = self.sessions.iterator();
-        while (session_iterator.next()) |entry| {
-            entry.value_ptr.deinit(self.allocator);
+        // Clean up all sessions and their keys
+        var iterator = self.sessions.iterator();
+        while (iterator.next()) |entry| {
+            var session = entry.value_ptr;
+            session.deinit(self.allocator);
+            self.allocator.free(entry.key_ptr.*); // Free the owned key
         }
         self.sessions.deinit();
 
@@ -210,30 +212,35 @@ pub const AgentManager = struct {
         self.file_locks.deinit();
     }
 
-    /// Register a new agent session
+    /// Register a new agent session - FIXED MEMORY CORRUPTION
     pub fn registerAgent(self: *AgentManager, agent_id: []const u8, agent_name: []const u8, capabilities: []const []const u8) !void {
         self.mutex.lock();
         defer self.mutex.unlock();
 
         var session = try AgentSession.init(self.allocator, agent_id, agent_name);
+        errdefer session.deinit(self.allocator);
 
         // Add capabilities
         for (capabilities) |capability| {
             try session.addCapability(self.allocator, capability);
         }
 
-        try self.sessions.put(session.id, session);
+        // Create separate owned key for HashMap to avoid circular dependency
+        const owned_key = try self.allocator.dupe(u8, agent_id);
+        errdefer self.allocator.free(owned_key);
+
+        try self.sessions.put(owned_key, session);
 
         // Agent registration with MCP server handled automatically during tool execution
 
         // Broadcast agent registration
         const capabilities_json = try self.formatCapabilities(capabilities);
         defer self.allocator.free(capabilities_json);
-        const event = try std.fmt.allocPrint(self.allocator, "{{\"type\":\"agent_registered\",\"agent_id\":\"{s}\",\"agent_name\":\"{s}\",\"capabilities\":{s}}}", .{ session.id, session.name, capabilities_json });
+        const event = try std.fmt.allocPrint(self.allocator, "{{\"type\":\"agent_registered\",\"agent_id\":\"{s}\",\"agent_name\":\"{s}\",\"capabilities\":{s}}}", .{ owned_key, session.name, capabilities_json });
         defer self.allocator.free(event);
         self.websocket_server.broadcast(event);
 
-        std.log.info("Agent registered: {s} ({s}) with {d} capabilities", .{ session.name, session.id, capabilities.len });
+        std.log.info("Agent registered: {s} ({s}) with {d} capabilities", .{ session.name, owned_key, capabilities.len });
     }
 
     /// Unregister an agent session
@@ -243,21 +250,28 @@ pub const AgentManager = struct {
 
         if (self.sessions.fetchRemove(agent_id)) |kv| {
             var session = kv.value;
+            const owned_key = kv.key; // This is the owned key we allocated
 
             // Release all file locks held by this agent
             self.releaseAgentLocks(agent_id);
 
-            // Clean up session
-            session.deinit(self.allocator);
-
-            // Agent cleanup handled automatically by MCP server session management
-
             // Broadcast agent unregistration
-            const event = std.fmt.allocPrint(self.allocator, "{{\"type\":\"agent_unregistered\",\"agent_id\":\"{s}\"}}", .{agent_id}) catch return;
+            const event = std.fmt.allocPrint(self.allocator, "{{\"type\":\"agent_unregistered\",\"agent_id\":\"{s}\"}}", .{agent_id}) catch {
+                std.log.warn("Failed to format agent unregistration event for {s}", .{agent_id});
+                return;
+            };
             defer self.allocator.free(event);
             self.websocket_server.broadcast(event);
 
+            // Clean up session
+            session.deinit(self.allocator);
+
+            // Free the owned HashMap key
+            self.allocator.free(owned_key);
+
             std.log.info("Agent unregistered: {s}", .{agent_id});
+        } else {
+            std.log.warn("Attempted to unregister unknown agent: {s}", .{agent_id});
         }
     }
 

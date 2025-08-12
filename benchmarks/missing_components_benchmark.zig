@@ -202,21 +202,22 @@ fn benchmarkJSONPoolPerformance(allocator: Allocator) !BenchmarkResult {
         .passed = true, // Skip but don't fail
     };
     
+    // Skip JSON optimizer testing for now since it's not implemented
     // var json_optimizer = JSONOptimizer.init(allocator) catch |err| {
-        print("  ❌ Failed to initialize JSON optimizer: {}\n", .{err});
-        return BenchmarkResult{
-            .name = "JSON Pool Performance",
-            .latency_p50_ms = 999.0,
-            .latency_p90_ms = 999.0,
-            .latency_p99_ms = 999.0,
-            .throughput_qps = 0.0,
-            .memory_mb = 0.0,
-            .cpu_percent = 0.0,
-            .status = "INITIALIZATION_FAILED",
-            .passed = false,
-        };
-    };
-    defer json_optimizer.deinit();
+    //     print("  ❌ Failed to initialize JSON optimizer: {}\n", .{err});
+    //     return BenchmarkResult{
+    //         .name = "JSON Pool Performance",
+    //         .latency_p50_ms = 999.0,
+    //         .latency_p90_ms = 999.0,
+    //         .latency_p99_ms = 999.0,
+    //         .throughput_qps = 0.0,
+    //         .memory_mb = 0.0,
+    //         .cpu_percent = 0.0,
+    //         .status = "INITIALIZATION_FAILED",
+    //         .passed = false,
+    //     };
+    // };
+    // defer json_optimizer.deinit();
 
     // Test pooled allocation
     for (0..num_iterations) |i| {

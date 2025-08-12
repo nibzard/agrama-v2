@@ -314,6 +314,8 @@ pub fn ObjectPool(comptime T: type) type {
             if (self.free_indices.items.len > 0) {
                 const index = self.free_indices.pop().?;
                 _ = self.allocation_count.fetchAdd(1, .monotonic);
+                // Zero-initialize the reused object
+                self.objects.items[index] = std.mem.zeroes(T);
                 return &self.objects.items[index];
             }
 
@@ -778,8 +780,26 @@ test "Memory pool analytics reporting" {
     const analytics = pool_system.getAnalytics();
     const report = try analytics.generateReport(allocator);
     defer {
+        // Proper JSON cleanup - handle nested ObjectMaps
         var report_mut = report;
-        freeJsonValue(allocator, &report_mut);
+        
+        // Clean up nested ObjectMaps first
+        if (report_mut.object.get("node_pool")) |node_pool_value| {
+            if (node_pool_value == .object) {
+                var node_pool_mut = node_pool_value.object;
+                node_pool_mut.deinit();
+            }
+        }
+        
+        if (report_mut.object.get("search_result_pool")) |search_pool_value| {
+            if (search_pool_value == .object) {
+                var search_pool_mut = search_pool_value.object;
+                search_pool_mut.deinit();
+            }
+        }
+        
+        // Clean up main ObjectMap
+        report_mut.object.deinit();
     }
 
     try testing.expect(report == .object);
@@ -787,25 +807,3 @@ test "Memory pool analytics reporting" {
     try testing.expect(report.object.get("node_pool") != null);
 }
 
-fn freeJsonValue(allocator: Allocator, value: *std.json.Value) void {
-    switch (value.*) {
-        .object => |*obj| {
-            var iter = obj.iterator();
-            while (iter.next()) |entry| {
-                allocator.free(entry.key_ptr.*);
-                freeJsonValue(allocator, entry.value_ptr);
-            }
-            obj.deinit();
-        },
-        .array => |*arr| {
-            for (arr.items) |*item| {
-                freeJsonValue(allocator, item);
-            }
-            arr.deinit();
-        },
-        .string => |str| {
-            allocator.free(str);
-        },
-        else => {},
-    }
-}

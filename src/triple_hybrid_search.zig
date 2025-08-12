@@ -441,7 +441,16 @@ pub const TripleHybridSearchEngine = struct {
 
     /// Perform BM25 search with timing for parallel execution
     fn performBM25SearchTimed(self: *TripleHybridSearchEngine, query: HybridQuery, stats: *HybridSearchStats) ![]BM25SearchResult {
-        var timer = std.time.Timer.start() catch unreachable;
+        var timer = std.time.Timer.start() catch |err| {
+            std.log.warn("Timer failed, using fallback timing: {any}", .{err});
+            // Fallback to system timestamp for timing
+            const start_time = std.time.timestamp();
+            const results = try self.performBM25Search(query);
+            const end_time = std.time.timestamp();
+            stats.bm25_time_ms = @as(f64, @floatFromInt((end_time - start_time) * 1000));
+            stats.bm25_results = @as(u32, @intCast(results.len));
+            return results;
+        };
         const results = try self.performBM25Search(query);
 
         // Atomic update of timing stats (safe for concurrent access)
@@ -461,7 +470,16 @@ pub const TripleHybridSearchEngine = struct {
 
     /// Perform HNSW search with timing for parallel execution
     fn performHNSWSearchTimed(self: *TripleHybridSearchEngine, query: HybridQuery, stats: *HybridSearchStats) ![]HNSWResult {
-        var timer = std.time.Timer.start() catch unreachable;
+        var timer = std.time.Timer.start() catch |err| {
+            std.log.warn("Timer failed, using fallback timing: {any}", .{err});
+            // Fallback to system timestamp for timing
+            const start_time = std.time.timestamp();
+            const results = try self.performHNSWSearch(query);
+            const end_time = std.time.timestamp();
+            stats.hnsw_time_ms = @as(f64, @floatFromInt((end_time - start_time) * 1000));
+            stats.hnsw_results = @as(u32, @intCast(results.len));
+            return results;
+        };
         const results = try self.performHNSWSearch(query);
 
         // Atomic update of timing stats
@@ -481,7 +499,16 @@ pub const TripleHybridSearchEngine = struct {
 
     /// Perform FRE search with timing for parallel execution
     fn performFRESearchTimed(self: *TripleHybridSearchEngine, query: HybridQuery, stats: *HybridSearchStats) ![]FREResult {
-        var timer = std.time.Timer.start() catch unreachable;
+        var timer = std.time.Timer.start() catch |err| {
+            std.log.warn("Timer failed, using fallback timing: {any}", .{err});
+            // Fallback to system timestamp for timing
+            const start_time = std.time.timestamp();
+            const results = try self.performFRESearch(query);
+            const end_time = std.time.timestamp();
+            stats.fre_time_ms = @as(f64, @floatFromInt((end_time - start_time) * 1000));
+            stats.fre_results = @as(u32, @intCast(results.len));
+            return results;
+        };
         const results = try self.performFRESearch(query);
 
         // Atomic update of timing stats
