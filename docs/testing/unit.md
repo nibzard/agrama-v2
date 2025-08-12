@@ -20,7 +20,6 @@ src/
 │   └── test "hnsw_index_operations"
 tests/
 ├── primitive_tests.zig         # Comprehensive primitive tests
-├── enhanced_mcp_tests.zig      # MCP server unit tests
 └── test_infrastructure.zig    # Test framework itself
 ```
 

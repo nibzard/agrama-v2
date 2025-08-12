@@ -85,31 +85,31 @@ pub const TestInfrastructureResult = struct {
 
         // Basic test results
         print("📊 Test Results:\n", .{});
-        print("  Total Tests: {}\n", .{self.total_tests});
-        print("  Passed: {} ✅\n", .{self.passed_tests});
-        print("  Failed: {} ❌\n", .{self.failed_tests});
-        print("  Skipped: {} ⏭️\n", .{self.skipped_tests});
+        print("  Total Tests: {d}\n", .{self.total_tests});
+        print("  Passed: {d} ✅\n", .{self.passed_tests});
+        print("  Failed: {d} ❌\n", .{self.failed_tests});
+        print("  Skipped: {d} ⏭️\n", .{self.skipped_tests});
         print("  Pass Rate: {:.1}%\n", .{(@as(f64, @floatFromInt(self.passed_tests)) / @as(f64, @floatFromInt(self.total_tests))) * 100.0});
 
         // Memory results
         print("\n💾 Memory Analysis:\n", .{});
-        print("  Memory Leaks: {}\n", .{self.memory_leaks_detected});
+        print("  Memory Leaks: {d}\n", .{self.memory_leaks_detected});
         print("  Peak Memory: {:.1}MB\n", .{self.peak_memory_usage_mb});
 
         // Performance results
         print("\n⚡ Performance Analysis:\n", .{});
-        print("  Regressions: {}\n", .{self.performance_regressions});
+        print("  Regressions: {d}\n", .{self.performance_regressions});
         print("  Avg Duration: {:.2}ms\n", .{self.average_test_duration_ms});
 
         // Concurrency results
         print("\n🧵 Concurrency Analysis:\n", .{});
-        print("  Race Conditions: {}\n", .{self.race_conditions_detected});
-        print("  Deadlocks: {}\n", .{self.deadlocks_detected});
+        print("  Race Conditions: {d}\n", .{self.race_conditions_detected});
+        print("  Deadlocks: {d}\n", .{self.deadlocks_detected});
 
         // Fuzz results
         print("\n🔀 Fuzz Testing Results:\n", .{});
-        print("  Crashes: {}\n", .{self.fuzz_crashes_detected});
-        print("  Hangs: {}\n", .{self.fuzz_hangs_detected});
+        print("  Crashes: {d}\n", .{self.fuzz_crashes_detected});
+        print("  Hangs: {d}\n", .{self.fuzz_hangs_detected});
 
         // Coverage results
         print("\n📈 Coverage Analysis:\n", .{});
@@ -168,7 +168,7 @@ pub const TestInfrastructure = struct {
             const leak_check = debug_alloc.deinit();
             if (leak_check == .leak) {
                 self.results.memory_leaks_detected += 1;
-                print("⚠️ Memory leaks detected during test cleanup!\n");
+                print("⚠️ Memory leaks detected during test cleanup!\n", .{});
             }
         }
     }
@@ -176,7 +176,7 @@ pub const TestInfrastructure = struct {
     /// Run comprehensive test suite
     pub fn runComprehensiveTests(self: *TestInfrastructure) !void {
         print("🚀 Starting Agrama comprehensive test suite...\n", .{});
-        print("Configuration: Memory leak detection: {}, Concurrent testing: {}, Fuzz testing: {}\n", .{ self.config.enable_memory_leak_detection, self.config.enable_concurrent_testing, self.config.enable_fuzz_testing });
+        print("Configuration: Memory leak detection: {any}, Concurrent testing: {any}, Fuzz testing: {any}\n", .{ self.config.enable_memory_leak_detection, self.config.enable_concurrent_testing, self.config.enable_fuzz_testing });
 
         self.test_start_time = std.time.timestamp();
 
@@ -246,13 +246,13 @@ pub const TestInfrastructure = struct {
 
             if (test_case.should_pass) {
                 if (memory_delta > 1.0) { // More than 1MB leaked
-                    print("  ⚠️ {} - MEMORY LEAK ({:.2}MB)\n", .{ test_case.name, memory_delta });
+                    print("  ⚠️ {s} - MEMORY LEAK ({:.2}MB)\n", .{ test_case.name, memory_delta });
                     self.results.memory_leaks_detected += 1;
                 }
-                print("  ✅ {}\n", .{test_case.name});
+                print("  ✅ {s}\n", .{test_case.name});
                 self.results.passed_tests += 1;
             } else {
-                print("  ❌ {}\n", .{test_case.name});
+                print("  ❌ {s}\n", .{test_case.name});
                 unit_test_failures += 1;
                 self.results.failed_tests += 1;
             }
@@ -263,7 +263,7 @@ pub const TestInfrastructure = struct {
         const unit_test_end = std.time.timestamp();
         const unit_test_duration = @as(f64, @floatFromInt(unit_test_end - unit_test_start)) * 1000.0;
 
-        print("  Unit tests completed: {}/{} passed in {:.2}ms\n", .{ unit_test_count - unit_test_failures, unit_test_count, unit_test_duration });
+        print("  Unit tests completed: {d}/{d} passed in {:.2}ms\n", .{ unit_test_count - unit_test_failures, unit_test_count, unit_test_duration });
     }
 
     /// Run integration tests
@@ -283,10 +283,10 @@ pub const TestInfrastructure = struct {
             std.time.sleep(5_000_000); // 5ms simulation
 
             if (test_case.should_pass) {
-                print("  ✅ {}\n", .{test_case.name});
+                print("  ✅ {s}\n", .{test_case.name});
                 self.results.passed_tests += 1;
             } else {
-                print("  ❌ {}\n", .{test_case.name});
+                print("  ❌ {s}\n", .{test_case.name});
                 self.results.failed_tests += 1;
             }
 
@@ -360,10 +360,10 @@ pub const TestInfrastructure = struct {
             total_duration += benchmark.simulated_ms;
 
             if (benchmark.simulated_ms <= benchmark.target_ms) {
-                print("  ✅ {} - {:.2}ms (target: {:.2}ms)\n", .{ benchmark.name, benchmark.simulated_ms, benchmark.target_ms });
+                print("  ✅ {s} - {:.2}ms (target: {:.2}ms)\n", .{ benchmark.name, benchmark.simulated_ms, benchmark.target_ms });
                 self.results.passed_tests += 1;
             } else {
-                print("  ❌ {} - {:.2}ms (target: {:.2}ms) - REGRESSION\n", .{ benchmark.name, benchmark.simulated_ms, benchmark.target_ms });
+                print("  ❌ {s} - {:.2}ms (target: {:.2}ms) - REGRESSION\n", .{ benchmark.name, benchmark.simulated_ms, benchmark.target_ms });
                 self.results.performance_regressions += 1;
                 self.results.failed_tests += 1;
             }
@@ -385,7 +385,7 @@ pub const TestInfrastructure = struct {
         };
 
         const results = concurrent_tests.runConcurrentStressTests(self.test_allocator, concurrent_config) catch |err| {
-            print("  ❌ Concurrent tests failed: {}\n", .{err});
+            print("  ❌ Concurrent tests failed: {any}\n", .{err});
             self.results.failed_tests += 1;
             self.results.total_tests += 1;
             return;
@@ -399,10 +399,10 @@ pub const TestInfrastructure = struct {
 
         for (results) |result| {
             if (result.passed) {
-                print("  ✅ {} - {} ops, {:.1} ops/sec\n", .{ result.test_name, result.successful_operations, result.throughput_ops_per_second });
+                print("  ✅ {s} - {d} ops, {:.1} ops/sec\n", .{ result.test_name, result.successful_operations, result.throughput_ops_per_second });
                 self.results.passed_tests += 1;
             } else {
-                print("  ❌ {} - {} failed ops, {} races, {} deadlocks\n", .{ result.test_name, result.failed_operations, result.races_detected, result.deadlocks_detected });
+                print("  ❌ {s} - {d} failed ops, {d} races, {d} deadlocks\n", .{ result.test_name, result.failed_operations, result.races_detected, result.deadlocks_detected });
                 self.results.race_conditions_detected += result.races_detected;
                 self.results.deadlocks_detected += result.deadlocks_detected;
                 self.results.failed_tests += 1;
@@ -422,7 +422,7 @@ pub const TestInfrastructure = struct {
         };
 
         const results = fuzz_framework.runFuzzTestSuite(self.test_allocator, fuzz_config) catch |err| {
-            print("  ❌ Fuzz tests failed: {}\n", .{err});
+            print("  ❌ Fuzz tests failed: {any}\n", .{err});
             self.results.failed_tests += 1;
             self.results.total_tests += 1;
             return;
@@ -436,10 +436,10 @@ pub const TestInfrastructure = struct {
 
         for (results) |result| {
             if (result.passed) {
-                print("  ✅ {} - {} iterations, {} unique errors\n", .{ result.test_name, result.iterations_completed, result.unique_errors });
+                print("  ✅ {s} - {d} iterations, {d} unique errors\n", .{ result.test_name, result.iterations_completed, result.unique_errors });
                 self.results.passed_tests += 1;
             } else {
-                print("  ❌ {} - {} crashes, {} hangs\n", .{ result.test_name, result.crashes_detected, result.hangs_detected });
+                print("  ❌ {s} - {d} crashes, {d} hangs\n", .{ result.test_name, result.crashes_detected, result.hangs_detected });
                 self.results.fuzz_crashes_detected += result.crashes_detected;
                 self.results.fuzz_hangs_detected += result.hangs_detected;
                 self.results.failed_tests += 1;
@@ -463,10 +463,10 @@ pub const TestInfrastructure = struct {
         for (error_scenarios) |scenario| {
             // Simulate error scenario
             if (scenario.should_recover) {
-                print("  ✅ {} - Graceful recovery\n", .{scenario.name});
+                print("  ✅ {s} - Graceful recovery\n", .{scenario.name});
                 self.results.passed_tests += 1;
             } else {
-                print("  ❌ {} - Recovery failed\n", .{scenario.name});
+                print("  ❌ {s} - Recovery failed\n", .{scenario.name});
                 self.results.failed_tests += 1;
             }
             self.results.total_tests += 1;
@@ -526,7 +526,7 @@ pub fn main() !void {
     defer {
         const leaked = gpa.deinit();
         if (leaked == .leak) {
-            print("⚠️ Memory leaks detected in test infrastructure\n");
+            print("⚠️ Memory leaks detected in test infrastructure\n", .{});
         }
     }
     const allocator = gpa.allocator();

@@ -178,7 +178,6 @@ test "database_temporal_query_integration" {
 - **Observatory Integration**: Frontend-backend data flow validation
 
 **Test Files:**
-- `tests/enhanced_mcp_tests.zig` - Comprehensive MCP server testing
 - `tests/integration_test.zig` - System integration validation
 - `tests/database_integration_tests.zig` - Database operation integration
 - `tests/e2e_scenario_tests.zig` - Complete workflow validation
@@ -251,7 +250,6 @@ test "hybrid_query_performance_validation" {
 
 **Test Files:**
 - `tests/primitive_performance_tests.zig` - Primitive operation performance
-- `tests/enhanced_mcp_performance_tests.zig` - MCP server performance
 - `tests/memory_performance_tests.zig` - Memory usage validation
 - `tests/performance_regression_detector.zig` - Automated regression detection
 
@@ -315,7 +313,6 @@ test "primitive_operations_fuzz_validation" {
 **Test Files:**
 - `tests/fuzz_test_framework.zig` - Comprehensive fuzz testing framework
 - `tests/primitive_security_tests.zig` - Security-focused primitive testing
-- `tests/enhanced_mcp_security_tests.zig` - MCP server security validation
 - `tests/security_attack_surface_tests.zig` - Attack surface analysis
 
 ## Memory Safety Tests

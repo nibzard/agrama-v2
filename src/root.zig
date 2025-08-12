@@ -147,6 +147,9 @@ pub const SearchPrimitive = @import("primitives.zig").SearchPrimitive;
 pub const LinkPrimitive = @import("primitives.zig").LinkPrimitive;
 pub const TransformPrimitive = @import("primitives.zig").TransformPrimitive;
 
+// Export PrimitiveMCPServer at top level for backward compatibility
+pub const PrimitiveMCPServer = @import("mcp_primitive_server.zig").PrimitiveMCPServer;
+
 // Export Primitive Engine components (additional types)
 pub const PrimitiveEngineStats = @import("primitive_engine.zig").PrimitiveEngineStats;
 

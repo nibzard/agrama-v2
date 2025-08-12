@@ -106,7 +106,7 @@ test "database_semantic_search_integration" {
 
 ### MCP Server Integration Testing
 ```zig
-// tests/enhanced_mcp_tests.zig
+// tests/integration_test.zig
 test "mcp_server_tool_integration" {
     var gpa = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
     defer {

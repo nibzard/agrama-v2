@@ -88,7 +88,6 @@ const TestContext = struct {
 - `tests/primitive_test_runner.zig` - Test orchestration and reporting
 
 ### Additional Test Infrastructure
-- `tests/enhanced_mcp_tests.zig` - Enhanced MCP server testing
 
 ## Testing Capabilities
 

@@ -534,7 +534,7 @@ fn testDatabaseCommand(allocator: std.mem.Allocator) !void {
     var graph_engine = lib.TripleHybridSearchEngine.init(allocator);
     defer graph_engine.deinit();
     
-    var mcp_server = try lib.MCPPrimitiveServer.init(allocator, &db, &semantic_db, &graph_engine);
+    var mcp_server = try lib.PrimitiveMCPServer.init(allocator, &db, &semantic_db, &graph_engine);
     defer mcp_server.deinit();
 
     std.log.info("✅ MCP Server initialized successfully", .{});

@@ -886,7 +886,7 @@ fn createVulnerabilityReport(
 
 ### Protocol Security Validation
 ```zig
-// tests/enhanced_mcp_security_tests.zig
+// MCP security testing example
 test "mcp_server_security_comprehensive" {
     var gpa = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
     defer {

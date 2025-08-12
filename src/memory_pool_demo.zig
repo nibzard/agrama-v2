@@ -109,7 +109,7 @@ pub fn main() !void {
     print("=================================================================\n", .{});
     print("    MEMORY POOL SYSTEM: MISSION ACCOMPLISHED\n", .{});
     print("    ✅ Target: 50-70%% allocation overhead reduction\n", .{});
-    print("    ✅ Achieved: {d:.1f}%% improvement in combined performance\n", .{calculateImprovement(overall_traditional.operations_per_second, overall_optimized.operations_per_second)});
+    print("    ✅ Achieved: {d:.1}%% improvement in combined performance\n", .{calculateImprovement(overall_traditional.operations_per_second, overall_optimized.operations_per_second)});
     print("=================================================================\n", .{});
     print("\n", .{});
 }
@@ -413,14 +413,14 @@ fn printResults(operation_name: []const u8, results: PerformanceResults) void {
 fn printImprovement(operation_name: []const u8, traditional: PerformanceResults, optimized: PerformanceResults) void {
     const throughput_improvement = calculateImprovement(traditional.operations_per_second, optimized.operations_per_second);
     const latency_improvement = calculateImprovement(optimized.avg_latency_ms, traditional.avg_latency_ms); // Lower is better
-    const allocation_reduction = calculateImprovement(optimized.allocations, traditional.allocations); // Lower is better
+    const allocation_reduction = calculateImprovement(@as(f64, @floatFromInt(optimized.allocations)), @as(f64, @floatFromInt(traditional.allocations))); // Lower is better
     const memory_reduction = calculateImprovement(optimized.peak_memory_mb, traditional.peak_memory_mb); // Lower is better
 
     print("  {s}:\n", .{operation_name});
-    print("    Throughput:  {d:>+7.1f}%\n", .{throughput_improvement});
-    print("    Latency:     {d:>+7.1f}% (lower is better)\n", .{latency_improvement});
-    print("    Allocations: {d:>+7.1f}% (reduction)\n", .{allocation_reduction});
-    print("    Memory:      {d:>+7.1f}% (reduction)\n", .{memory_reduction});
+    print("    Throughput:  {d:>7.1}%\n", .{throughput_improvement});
+    print("    Latency:     {d:>7.1}% (lower is better)\n", .{latency_improvement});
+    print("    Allocations: {d:>7.1}% (reduction)\n", .{allocation_reduction});
+    print("    Memory:      {d:>7.1}% (reduction)\n", .{memory_reduction});
     print("\n", .{});
 }
 

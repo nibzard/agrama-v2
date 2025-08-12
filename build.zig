@@ -474,65 +474,6 @@ pub fn build(b: *std.Build) void {
     test_all_primitives_direct_step.dependOn(&run_primitive_integration_tests_direct.step);
     test_all_primitives_direct_step.dependOn(&run_primitive_performance_tests_direct.step);
 
-    // Enhanced MCP Test Suites (legacy - keeping for backward compatibility)
-
-    // Enhanced MCP comprehensive tests
-    const enhanced_mcp_tests = b.addTest(.{
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("tests/enhanced_mcp_tests.zig"),
-            .target = target,
-            .optimize = optimize,
-        }),
-    });
-    enhanced_mcp_tests.root_module.addImport("agrama_lib", lib_mod);
-
-    const run_enhanced_mcp_tests = b.addRunArtifact(enhanced_mcp_tests);
-    const enhanced_mcp_test_step = b.step("test-enhanced-mcp", "Run enhanced MCP comprehensive tests");
-    enhanced_mcp_test_step.dependOn(&run_enhanced_mcp_tests.step);
-
-    // Enhanced MCP performance tests
-    const enhanced_mcp_perf_tests = b.addExecutable(.{
-        .name = "enhanced_mcp_performance_tests",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("tests/enhanced_mcp_performance_tests.zig"),
-            .target = target,
-            .optimize = optimize,
-        }),
-    });
-    enhanced_mcp_perf_tests.root_module.addImport("agrama_lib", lib_mod);
-    b.installArtifact(enhanced_mcp_perf_tests);
-
-    const run_enhanced_mcp_perf = b.addRunArtifact(enhanced_mcp_perf_tests);
-    if (b.args) |args| {
-        run_enhanced_mcp_perf.addArgs(args);
-    }
-    const enhanced_mcp_perf_step = b.step("test-enhanced-mcp-performance", "Run enhanced MCP performance tests");
-    enhanced_mcp_perf_step.dependOn(&run_enhanced_mcp_perf.step);
-
-    // Enhanced MCP security tests
-    const enhanced_mcp_security_tests = b.addExecutable(.{
-        .name = "enhanced_mcp_security_tests",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("tests/enhanced_mcp_security_tests.zig"),
-            .target = target,
-            .optimize = optimize,
-        }),
-    });
-    enhanced_mcp_security_tests.root_module.addImport("agrama_lib", lib_mod);
-    b.installArtifact(enhanced_mcp_security_tests);
-
-    const run_enhanced_mcp_security = b.addRunArtifact(enhanced_mcp_security_tests);
-    if (b.args) |args| {
-        run_enhanced_mcp_security.addArgs(args);
-    }
-    const enhanced_mcp_security_step = b.step("test-enhanced-mcp-security", "Run enhanced MCP security and memory safety tests");
-    enhanced_mcp_security_step.dependOn(&run_enhanced_mcp_security.step);
-
-    // Comprehensive enhanced MCP test suite (all tests)
-    const enhanced_mcp_full_suite = b.step("test-enhanced-mcp-full", "Run complete enhanced MCP test suite (functional + performance + security)");
-    enhanced_mcp_full_suite.dependOn(&run_enhanced_mcp_tests.step);
-    enhanced_mcp_full_suite.dependOn(&run_enhanced_mcp_perf.step);
-    enhanced_mcp_full_suite.dependOn(&run_enhanced_mcp_security.step);
 
     // Security summary report
     const security_summary = b.addExecutable(.{

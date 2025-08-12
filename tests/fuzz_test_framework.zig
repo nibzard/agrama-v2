@@ -249,9 +249,9 @@ pub const PrimitiveFuzzTester = struct {
             _ = self.primitive_engine.executePrimitive(primitive, params, "fuzz_agent") catch |err| {
                 const error_name = @errorName(err);
                 if (!unique_errors.contains(error_name)) {
-                    const error_sample = try std.fmt.allocPrint(self.allocator, "Error: {} on primitive '{}' with malformed params", .{ err, primitive });
+                    const error_sample = try std.fmt.allocPrint(self.allocator, "Error: {any} on primitive '{s}' with malformed params", .{ err, primitive });
                     try error_samples.append(error_sample);
-                    try unique_errors.put(error_name, {});
+                    try unique_errors.put(error_name, void{});
                 }
                 continue;
             };
@@ -305,9 +305,9 @@ pub const PrimitiveFuzzTester = struct {
             const parsed = std.json.parseFromSlice(std.json.Value, self.allocator, malformed_json, .{}) catch |err| {
                 const error_name = @errorName(err);
                 if (!unique_errors.contains(error_name)) {
-                    const error_sample = try std.fmt.allocPrint(self.allocator, "JSON parse error: {} on input: {s}", .{ err, malformed_json[0..@min(malformed_json.len, 50)] });
+                    const error_sample = try std.fmt.allocPrint(self.allocator, "JSON parse error: {any} on input: {s}", .{ err, malformed_json[0..@min(malformed_json.len, 50)] });
                     try error_samples.append(error_sample);
-                    try unique_errors.put(error_name, {});
+                    try unique_errors.put(error_name, void{});
                 }
                 continue;
             };
@@ -353,7 +353,7 @@ pub const PrimitiveFuzzTester = struct {
                 const large_string = self.generator.generateExtremeString(size) catch |err| {
                     if (err == error.OutOfMemory) {
                         oom_recovered += 1;
-                        const sample = try std.fmt.allocPrint(self.allocator, "OOM recovered at size: {}", .{size});
+                        const sample = try std.fmt.allocPrint(self.allocator, "OOM recovered at size: {d}", .{size});
                         try error_samples.append(sample);
                         continue;
                     }
@@ -366,7 +366,7 @@ pub const PrimitiveFuzzTester = struct {
                 var params_obj = std.json.ObjectMap.init(self.allocator);
                 defer params_obj.deinit();
 
-                const key = try std.fmt.allocPrint(self.allocator, "large_test_{}", .{i});
+                const key = try std.fmt.allocPrint(self.allocator, "large_test_{d}", .{i});
                 defer self.allocator.free(key);
 
                 try params_obj.put("key", std.json.Value{ .string = key });
@@ -453,7 +453,7 @@ pub fn main() !void {
     var all_passed = true;
     for (results) |result| {
         const status = if (result.passed) "✅" else "❌";
-        print("{s} {s}: {} iterations, {} crashes, {} hangs\n", .{ status, result.test_name, result.iterations_completed, result.crashes_detected, result.hangs_detected });
+        print("{s} {s}: {d} iterations, {d} crashes, {d} hangs\n", .{ status, result.test_name, result.iterations_completed, result.crashes_detected, result.hangs_detected });
 
         if (!result.passed) all_passed = false;
     }
@@ -465,7 +465,7 @@ pub fn main() !void {
 /// Run comprehensive fuzz test suite
 pub fn runFuzzTestSuite(allocator: Allocator, config: FuzzConfig) ![]FuzzResult {
     print("🔀 Starting comprehensive fuzz test suite...\n", .{});
-    print("Configuration: {} iterations, max input size: {} bytes\n", .{ config.iterations, config.max_input_size });
+    print("Configuration: {d} iterations, max input size: {d} bytes\n", .{ config.iterations, config.max_input_size });
 
     var tester = try PrimitiveFuzzTester.init(allocator, config);
     defer tester.deinit();

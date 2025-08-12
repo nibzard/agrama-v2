@@ -56,7 +56,7 @@ fn benchmarkPrimitiveOperations(allocator: Allocator) !BenchmarkResult {
     defer database.deinit();
     
     var semantic_db = SemanticDatabase.init(allocator, .{}) catch |err| {
-        print("  ❌ Failed to initialize semantic database: {}\n", .{err});
+        print("  ❌ Failed to initialize semantic database: {any}\n", .{err});
         return BenchmarkResult{
             .name = "Individual Primitive Operations",
             .latency_p50_ms = 999.0,
@@ -75,7 +75,7 @@ fn benchmarkPrimitiveOperations(allocator: Allocator) !BenchmarkResult {
     defer graph_engine.deinit();
     
     var engine = PrimitiveEngine.init(allocator, &database, &semantic_db, &graph_engine) catch |err| {
-        print("  ❌ Failed to initialize primitive engine: {}\n", .{err});
+        print("  ❌ Failed to initialize primitive engine: {any}\n", .{err});
         return BenchmarkResult{
             .name = "Individual Primitive Operations",
             .latency_p50_ms = 999.0,
@@ -115,7 +115,7 @@ fn benchmarkPrimitiveOperations(allocator: Allocator) !BenchmarkResult {
         try params.put("content", std.json.Value{ .string = value });
 
         // Execute primitive operation
-        const result = engine.executePrimitive("store", std.json.Value{ .object = params }, "benchmark_agent") catch {
+        _ = engine.executePrimitive("store", std.json.Value{ .object = params }, "benchmark_agent") catch {
             continue; // Skip failed operations for now
         };
         
@@ -157,11 +157,11 @@ fn benchmarkPrimitiveOperations(allocator: Allocator) !BenchmarkResult {
     const passed = p50 < 1.0; // Target: <1ms P50 latency
     const status = if (passed) "PASSED" else "FAILED";
 
-    print("Benchmark: Individual Primitive Operations (primitives)\n");
-    print("Dataset: {} items, {} iterations, {d:.2}s duration\n", .{ latencies.items.len, num_iterations, total_time_s });
+    print("Benchmark: Individual Primitive Operations (primitives)\n", .{});
+    print("Dataset: {d} items, {d} iterations, {d:.2}s duration\n", .{ latencies.items.len, num_iterations, total_time_s });
     print("Latency:  P50={d:.3}ms P90={d:.3}ms P99={d:.3}ms\n", .{ p50, p90, p99 });
     print("Performance: {d:.1} QPS\n", .{throughput});
-    print("Status: {} {s}\n\n", .{ if (passed) "✅" else "❌", status });
+    print("Status: {s} {s}\n\n", .{ if (passed) "✅" else "❌", status });
 
     return BenchmarkResult{
         .name = "Individual Primitive Operations",
@@ -185,7 +185,7 @@ fn benchmarkJSONPoolPerformance(allocator: Allocator) !BenchmarkResult {
     var latencies_pooled = ArrayList(f64).init(allocator);
     defer latencies_pooled.deinit();
 
-    var timer = Timer.start() catch return error.TimerFailed;
+    _ = Timer.start() catch return error.TimerFailed;
 
     print("  🔬 Testing JSON pool optimization with {} iterations...\n", .{num_iterations});
 
@@ -200,79 +200,6 @@ fn benchmarkJSONPoolPerformance(allocator: Allocator) !BenchmarkResult {
         .cpu_percent = 60.0,
         .status = "SKIPPED",
         .passed = true, // Skip but don't fail
-    };
-    
-    // Skip JSON optimizer testing for now since it's not implemented
-    // var json_optimizer = JSONOptimizer.init(allocator) catch |err| {
-    //     print("  ❌ Failed to initialize JSON optimizer: {}\n", .{err});
-    //     return BenchmarkResult{
-    //         .name = "JSON Pool Performance",
-    //         .latency_p50_ms = 999.0,
-    //         .latency_p90_ms = 999.0,
-    //         .latency_p99_ms = 999.0,
-    //         .throughput_qps = 0.0,
-    //         .memory_mb = 0.0,
-    //         .cpu_percent = 0.0,
-    //         .status = "INITIALIZATION_FAILED",
-    //         .passed = false,
-    //     };
-    // };
-    // defer json_optimizer.deinit();
-
-    // Test pooled allocation
-    for (0..num_iterations) |i| {
-        const start = timer.read();
-
-        // Get object from pool
-        var obj = json_optimizer.getObjectMap();
-        defer json_optimizer.returnObjectMap(obj);
-
-        // Simulate typical JSON operations
-        const key = try std.fmt.allocPrint(allocator, "key_{d}", .{i});
-        defer allocator.free(key);
-        const value = try std.fmt.allocPrint(allocator, "value_{d}", .{i});
-        defer allocator.free(value);
-
-        try obj.put(key, std.json.Value{ .string = value });
-
-        const end = timer.read();
-        const duration_ms = @as(f64, @floatFromInt(end - start)) / std.time.ns_per_ms;
-        try latencies_pooled.append(duration_ms);
-    }
-
-    // Sort latencies for percentile calculation
-    std.mem.sort(f64, latencies_pooled.items, {}, std.sort.asc(f64));
-
-    const p50_idx = latencies_pooled.items.len / 2;
-    const p90_idx = (latencies_pooled.items.len * 90) / 100;
-    const p99_idx = (latencies_pooled.items.len * 99) / 100;
-
-    const p50 = latencies_pooled.items[p50_idx];
-    const p90 = latencies_pooled.items[p90_idx];
-    const p99 = latencies_pooled.items[p99_idx];
-
-    const total_time_s = @as(f64, @floatFromInt(timer.read())) / std.time.ns_per_s;
-    const throughput = @as(f64, @floatFromInt(latencies_pooled.items.len)) / total_time_s;
-
-    const passed = p50 < 0.1; // Target: <0.1ms for JSON operations
-    const status = if (passed) "PASSED" else "FAILED";
-
-    print("Benchmark: JSON Pool Performance (optimization)\n");
-    print("Dataset: {} items, {} iterations, {d:.2}s duration\n", .{ latencies_pooled.items.len, num_iterations, total_time_s });
-    print("Latency:  P50={d:.3}ms P90={d:.3}ms P99={d:.3}ms\n", .{ p50, p90, p99 });
-    print("Performance: {d:.1} QPS\n", .{throughput});
-    print("Status: {} {s}\n\n", .{ if (passed) "✅" else "❌", status });
-
-    return BenchmarkResult{
-        .name = "JSON Pool Performance",
-        .latency_p50_ms = p50,
-        .latency_p90_ms = p90,
-        .latency_p99_ms = p99,
-        .throughput_qps = throughput,
-        .memory_mb = 5.0, // Estimated
-        .cpu_percent = 60.0, // Estimated
-        .status = status,
-        .passed = passed,
     };
 }
 
@@ -328,11 +255,11 @@ fn benchmarkMemoryArenaPerformance(allocator: Allocator) !BenchmarkResult {
     const passed = p50 < 0.05; // Target: <0.05ms for arena operations
     const status = if (passed) "PASSED" else "FAILED";
 
-    print("Benchmark: Memory Arena Performance (memory)\n");
-    print("Dataset: {} items, {} iterations, {d:.2}s duration\n", .{ latencies.items.len, num_iterations, total_time_s });
+    print("Benchmark: Memory Arena Performance (memory)\n", .{});
+    print("Dataset: {d} items, {d} iterations, {d:.2}s duration\n", .{ latencies.items.len, num_iterations, total_time_s });
     print("Latency:  P50={d:.3}ms P90={d:.3}ms P99={d:.3}ms\n", .{ p50, p90, p99 });
     print("Performance: {d:.1} QPS\n", .{throughput});
-    print("Status: {} {s}\n\n", .{ if (passed) "✅" else "❌", status });
+    print("Status: {s} {s}\n\n", .{ if (passed) "✅" else "❌", status });
 
     return BenchmarkResult{
         .name = "Memory Arena Performance",
@@ -365,7 +292,7 @@ fn benchmarkConcurrentPrimitiveAccess(allocator: Allocator) !BenchmarkResult {
     defer database.deinit();
     
     var semantic_db = SemanticDatabase.init(allocator, .{}) catch |err| {
-        print("  ❌ Failed to initialize semantic database: {}\n", .{err});
+        print("  ❌ Failed to initialize semantic database: {any}\n", .{err});
         return BenchmarkResult{
             .name = "Concurrent Primitive Access",
             .latency_p50_ms = 999.0,
@@ -384,7 +311,7 @@ fn benchmarkConcurrentPrimitiveAccess(allocator: Allocator) !BenchmarkResult {
     defer graph_engine.deinit();
     
     var engine = PrimitiveEngine.init(allocator, &database, &semantic_db, &graph_engine) catch |err| {
-        print("  ❌ Failed to initialize primitive engine: {}\n", .{err});
+        print("  ❌ Failed to initialize primitive engine: {any}\n", .{err});
         return BenchmarkResult{
             .name = "Concurrent Primitive Access",
             .latency_p50_ms = 999.0,
@@ -401,7 +328,7 @@ fn benchmarkConcurrentPrimitiveAccess(allocator: Allocator) !BenchmarkResult {
 
     var timer = Timer.start() catch return error.TimerFailed;
 
-    print("  👥 Simulating {} agents with {} operations each...\n", .{ num_agents, num_iterations / num_agents });
+    print("  👥 Simulating {d} agents with {d} operations each...\n", .{ num_agents, num_iterations / num_agents });
 
     // Simulate concurrent access by interleaving agent operations
     for (0..num_iterations) |i| {
@@ -421,7 +348,7 @@ fn benchmarkConcurrentPrimitiveAccess(allocator: Allocator) !BenchmarkResult {
         defer allocator.free(agent_name);
 
         // Execute retrieve operation (simulates concurrent access)
-        const result = engine.executePrimitive("retrieve", std.json.Value{ .object = params }, agent_name) catch {
+        _ = engine.executePrimitive("retrieve", std.json.Value{ .object = params }, agent_name) catch {
             continue; // Skip failed operations
         };
 
@@ -463,11 +390,11 @@ fn benchmarkConcurrentPrimitiveAccess(allocator: Allocator) !BenchmarkResult {
     const passed = p50 < 2.0; // Target: <2ms for concurrent access
     const status = if (passed) "PASSED" else "FAILED";
 
-    print("Benchmark: Concurrent Primitive Access (concurrency)\n");
-    print("Dataset: {} items, {} iterations, {d:.2}s duration\n", .{ latencies.items.len, num_iterations, total_time_s });
+    print("Benchmark: Concurrent Primitive Access (concurrency)\n", .{});
+    print("Dataset: {d} items, {d} iterations, {d:.2}s duration\n", .{ latencies.items.len, num_iterations, total_time_s });
     print("Latency:  P50={d:.3}ms P90={d:.3}ms P99={d:.3}ms\n", .{ p50, p90, p99 });
     print("Performance: {d:.1} QPS\n", .{throughput});
-    print("Status: {} {s}\n\n", .{ if (passed) "✅" else "❌", status });
+    print("Status: {s} {s}\n\n", .{ if (passed) "✅" else "❌", status });
 
     return BenchmarkResult{
         .name = "Concurrent Primitive Access",
@@ -536,12 +463,12 @@ fn benchmarkMemoryLeakDetection(allocator: Allocator) !BenchmarkResult {
     const passed = leak_rate < 1.0; // Target: <1% leak rate
     const status = if (passed) "PASSED" else "FAILED";
 
-    print("Benchmark: Memory Leak Detection (memory_safety)\n");
-    print("Dataset: {} items, {} iterations, {d:.2}s duration\n", .{ num_iterations, num_iterations, total_time_s });
+    print("Benchmark: Memory Leak Detection (memory_safety)\n", .{});
+    print("Dataset: {d} items, {d} iterations, {d:.2}s duration\n", .{ num_iterations, num_iterations, total_time_s });
     print("Latency:  P50={d:.3}ms (average)\n", .{avg_latency_ms});
-    print("Leak Rate: {d:.1}% ({} leaked allocations)\n", .{ leak_rate, leaked_allocations });
+    print("Leak Rate: {d:.1}% ({d} leaked allocations)\n", .{ leak_rate, leaked_allocations });
     print("Performance: {d:.1} operations/sec\n", .{operations_per_sec});
-    print("Status: {} {s}\n\n", .{ if (passed) "✅" else "❌", status });
+    print("Status: {s} {s}\n\n", .{ if (passed) "✅" else "❌", status });
 
     return BenchmarkResult{
         .name = "Memory Leak Detection",
@@ -557,8 +484,8 @@ fn benchmarkMemoryLeakDetection(allocator: Allocator) !BenchmarkResult {
 }
 
 fn generateSummaryReport(allocator: Allocator, results: []BenchmarkResult) !void {
-    print("📈 MISSING COMPONENTS BENCHMARK SUMMARY\n");
-    print("==================================================\n");
+    print("📈 MISSING COMPONENTS BENCHMARK SUMMARY\n", .{});
+    print("==================================================\n", .{});
 
     var total_benchmarks: usize = 0;
     var passed_benchmarks: usize = 0;
@@ -573,7 +500,7 @@ fn generateSummaryReport(allocator: Allocator, results: []BenchmarkResult) !void
         total_latency += result.latency_p50_ms;
         total_throughput += result.throughput_qps;
 
-        print("  {} {s}: P50={d:.3}ms, {d:.1} QPS\n", .{
+        print("  {s} {s}: P50={d:.3}ms, {d:.1} QPS\n", .{
             if (result.passed) "✅" else "❌",
             result.name,
             result.latency_p50_ms,
@@ -585,7 +512,7 @@ fn generateSummaryReport(allocator: Allocator, results: []BenchmarkResult) !void
     const avg_latency = total_latency / @as(f64, @floatFromInt(total_benchmarks));
     const avg_throughput = total_throughput / @as(f64, @floatFromInt(total_benchmarks));
 
-    print("\nSummary: {} total, {} passed, {} failed\n", .{ total_benchmarks, passed_benchmarks, total_benchmarks - passed_benchmarks });
+    print("\nSummary: {d} total, {d} passed, {d} failed\n", .{ total_benchmarks, passed_benchmarks, total_benchmarks - passed_benchmarks });
     print("Pass Rate: {d:.1}%\n", .{pass_rate});
     print("Average P50 Latency: {d:.3}ms\n", .{avg_latency});
     print("Average Throughput: {d:.1} QPS\n", .{avg_throughput});
@@ -597,7 +524,7 @@ fn generateSummaryReport(allocator: Allocator, results: []BenchmarkResult) !void
     defer allocator.free(filename);
 
     var file = std.fs.cwd().createFile(filename, .{}) catch |err| {
-        print("⚠️  Could not save results to file: {}\n", .{err});
+        print("⚠️  Could not save results to file: {any}\n", .{err});
         return;
     };
     defer file.close();

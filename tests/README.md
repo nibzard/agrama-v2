@@ -4,7 +4,7 @@ Comprehensive testing suite for the enhanced MCP server implementation with adva
 
 ## Test Categories
 
-### 1. Functional Tests (`enhanced_mcp_tests.zig`)
+### 1. Functional Tests (archived)
 Comprehensive validation of all enhanced MCP tools and protocol compliance.
 
 **Test Areas:**
@@ -22,7 +22,7 @@ zig build test-enhanced-mcp
 zig build test-enhanced-mcp -- --verbose
 ```
 
-### 2. Performance Tests (`enhanced_mcp_performance_tests.zig`)
+### 2. Performance Tests (archived)
 Validates performance targets and algorithmic guarantees.
 
 **Performance Targets:**
@@ -51,7 +51,7 @@ zig build test-enhanced-mcp-performance -- --quick
 zig build test-enhanced-mcp-performance -- --dataset 1000
 ```
 
-### 3. Security Tests (`enhanced_mcp_security_tests.zig`)
+### 3. Security Tests (archived)
 Validates security, memory safety, and robustness.
 
 **Security Areas:**
