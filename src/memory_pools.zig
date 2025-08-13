@@ -782,7 +782,7 @@ test "Memory pool analytics reporting" {
     defer {
         // Proper JSON cleanup - handle nested ObjectMaps
         var report_mut = report;
-        
+
         // Clean up nested ObjectMaps first
         if (report_mut.object.get("node_pool")) |node_pool_value| {
             if (node_pool_value == .object) {
@@ -790,14 +790,14 @@ test "Memory pool analytics reporting" {
                 node_pool_mut.deinit();
             }
         }
-        
+
         if (report_mut.object.get("search_result_pool")) |search_pool_value| {
             if (search_pool_value == .object) {
                 var search_pool_mut = search_pool_value.object;
                 search_pool_mut.deinit();
             }
         }
-        
+
         // Clean up main ObjectMap
         report_mut.object.deinit();
     }
@@ -806,4 +806,3 @@ test "Memory pool analytics reporting" {
     try testing.expect(report.object.get("total_allocations_saved") != null);
     try testing.expect(report.object.get("node_pool") != null);
 }
-

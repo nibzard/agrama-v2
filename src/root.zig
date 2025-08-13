@@ -53,7 +53,7 @@ pub const interfaces = struct {
     // MCP Interface - For AI agents like Claude
     pub const MCP = struct {
         pub const Interface = @import("interfaces/mcp/mcp_interface.zig").MCPInterface;
-        
+
         // Protocol implementation details (usually not needed directly)
         pub const PrimitiveMCPServer = @import("mcp_primitive_server.zig").PrimitiveMCPServer;
         pub const Request = @import("mcp_primitive_server.zig").MCPRequest;
@@ -62,22 +62,21 @@ pub const interfaces = struct {
         pub const Content = @import("mcp_primitive_server.zig").MCPContent;
         pub const ToolResponse = @import("mcp_primitive_server.zig").MCPToolResponse;
     };
-    
+
     // WebSocket Interface - For real-time web clients
     pub const WebSocket = struct {
         pub const Interface = @import("interfaces/websocket/websocket_interface.zig").WebSocketInterface;
-        
+
         // Protocol implementation details
         pub const Server = @import("websocket.zig").WebSocketServer;
         pub const Connection = @import("websocket.zig").WebSocketConnection;
         pub const EventBroadcaster = @import("websocket.zig").EventBroadcaster;
     };
-    
+
     // Future interfaces will be added here:
     // pub const HTTP = struct { ... };
     // pub const gRPC = struct { ... };
 };
-
 
 // Export Frontier Reduction Engine components (using paper-compliant implementation)
 pub const TrueFrontierReductionEngine = @import("fre_true.zig").TrueFrontierReductionEngine;
@@ -91,7 +90,7 @@ pub const FrontierReductionEngine = TrueFrontierReductionEngine;
 // Simple compatibility types for gradual migration
 pub const TraversalDirection = enum {
     forward,
-    reverse, 
+    reverse,
     bidirectional,
 };
 
@@ -153,10 +152,8 @@ pub const PrimitiveMCPServer = @import("mcp_primitive_server.zig").PrimitiveMCPS
 // Export Primitive Engine components (additional types)
 pub const PrimitiveEngineStats = @import("primitive_engine.zig").PrimitiveEngineStats;
 
-
 // Re-export for convenience
 pub const TemporalGraphDB = Database;
-
 
 test "Database module exports" {
     // Verify that our main exports are accessible
@@ -174,7 +171,7 @@ test "Interface exports" {
 
     const mcp_request_type_info = @typeInfo(interfaces.MCP.Request);
     try testing.expect(mcp_request_type_info == .@"struct");
-    
+
     // Verify WebSocket interface types are accessible
     const ws_interface_type_info = @typeInfo(interfaces.WebSocket.Interface);
     try testing.expect(ws_interface_type_info == .@"struct");

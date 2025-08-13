@@ -551,20 +551,23 @@ fn benchmarkLinkPrimitive(allocator: Allocator, config: BenchmarkConfig) !Benchm
     // Warmup
     print("🌡️ Running warmup ({d} iterations)...\n", .{config.warmup_iterations});
     for (0..config.warmup_iterations) |i| {
+        // Use arena allocator for each warmup iteration to prevent memory buildup
+        var warmup_arena = std.heap.ArenaAllocator.init(allocator);
+        defer warmup_arena.deinit();
+        const warmup_allocator = warmup_arena.allocator();
+
         const from_idx = i % ctx.test_keys.len;
         const to_idx = (i + 1) % ctx.test_keys.len;
         const relation = relations[i % relations.len];
 
-        var params_obj = std.json.ObjectMap.init(allocator);
-        defer params_obj.deinit();
+        var params_obj = std.json.ObjectMap.init(warmup_allocator);
 
         try params_obj.put("from", std.json.Value{ .string = ctx.test_keys[from_idx] });
         try params_obj.put("to", std.json.Value{ .string = ctx.test_keys[to_idx] });
         try params_obj.put("relation", std.json.Value{ .string = relation });
 
         if (i % 3 == 0) {
-            var meta_obj = std.json.ObjectMap.init(allocator);
-            defer meta_obj.deinit();
+            var meta_obj = std.json.ObjectMap.init(warmup_allocator);
             try meta_obj.put("strength", std.json.Value{ .float = 0.8 });
             try params_obj.put("metadata", std.json.Value{ .object = meta_obj });
         }
@@ -579,20 +582,23 @@ fn benchmarkLinkPrimitive(allocator: Allocator, config: BenchmarkConfig) !Benchm
     timer = try Timer.start();
 
     for (0..config.iterations) |i| {
+        // Use arena allocator for each iteration to prevent memory buildup
+        var iteration_arena = std.heap.ArenaAllocator.init(allocator);
+        defer iteration_arena.deinit();
+        const iter_allocator = iteration_arena.allocator();
+
         const from_idx = i % ctx.test_keys.len;
         const to_idx = (i + 1) % ctx.test_keys.len;
         const relation = relations[i % relations.len];
 
-        var params_obj = std.json.ObjectMap.init(allocator);
-        defer params_obj.deinit();
+        var params_obj = std.json.ObjectMap.init(iter_allocator);
 
         try params_obj.put("from", std.json.Value{ .string = ctx.test_keys[from_idx] });
         try params_obj.put("to", std.json.Value{ .string = ctx.test_keys[to_idx] });
         try params_obj.put("relation", std.json.Value{ .string = relation });
 
         if (i % 3 == 0) {
-            var meta_obj = std.json.ObjectMap.init(allocator);
-            defer meta_obj.deinit();
+            var meta_obj = std.json.ObjectMap.init(iter_allocator);
             try meta_obj.put("strength", std.json.Value{ .float = 0.8 });
             try params_obj.put("metadata", std.json.Value{ .object = meta_obj });
         }

@@ -474,7 +474,6 @@ pub fn build(b: *std.Build) void {
     test_all_primitives_direct_step.dependOn(&run_primitive_integration_tests_direct.step);
     test_all_primitives_direct_step.dependOn(&run_primitive_performance_tests_direct.step);
 
-
     // Security summary report
     const security_summary = b.addExecutable(.{
         .name = "websocket_security_summary",

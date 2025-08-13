@@ -369,17 +369,18 @@ pub const StorePrimitive = struct {
 
         try ctx.database.saveFile(metadata_key, metadata_json);
 
-        // Build response - use main allocator for return value that caller owns
-        var result = std.json.ObjectMap.init(ctx.allocator);
+        // Build response using arena allocator to prevent leaks
+        var result = std.json.ObjectMap.init(arena_allocator);
         try result.put("success", std.json.Value{ .bool = true });
-        try result.put("key", std.json.Value{ .string = try ctx.allocator.dupe(u8, key_str) });
+        try result.put("key", std.json.Value{ .string = try arena_allocator.dupe(u8, key_str) });
         try result.put("timestamp", std.json.Value{ .integer = ctx.timestamp });
         try result.put("indexed", std.json.Value{ .bool = indexed });
 
         const execution_time = @as(f64, @floatFromInt(timer.read())) / 1_000_000.0;
         try result.put("execution_time_ms", std.json.Value{ .float = execution_time });
 
-        return std.json.Value{ .object = result };
+        // Deep copy to main allocator before arena is destroyed
+        return try copyJsonValue(ctx.allocator, std.json.Value{ .object = result });
     }
 
     pub fn validate(params: std.json.Value) !void {
@@ -430,10 +431,17 @@ pub const RetrievePrimitive = struct {
         // Get current content
         const content = ctx.database.getFile(key_str) catch |err| switch (err) {
             error.FileNotFound => {
-                var result = std.json.ObjectMap.init(ctx.allocator);
+                // Use arena allocator for error response to prevent leaks
+                var error_arena = std.heap.ArenaAllocator.init(ctx.allocator);
+                defer error_arena.deinit();
+                const error_allocator = error_arena.allocator();
+                
+                var result = std.json.ObjectMap.init(error_allocator);
                 try result.put("exists", std.json.Value{ .bool = false });
-                try result.put("key", std.json.Value{ .string = try ctx.allocator.dupe(u8, key_str) });
-                return std.json.Value{ .object = result };
+                try result.put("key", std.json.Value{ .string = try error_allocator.dupe(u8, key_str) });
+                
+                // Deep copy to main allocator before arena is destroyed
+                return try copyJsonValue(ctx.allocator, std.json.Value{ .object = result });
             },
             else => return err,
         };
@@ -452,10 +460,11 @@ pub const RetrievePrimitive = struct {
             break :blk try copyJsonValue(ctx.allocator, parsed_result.value);
         };
 
-        var result = std.json.ObjectMap.init(ctx.allocator);
+        // Build result using arena allocator for temporary work
+        var result = std.json.ObjectMap.init(arena_allocator);
         try result.put("exists", std.json.Value{ .bool = true });
-        try result.put("key", std.json.Value{ .string = try ctx.allocator.dupe(u8, key_str) });
-        try result.put("value", std.json.Value{ .string = try ctx.allocator.dupe(u8, content) });
+        try result.put("key", std.json.Value{ .string = try arena_allocator.dupe(u8, key_str) });
+        try result.put("value", std.json.Value{ .string = try arena_allocator.dupe(u8, content) });
         try result.put("metadata", metadata_value);
 
         // Include history if requested
@@ -476,7 +485,8 @@ pub const RetrievePrimitive = struct {
         const execution_time = @as(f64, @floatFromInt(timer.read())) / 1_000_000.0;
         try result.put("execution_time_ms", std.json.Value{ .float = execution_time });
 
-        return std.json.Value{ .object = result };
+        // Deep copy the result to the main allocator before arena is destroyed
+        return try copyJsonValue(ctx.allocator, std.json.Value{ .object = result });
     }
 
     pub fn validate(params: std.json.Value) !void {
@@ -587,8 +597,8 @@ pub const SearchPrimitive = struct {
                     }
                 } else {
                     // Fallback: Use text query without embedding (less optimal but functional)
-                    var result_obj = std.json.ObjectMap.init(ctx.allocator);
-                    try result_obj.put("key", std.json.Value{ .string = try ctx.allocator.dupe(u8, "semantic_search") });
+                    var result_obj = std.json.ObjectMap.init(arena_allocator);
+                    try result_obj.put("key", std.json.Value{ .string = try arena_allocator.dupe(u8, "semantic_search") });
                     try result_obj.put("score", std.json.Value{ .float = 0.5 });
                     try result_obj.put("type", std.json.Value{ .string = try ctx.allocator.dupe(u8, "semantic") });
                     try result_obj.put("note", std.json.Value{ .string = try ctx.allocator.dupe(u8, "Embedding required for semantic search") });
@@ -617,8 +627,8 @@ pub const SearchPrimitive = struct {
             for (search_results) |result| {
                 try results_array.append(std.json.Value{
                     .object = blk: {
-                        var result_obj = std.json.ObjectMap.init(ctx.allocator);
-                        try result_obj.put("key", std.json.Value{ .string = try ctx.allocator.dupe(u8, result.file_path) });
+                        var result_obj = std.json.ObjectMap.init(arena_allocator);
+                        try result_obj.put("key", std.json.Value{ .string = try arena_allocator.dupe(u8, result.file_path) });
                         try result_obj.put("score", std.json.Value{ .float = result.bm25_score });
                         try result_obj.put("type", std.json.Value{ .string = try ctx.allocator.dupe(u8, "lexical") });
 
@@ -701,19 +711,19 @@ pub const SearchPrimitive = struct {
             for (search_results) |result| {
                 try results_array.append(std.json.Value{
                     .object = blk: {
-                        var result_obj = std.json.ObjectMap.init(ctx.allocator);
-                        try result_obj.put("key", std.json.Value{ .string = try ctx.allocator.dupe(u8, result.file_path) });
+                        var result_obj = std.json.ObjectMap.init(arena_allocator);
+                        try result_obj.put("key", std.json.Value{ .string = try arena_allocator.dupe(u8, result.file_path) });
                         try result_obj.put("combined_score", std.json.Value{ .float = result.combined_score });
                         try result_obj.put("semantic_score", std.json.Value{ .float = result.hnsw_score });
                         try result_obj.put("lexical_score", std.json.Value{ .float = result.bm25_score });
                         try result_obj.put("graph_score", std.json.Value{ .float = result.fre_score });
-                        try result_obj.put("type", std.json.Value{ .string = try ctx.allocator.dupe(u8, "hybrid") });
+                        try result_obj.put("type", std.json.Value{ .string = try arena_allocator.dupe(u8, "hybrid") });
 
                         // Add detailed metadata
                         if (result.matching_terms.len > 0) {
-                            var terms_array = std.json.Array.init(ctx.allocator);
+                            var terms_array = std.json.Array.init(arena_allocator);
                             for (result.matching_terms) |term| {
-                                try terms_array.append(std.json.Value{ .string = try ctx.allocator.dupe(u8, term) });
+                                try terms_array.append(std.json.Value{ .string = try arena_allocator.dupe(u8, term) });
                             }
                             try result_obj.put("matching_terms", std.json.Value{ .array = terms_array });
                         }
@@ -730,16 +740,17 @@ pub const SearchPrimitive = struct {
             }
         }
 
-        var final_result = std.json.ObjectMap.init(ctx.allocator);
-        try final_result.put("query", std.json.Value{ .string = try ctx.allocator.dupe(u8, query_str) });
-        try final_result.put("type", std.json.Value{ .string = try ctx.allocator.dupe(u8, type_str) });
+        var final_result = std.json.ObjectMap.init(arena_allocator);
+        try final_result.put("query", std.json.Value{ .string = try arena_allocator.dupe(u8, query_str) });
+        try final_result.put("type", std.json.Value{ .string = try arena_allocator.dupe(u8, type_str) });
         try final_result.put("results", std.json.Value{ .array = results_array });
         try final_result.put("count", std.json.Value{ .integer = @as(i64, @intCast(results_array.items.len)) });
 
         const execution_time = @as(f64, @floatFromInt(timer.read())) / 1_000_000.0;
         try final_result.put("execution_time_ms", std.json.Value{ .float = execution_time });
 
-        return std.json.Value{ .object = final_result };
+        // Deep copy to main allocator before arena is destroyed
+        return try copyJsonValue(ctx.allocator, std.json.Value{ .object = final_result });
     }
 
     pub fn validate(params: std.json.Value) !void {
@@ -825,18 +836,19 @@ pub const LinkPrimitive = struct {
 
         try ctx.database.saveFile(link_key, link_data);
 
-        // Build response - use main allocator for returned data
-        var result = std.json.ObjectMap.init(ctx.allocator);
+        // Build response using arena allocator to prevent leaks
+        var result = std.json.ObjectMap.init(arena_allocator);
         try result.put("success", std.json.Value{ .bool = true });
-        try result.put("from", std.json.Value{ .string = try ctx.allocator.dupe(u8, from_str) });
-        try result.put("to", std.json.Value{ .string = try ctx.allocator.dupe(u8, to_str) });
-        try result.put("relation", std.json.Value{ .string = try ctx.allocator.dupe(u8, relation_str) });
+        try result.put("from", std.json.Value{ .string = try arena_allocator.dupe(u8, from_str) });
+        try result.put("to", std.json.Value{ .string = try arena_allocator.dupe(u8, to_str) });
+        try result.put("relation", std.json.Value{ .string = try arena_allocator.dupe(u8, relation_str) });
         try result.put("timestamp", std.json.Value{ .integer = ctx.timestamp });
 
         const execution_time = @as(f64, @floatFromInt(timer.read())) / 1_000_000.0;
         try result.put("execution_time_ms", std.json.Value{ .float = execution_time });
 
-        return std.json.Value{ .object = result };
+        // Deep copy to main allocator before arena is destroyed
+        return try copyJsonValue(ctx.allocator, std.json.Value{ .object = result });
     }
 
     pub fn validate(params: std.json.Value) !void {
@@ -893,18 +905,22 @@ pub const TransformPrimitive = struct {
         const output = try applyTransformation(ctx.allocator, operation_str, data_str, options);
         const output_size = output.len;
 
-        // Build response
-        var result = std.json.ObjectMap.init(ctx.allocator);
+        // Build response using arena allocator to prevent leaks
+        var result = std.json.ObjectMap.init(arena_allocator);
         try result.put("success", std.json.Value{ .bool = true });
-        try result.put("operation", std.json.Value{ .string = try ctx.allocator.dupe(u8, operation_str) });
+        try result.put("operation", std.json.Value{ .string = try arena_allocator.dupe(u8, operation_str) });
         try result.put("input_size", std.json.Value{ .integer = @as(i64, @intCast(input_size)) });
         try result.put("output_size", std.json.Value{ .integer = @as(i64, @intCast(output_size)) });
-        try result.put("output", std.json.Value{ .string = output }); // Transfer ownership to result
+        try result.put("output", std.json.Value{ .string = try arena_allocator.dupe(u8, output) }); // Copy to arena
+        
+        // Free the output since we copied it to arena
+        ctx.allocator.free(output);
 
         const execution_time = @as(f64, @floatFromInt(timer.read())) / 1_000_000.0;
         try result.put("execution_time_ms", std.json.Value{ .float = execution_time });
 
-        return std.json.Value{ .object = result };
+        // Deep copy to main allocator before arena is destroyed
+        return try copyJsonValue(ctx.allocator, std.json.Value{ .object = result });
     }
 
     pub fn validate(params: std.json.Value) !void {
@@ -943,34 +959,7 @@ pub const TransformPrimitive = struct {
     };
 };
 
-/// Helper function to deep copy JSON values
-fn copyJsonValue(allocator: Allocator, value: std.json.Value) !std.json.Value {
-    return switch (value) {
-        .null => std.json.Value.null,
-        .bool => |b| std.json.Value{ .bool = b },
-        .integer => |i| std.json.Value{ .integer = i },
-        .float => |f| std.json.Value{ .float = f },
-        .number_string => |s| std.json.Value{ .number_string = try allocator.dupe(u8, s) },
-        .string => |s| std.json.Value{ .string = try allocator.dupe(u8, s) },
-        .array => |arr| blk: {
-            var new_array = std.json.Array.init(allocator);
-            for (arr.items) |item| {
-                try new_array.append(try copyJsonValue(allocator, item));
-            }
-            break :blk std.json.Value{ .array = new_array };
-        },
-        .object => |obj| blk: {
-            var new_object = std.json.ObjectMap.init(allocator);
-            var iter = obj.iterator();
-            while (iter.next()) |entry| {
-                const key_copy = try allocator.dupe(u8, entry.key_ptr.*);
-                const value_copy = try copyJsonValue(allocator, entry.value_ptr.*);
-                try new_object.put(key_copy, value_copy);
-            }
-            break :blk std.json.Value{ .object = new_object };
-        },
-    };
-}
+
 
 /// Apply data transformation based on operation type
 fn applyTransformation(allocator: Allocator, operation: []const u8, data: []const u8, options: std.json.Value) ![]const u8 {
@@ -1459,7 +1448,7 @@ test "StorePrimitive basic functionality" {
 
     // Test execution
     const result = try StorePrimitive.execute(&context, params);
-    defer cleanupPrimitiveResult(allocator, result); // Properly free the result
+    defer cleanupCopiedJsonValue(allocator, result); // Properly free the result
 
     try testing.expect(result.object.get("success").?.bool == true);
     try testing.expect(std.mem.eql(u8, result.object.get("key").?.string, "test_key"));
@@ -1506,7 +1495,7 @@ test "RetrievePrimitive basic functionality" {
 
     // Test execution
     const result = try RetrievePrimitive.execute(&context, params);
-    defer cleanupPrimitiveResult(allocator, result); // Properly free the result
+    defer cleanupCopiedJsonValue(allocator, result); // Properly free the result
 
     try testing.expect(result.object.get("exists").?.bool == true);
     try testing.expect(std.mem.eql(u8, result.object.get("value").?.string, "test_value"));
@@ -1547,25 +1536,28 @@ pub fn cleanupPrimitiveResult(allocator: Allocator, value: std.json.Value) void 
                 const key = entry.key_ptr.*;
                 const val = entry.value_ptr.*;
                 // Free specific string fields that we know we duplicate
-                if ((std.mem.eql(u8, key, "key") or 
-                     std.mem.eql(u8, key, "value") or 
-                     std.mem.eql(u8, key, "source") or
-                     std.mem.eql(u8, key, "target") or
-                     std.mem.eql(u8, key, "current_session") or
-                     std.mem.eql(u8, key, "name") or
-                     std.mem.eql(u8, key, "description") or
-                     std.mem.eql(u8, key, "performance")) and val == .string) {
+                if ((std.mem.eql(u8, key, "key") or
+                    std.mem.eql(u8, key, "value") or
+                    std.mem.eql(u8, key, "source") or
+                    std.mem.eql(u8, key, "target") or
+                    std.mem.eql(u8, key, "current_session") or
+                    std.mem.eql(u8, key, "name") or
+                    std.mem.eql(u8, key, "description") or
+                    std.mem.eql(u8, key, "performance")) and val == .string)
+                {
                     allocator.free(val.string);
                 }
-                // Handle operation_counts object - need to free keys
+                // Handle operation_counts object - need to free keys that are duplicated
                 if (std.mem.eql(u8, key, "operation_counts") and val == .object) {
                     var op_iter = val.object.iterator();
                     while (op_iter.next()) |op_entry| {
                         allocator.free(op_entry.key_ptr.*);
                     }
+                    var mutable_op_obj = val.object;
+                    mutable_op_obj.deinit();
                 }
                 // Recursively clean nested objects/arrays
-                if (val == .object or val == .array) {
+                else if (val == .object or val == .array) {
                     cleanupPrimitiveResult(allocator, val);
                 }
             }
@@ -1588,6 +1580,75 @@ pub fn cleanupPrimitiveResult(allocator: Allocator, value: std.json.Value) void 
         },
         else => {
             // No cleanup needed for primitives like bool, integer, float, null
+        },
+    }
+}
+
+// Cleanup function specifically for results from copyJsonValue (frees everything)
+pub fn cleanupCopiedJsonValue(allocator: Allocator, value: std.json.Value) void {
+    freeJsonValue(allocator, value);
+}
+
+/// Deep copy a JSON value using the provided allocator
+/// This is needed for copying user metadata into our structures
+fn copyJsonValue(allocator: Allocator, value: std.json.Value) !std.json.Value {
+    switch (value) {
+        .null => return std.json.Value{ .null = {} },
+        .bool => |b| return std.json.Value{ .bool = b },
+        .integer => |i| return std.json.Value{ .integer = i },
+        .float => |f| return std.json.Value{ .float = f },
+        .number_string => |s| {
+            const copied_string = try allocator.dupe(u8, s);
+            return std.json.Value{ .number_string = copied_string };
+        },
+        .string => |s| {
+            const copied_string = try allocator.dupe(u8, s);
+            return std.json.Value{ .string = copied_string };
+        },
+        .array => |arr| {
+            var new_array = std.json.Array.init(allocator);
+            for (arr.items) |item| {
+                const copied_item = try copyJsonValue(allocator, item);
+                try new_array.append(copied_item);
+            }
+            return std.json.Value{ .array = new_array };
+        },
+        .object => |obj| {
+            var new_object = std.json.ObjectMap.init(allocator);
+            var iter = obj.iterator();
+            while (iter.next()) |entry| {
+                const copied_key = try allocator.dupe(u8, entry.key_ptr.*);
+                const copied_value = try copyJsonValue(allocator, entry.value_ptr.*);
+                try new_object.put(copied_key, copied_value);
+            }
+            return std.json.Value{ .object = new_object };
+        },
+    }
+}
+
+/// Free a JSON value that was created with copyJsonValue
+fn freeJsonValue(allocator: Allocator, value: std.json.Value) void {
+    switch (value) {
+        .string => |s| allocator.free(s),
+        .number_string => |s| allocator.free(s),
+        .array => |arr| {
+            for (arr.items) |item| {
+                freeJsonValue(allocator, item);
+            }
+            var mutable_arr = arr;
+            mutable_arr.deinit();
+        },
+        .object => |obj| {
+            var iter = obj.iterator();
+            while (iter.next()) |entry| {
+                allocator.free(entry.key_ptr.*); // Free the key
+                freeJsonValue(allocator, entry.value_ptr.*); // Free the value
+            }
+            var mutable_obj = obj;
+            mutable_obj.deinit();
+        },
+        else => {
+            // No cleanup needed for null, bool, integer, float
         },
     }
 }

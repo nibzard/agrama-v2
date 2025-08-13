@@ -12,7 +12,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(grep:*)",
-      "Bash(zig build-exe:*)"
+      "Bash(zig build-exe:*)",
+      "Bash(./zig-out/bin/mcp_benchmark:*)",
+      "Bash(timeout:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

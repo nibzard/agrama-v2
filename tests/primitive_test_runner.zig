@@ -67,6 +67,7 @@ pub const TestResult = struct {
         if (self.error_message) |msg| {
             allocator.free(msg);
         }
+        // Note: name is now a string literal, so we don't free it
     }
 };
 
@@ -303,7 +304,7 @@ pub const PrimitiveTestRunner = struct {
 
         var result = TestResult{
             .category = category,
-            .name = try self.allocator.dupe(u8, name),
+            .name = name, // Don't duplicate the name - it's a string literal
             .passed = false,
             .duration_ms = 0,
         };
@@ -540,8 +541,14 @@ pub const PrimitiveTestRunner = struct {
 
 /// Main entry point for primitive test runner
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
+    var gpa = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
+    defer {
+        const leaked = gpa.deinit();
+        if (leaked == .leak) {
+            std.log.err("Memory leaks detected in test runner", .{});
+            std.process.exit(1);
+        }
+    }
     const allocator = gpa.allocator();
 
     // Parse command line arguments

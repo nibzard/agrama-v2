@@ -477,7 +477,7 @@ test "PrimitiveEngine primitive execution" {
 
     // Execute store primitive
     const result = try engine.executePrimitive("store", params, "test_agent");
-    defer primitives.cleanupPrimitiveResult(allocator, result);
+    defer primitives.cleanupCopiedJsonValue(allocator, result);
 
     try testing.expect(result.object.get("success").?.bool == true);
     try testing.expect(engine.total_executions == 1);

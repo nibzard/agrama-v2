@@ -543,7 +543,7 @@ pub const HNSWIndex = struct {
         }
 
         // Use existing searchLayer infrastructure
-        const results = try self.searchLayer(&query_vector, entry_points.items, ef, level);
+        var results = try self.searchLayer(&query_vector, entry_points.items, ef, level);
         return try results.toOwnedSlice();
     }
 

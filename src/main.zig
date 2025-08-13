@@ -521,7 +521,7 @@ fn testDatabaseCommand(allocator: std.mem.Allocator) !void {
 
     // Test MCP server integration
     std.log.info("✅ Testing MCP Server initialization...", .{});
-    
+
     // Initialize required components for MCP server
     const hnsw_config = lib.SemanticDatabase.HNSWConfig{
         .vector_dimensions = 768,
@@ -530,10 +530,10 @@ fn testDatabaseCommand(allocator: std.mem.Allocator) !void {
     };
     var semantic_db = try lib.SemanticDatabase.init(allocator, hnsw_config);
     defer semantic_db.deinit();
-    
+
     var graph_engine = lib.TripleHybridSearchEngine.init(allocator);
     defer graph_engine.deinit();
-    
+
     var mcp_server = try lib.PrimitiveMCPServer.init(allocator, &db, &semantic_db, &graph_engine);
     defer mcp_server.deinit();
 

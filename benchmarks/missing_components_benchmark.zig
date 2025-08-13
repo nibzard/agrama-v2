@@ -54,7 +54,7 @@ fn benchmarkPrimitiveOperations(allocator: Allocator) !BenchmarkResult {
     // Initialize required components for primitive engine
     var database = Database.init(allocator);
     defer database.deinit();
-    
+
     var semantic_db = SemanticDatabase.init(allocator, .{}) catch |err| {
         print("  ❌ Failed to initialize semantic database: {any}\n", .{err});
         return BenchmarkResult{
@@ -70,10 +70,10 @@ fn benchmarkPrimitiveOperations(allocator: Allocator) !BenchmarkResult {
         };
     };
     defer semantic_db.deinit();
-    
+
     var graph_engine = TripleHybridSearchEngine.init(allocator);
     defer graph_engine.deinit();
-    
+
     var engine = PrimitiveEngine.init(allocator, &database, &semantic_db, &graph_engine) catch |err| {
         print("  ❌ Failed to initialize primitive engine: {any}\n", .{err});
         return BenchmarkResult{
@@ -118,7 +118,7 @@ fn benchmarkPrimitiveOperations(allocator: Allocator) !BenchmarkResult {
         _ = engine.executePrimitive("store", std.json.Value{ .object = params }, "benchmark_agent") catch {
             continue; // Skip failed operations for now
         };
-        
+
         // Clean up result - result cleanup handled by engine
 
         const end = timer.read();
@@ -287,10 +287,10 @@ fn benchmarkConcurrentPrimitiveAccess(allocator: Allocator) !BenchmarkResult {
     var latencies = ArrayList(f64).init(allocator);
     defer latencies.deinit();
 
-    // Initialize required components  
+    // Initialize required components
     var database = Database.init(allocator);
     defer database.deinit();
-    
+
     var semantic_db = SemanticDatabase.init(allocator, .{}) catch |err| {
         print("  ❌ Failed to initialize semantic database: {any}\n", .{err});
         return BenchmarkResult{
@@ -306,10 +306,10 @@ fn benchmarkConcurrentPrimitiveAccess(allocator: Allocator) !BenchmarkResult {
         };
     };
     defer semantic_db.deinit();
-    
+
     var graph_engine = TripleHybridSearchEngine.init(allocator);
     defer graph_engine.deinit();
-    
+
     var engine = PrimitiveEngine.init(allocator, &database, &semantic_db, &graph_engine) catch |err| {
         print("  ❌ Failed to initialize primitive engine: {any}\n", .{err});
         return BenchmarkResult{

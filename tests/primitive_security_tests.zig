@@ -32,6 +32,7 @@ const RetrievePrimitive = agrama_lib.RetrievePrimitive;
 const SearchPrimitive = agrama_lib.SearchPrimitive;
 const LinkPrimitive = agrama_lib.LinkPrimitive;
 const TransformPrimitive = agrama_lib.TransformPrimitive;
+const primitives = agrama_lib.primitives;
 
 /// Security test configuration
 const SecurityTestConfig = struct {
@@ -66,8 +67,66 @@ const SecurityTestContext = struct {
         const json_string = try std.json.stringifyAlloc(self.allocator, params, .{});
         defer self.allocator.free(json_string);
 
+        // Parse JSON and deep copy the result to avoid memory leaks
         const parsed = try std.json.parseFromSlice(std.json.Value, self.allocator, json_string, .{});
-        return parsed.value;
+        defer parsed.deinit(); // This frees the internal arena allocator
+        
+        // Deep copy the parsed value to the main allocator so we can return it
+        return try self.copyJsonValue(parsed.value);
+    }
+    
+    /// Deep copy a JSON value to avoid arena allocator issues
+    fn copyJsonValue(self: *SecurityTestContext, value: std.json.Value) !std.json.Value {
+        switch (value) {
+            .null => return .null,
+            .bool => |b| return .{ .bool = b },
+            .integer => |i| return .{ .integer = i },
+            .float => |f| return .{ .float = f },
+            .number_string => |s| return .{ .number_string = try self.allocator.dupe(u8, s) },
+            .string => |s| return .{ .string = try self.allocator.dupe(u8, s) },
+            .array => |arr| {
+                var result = std.json.Array.init(self.allocator);
+                for (arr.items) |item| {
+                    try result.append(try self.copyJsonValue(item));
+                }
+                return .{ .array = result };
+            },
+            .object => |obj| {
+                var result = std.json.ObjectMap.init(self.allocator);
+                var iterator = obj.iterator();
+                while (iterator.next()) |entry| {
+                    const key = try self.allocator.dupe(u8, entry.key_ptr.*);
+                    const val = try self.copyJsonValue(entry.value_ptr.*);
+                    try result.put(key, val);
+                }
+                return .{ .object = result };
+            },
+        }
+    }
+    
+    /// Free a copied JSON value
+    pub fn freeJsonValue(self: *SecurityTestContext, value: std.json.Value) void {
+        switch (value) {
+            .null, .bool, .integer, .float => {},
+            .number_string => |s| self.allocator.free(s),
+            .string => |s| self.allocator.free(s),
+            .array => |arr| {
+                for (arr.items) |item| {
+                    self.freeJsonValue(item);
+                }
+                var mutable_arr = arr;
+                mutable_arr.deinit();
+            },
+            .object => |obj| {
+                var iterator = obj.iterator();
+                while (iterator.next()) |entry| {
+                    self.allocator.free(entry.key_ptr.*);
+                    self.freeJsonValue(entry.value_ptr.*);
+                }
+                var mutable_obj = obj;
+                mutable_obj.deinit();
+            },
+        }
     }
 };
 
@@ -99,6 +158,7 @@ const InputValidationTests = struct {
                 .key = malicious_key,
                 .value = "This should not be stored due to path traversal",
             });
+            defer ctx.freeJsonValue(store_params); // Ensure params are freed
 
             // Should either fail validation or be safely handled
             const store_result = StorePrimitive.execute(&primitive_ctx, store_params) catch |err| {
@@ -111,6 +171,7 @@ const InputValidationTests = struct {
                     else => return err,
                 }
             };
+            defer primitives.cleanupCopiedJsonValue(ctx.allocator, store_result); // Use the correct cleanup function
 
             // If it didn't throw an error, verify it was sanitized
             if (store_result.object.get("success")) |success| {
